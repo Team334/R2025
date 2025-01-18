@@ -10,8 +10,8 @@ import frc.lib.AdvancedSubsystem;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
-
-  public static enum ElevatorSetpoint {
+  /** A setpoint for the wristevator. */
+  public static enum WristevatorSetpoint {
     HOME(Radians.of(0), Meters.of(0)),
     HUMAN(Radians.of(0), Meters.of(0)),
     L1(Radians.of(0), Meters.of(0)),
@@ -22,7 +22,7 @@ public class Wristevator extends AdvancedSubsystem {
     private final Angle _angle;
     private final Distance _height;
 
-    private ElevatorSetpoint(Angle angle, Distance height) {
+    private WristevatorSetpoint(Angle angle, Distance height) {
       _angle = angle;
       _height = height;
     }
@@ -38,14 +38,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   public Wristevator() {}
 
-  public Command setSetpoint(ElevatorSetpoint elevatorSetpoint) {
-    return run(() -> {});
-  }
-
-  public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
-    return run(() -> {});
-  }
-
   @Logged(name = "Height")
   public double getHeight() {
     return 0;
@@ -54,6 +46,21 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Angle")
   public double getAngle() {
     return 0;
+  }
+
+  /** Set the wristevator to a setpoint. */
+  public Command setSetpoint(WristevatorSetpoint elevatorSetpoint) {
+    return run(() -> {});
+  }
+
+  /** Control the elevator and wrist speeds individually. */
+  public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
+    return run(() -> {});
+  }
+
+  @Override
+  public void periodic() {
+    super.periodic();
   }
 
   @Override

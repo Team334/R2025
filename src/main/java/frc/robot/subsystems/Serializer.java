@@ -5,21 +5,30 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 
 public class Serializer extends AdvancedSubsystem {
-  @Override
-  public void close() throws Exception {}
-
   public Serializer() {
     setDefaultCommand(setSpeed(0));
   }
-
-  public Command setSpeed(double speed) {
-    return run(() -> {});
-  }
-
-  public void holdCoral() {}
 
   @Logged(name = "Speed")
   public double getSpeed() {
     return 0;
   }
+
+  /** Set the speed of the feed motor in rad/s. */
+  public Command setSpeed(double speed) {
+    return run(() -> {});
+  }
+
+  /** Hold the coral inside the serializer. */
+  public Command holdCoral() {
+    return run(() -> {});
+  }
+
+  @Override
+  public void periodic() {
+    super.periodic();
+  }
+
+  @Override
+  public void close() throws Exception {}
 }

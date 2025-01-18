@@ -9,13 +9,19 @@ public class Manipulator extends AdvancedSubsystem {
     setDefaultCommand(setSpeed(0));
   }
 
-  public Command setSpeed(double speed) {
-    return run(() -> {}); // return rad/s
-  }
-
   @Logged(name = "Speed")
   public double getSpeed() {
-    return 0; // returns wheel speed in rad/s
+    return 0;
+  }
+
+  /** Set the speed of the manipulator motor in rad/s. */
+  public Command setSpeed(double speed) {
+    return run(() -> {});
+  }
+
+  @Override
+  public void periodic() {
+    super.periodic();
   }
 
   @Override

@@ -34,9 +34,10 @@ import frc.robot.commands.Autos;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Manipulator;
+import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Wristevator;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -49,18 +50,18 @@ public class Robot extends TimedRobot {
   private final CommandXboxController _driverController =
       new CommandXboxController(Ports.driverController);
 
-  // subsystems
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
 
   @Logged(name = "Intake")
   private final Intake _intake = new Intake();
+
   @Logged(name = "Serializer")
-  
   private final Serializer _serializer = new Serializer();
+
   @Logged(name = "Manipulator")
   private final Manipulator _manipulator = new Manipulator();
-  
+
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
