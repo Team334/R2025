@@ -53,6 +53,9 @@ public class Robot extends TimedRobot {
 
   @Logged(name = "Manipulator")
   private final Manipulator _manipulator = new Manipulator();
+  
+  @Logged(name = "Wristevator")
+  private final Wristevator _wristevator = new Wristevator();
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
