@@ -53,7 +53,7 @@ public class Robot extends TimedRobot {
 
   @Logged(name = "Serializer")
   private final Serializer _serializer = new Serializer();
-  
+
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
 
