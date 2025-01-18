@@ -9,7 +9,7 @@ public class Manipulator extends AdvancedSubsystem {
     setDefaultCommand(setSpeed(0));
   }
 
-  @Logged(name = "Speed")
+  @Logged(name = "Speed ")
   public double getSpeed() {
     return 0;
   }
