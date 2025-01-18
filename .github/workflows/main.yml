@@ -29,7 +29,6 @@ jobs:
     - name: Compile and run tests on robot code
       run: ./gradlew build
   
-  # spotless job
   spotless:
     # The type of runner that the job will run on
     runs-on: ubuntu-22.04
