@@ -20,7 +20,6 @@ public abstract class AdvancedSubsystem extends SubsystemBase
   private final Set<Fault> _faults = new HashSet<Fault>();
   private final FaultsTable _faultsTable;
 
-  @Logged(name = "Has Error")
   private boolean _hasError = false;
 
   public AdvancedSubsystem() {
@@ -35,7 +34,6 @@ public abstract class AdvancedSubsystem extends SubsystemBase
    * Returns the name of the command that's currently requiring this subsystem. Is "None" when the
    * command in null.
    */
-  @Logged(name = "Current Command")
   public final String currentCommandName() {
     if (getCurrentCommand() != null) {
       return getCurrentCommand().getName();
@@ -86,5 +84,11 @@ public abstract class AdvancedSubsystem extends SubsystemBase
             .withName(getName() + " Self Check");
 
     return selfCheck;
+  }
+
+  @Override
+  public void periodic() {
+    DogLog.log(getName() + "/Current Command", currentCommandName());
+    DogLog.log(getName() + "/Has Error", _hasError);
   }
 }
