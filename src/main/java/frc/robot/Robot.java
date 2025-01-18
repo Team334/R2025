@@ -34,6 +34,8 @@ import frc.robot.commands.Autos;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Serializer;
+import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Swerve;
 
 /**
@@ -53,6 +55,14 @@ public class Robot extends TimedRobot {
 
   @Logged(name = "Intake")
   private final Intake _intake = new Intake();
+  @Logged(name = "Serializer")
+  
+  private final Serializer _serializer = new Serializer();
+  @Logged(name = "Manipulator")
+  private final Manipulator _manipulator = new Manipulator();
+  
+  @Logged(name = "Wristevator")
+  private final Wristevator _wristevator = new Wristevator();
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
