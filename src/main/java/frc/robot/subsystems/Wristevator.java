@@ -2,11 +2,14 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.robot.Constants;
+import frc.robot.Constants.WristevatorConstants;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -40,6 +43,13 @@ public class Wristevator extends AdvancedSubsystem {
       return _height;
     }
   }
+
+  private final TalonFX _leftMotor =
+      new TalonFX(WristevatorConstants.leftMotorId, Constants.canivoreName);
+  private final TalonFX _rightMotor =
+      new TalonFX(WristevatorConstants.rightMotorId, Constants.canivoreName);
+  private final TalonFX _wristMotor =
+      new TalonFX(WristevatorConstants.wristMotorId, Constants.canivoreName);
 
   public Wristevator() {}
 
