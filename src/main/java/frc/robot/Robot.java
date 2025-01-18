@@ -30,6 +30,7 @@ import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
@@ -151,6 +152,15 @@ public class Robot extends TimedRobot {
             InputStream.of(_driverController::getRightX)
                 .negate()
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
+
+    _wristevator.setDefaultCommand(
+      _wristevator.setSpeeds(
+        InputStream.of(_operatorController::getRightY)
+          .negate()
+          .scale(WristevatorConstants.maxElevatorSpeed.in(MetersPerSecond)), 
+        InputStream.of(_operatorController::getLeftY)
+          .negate()
+          .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
 
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());

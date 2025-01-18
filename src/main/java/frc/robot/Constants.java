@@ -82,4 +82,11 @@ public final class Constants {
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.1);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.1);
   }
+
+  public static class WristevatorConstants {
+    // temporary values
+    public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(Math.PI);
+    public static final LinearVelocity maxElevatorSpeed = MetersPerSecond.of(1);
+  }
+
 }
