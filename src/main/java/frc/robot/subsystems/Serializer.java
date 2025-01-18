@@ -1,12 +1,20 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.robot.Constants.SerializerConstants;
 
 public class Serializer extends AdvancedSubsystem {
+  private DigitalInput _frontBeam;
+  private DigitalInput _backBeam;
+
   public Serializer() {
     setDefaultCommand(setSpeed(0));
+
+    _frontBeam = new DigitalInput(SerializerConstants.frontBeam);
+    _backBeam = new DigitalInput(SerializerConstants.backBeam);
   }
 
   @Logged(name = "Speed")
@@ -22,6 +30,14 @@ public class Serializer extends AdvancedSubsystem {
   /** Hold the coral inside the serializer. */
   public Command holdCoral() {
     return run(() -> {});
+  }
+
+  public boolean getFrontBeam() {
+    return !_frontBeam.get();
+  }
+
+  public boolean getBackBeam() {
+    return !_backBeam.get();
   }
 
   @Override
