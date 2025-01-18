@@ -33,6 +33,7 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 
 /**
@@ -50,6 +51,9 @@ public class Robot extends TimedRobot {
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
 
+  @Logged(name = "Serializer")
+  private final Serializer _serializer = new Serializer();
+  
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
 
