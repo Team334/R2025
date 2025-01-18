@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants.SerializerConstants;
 
@@ -15,6 +16,8 @@ public class Serializer extends AdvancedSubsystem {
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeam);
     _backBeam = new DigitalInput(SerializerConstants.backBeam);
+
+    new Trigger(this::getFrontBeam).whileTrue(holdCoral());
   }
 
   @Logged(name = "Speed")
