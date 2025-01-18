@@ -14,7 +14,7 @@ public class Intake extends AdvancedSubsystem {
     return 0.0;
   }
 
-  @Logged(name = "Angle ")
+  @Logged(name = "Angle")
   public double getAngle() {
     return 0.0;
   }
