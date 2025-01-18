@@ -34,6 +34,7 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
+import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
@@ -185,6 +186,18 @@ public class Robot extends TimedRobot {
         .y()
         .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L3 : UPPER_ALGAE));
     _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
+
+    _operatorController
+        .rightBumper()
+        .and(() -> getSetpoint() == HOME)
+        .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
+
+    _operatorController
+        .rightBumper()
+        .and(() -> getSetpoint() != HOME)
+        .whileTrue(Superstructure.groundIntake(_intake, _serializer));
+
+    _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
   }
 
   /**

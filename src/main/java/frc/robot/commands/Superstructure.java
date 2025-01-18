@@ -6,6 +6,7 @@ package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
@@ -21,17 +22,24 @@ public class Superstructure {
   }
 
   /** Passoff from intake (if needed) -> serializer -> manipulator. */
-  public Command passoff(Intake intake, Serializer serializer, Manipulator manipulator) {
-    return none();
+  public static Command passoff(Intake intake, Serializer serializer, Manipulator manipulator) {
+    return parallel(
+        intake.set(0, 0).unless(serializer::getBackBeam),
+        serializer.setSpeed(0),
+        manipulator.setSpeed(0));
   }
 
   /** Outtake from serializer -> intake. */
-  public Command groundOuttake(Intake intake, Serializer serializer) {
-    return none();
+  public static Command groundOuttake(Intake intake, Serializer serializer) {
+    return sequence(
+        intake.set(0, 0).until(() -> MathUtil.isNear(0, intake.getAngle(), 0.3)),
+        serializer.setSpeed(0));
   }
 
   /** Intake from intake -> serializer. */
-  public Command groundIntake(Intake intake, Serializer serializer) {
-    return none();
+  public static Command groundIntake(Intake intake, Serializer serializer) {
+    return parallel(
+        intake.set(0, 0).unless(serializer::getBackBeam),
+        serializer.setSpeed(0).unless(serializer::getBackBeam));
   }
 }
