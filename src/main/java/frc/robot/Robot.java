@@ -7,6 +7,8 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
+import static frc.robot.subsystems.Wristevator.WristevatorSetpoint.*;
+import static frc.robot.utils.GlobalState.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -36,6 +38,7 @@ import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
+import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
@@ -166,14 +169,22 @@ public class Robot extends TimedRobot {
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
 
-    // _operatorController.a().onTrue()
-    // _operatorController.b().onTrue()
-    // _operatorController.y().onTrue()
-    // _operatorController.x().onTrue()
-
     _driverController
         .b()
         .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+
+    _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
+    _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
+    _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
+
+    _operatorController.a().whileTrue(_wristevator.setSetpoint(L1));
+    _operatorController
+        .b()
+        .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L2 : LOWER_ALGAE));
+    _operatorController
+        .y()
+        .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L3 : UPPER_ALGAE));
+    _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
   }
 
   /**

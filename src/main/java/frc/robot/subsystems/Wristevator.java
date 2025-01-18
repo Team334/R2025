@@ -14,10 +14,15 @@ public class Wristevator extends AdvancedSubsystem {
   public static enum WristevatorSetpoint {
     HOME(Radians.of(0), Meters.of(0)),
     HUMAN(Radians.of(0), Meters.of(0)),
+    PROCESSOR(Radians.of(0), Meters.of(0)),
+
     L1(Radians.of(0), Meters.of(0)),
     L2(Radians.of(0), Meters.of(0)),
     L3(Radians.of(0), Meters.of(0)),
-    L4(Radians.of(0), Meters.of(0));
+    L4(Radians.of(0), Meters.of(0)),
+
+    LOWER_ALGAE(Radians.of(0), Meters.of(0)),
+    UPPER_ALGAE(Radians.of(0), Meters.of(0));
 
     private final Angle _angle;
     private final Distance _height;
@@ -50,12 +55,12 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Set the wristevator to a setpoint. */
   public Command setSetpoint(WristevatorSetpoint elevatorSetpoint) {
-    return run(() -> {});
+    return run(() -> {}).withName("Set Setpoint: " + elevatorSetpoint.toString());
   }
 
   /** Control the elevator and wrist speeds individually. */
   public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
-    return run(() -> {});
+    return run(() -> {}).withName("Set Speeds");
   }
 
   @Override
