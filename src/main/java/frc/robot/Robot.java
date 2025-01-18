@@ -50,6 +50,8 @@ public class Robot extends TimedRobot {
   private final CommandXboxController _driverController =
       new CommandXboxController(Ports.driverController);
 
+  private final CommandXboxController _operatorController = new CommandXboxController(Ports.operatorController);
+
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
 

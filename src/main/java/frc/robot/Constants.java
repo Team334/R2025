@@ -33,6 +33,7 @@ public final class Constants {
 
   public static class Ports {
     public static final int driverController = 0;
+    public static final int operatorController = 1;
   }
 
   public static class FieldConstants {
