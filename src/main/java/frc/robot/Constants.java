@@ -88,5 +88,4 @@ public final class Constants {
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(Math.PI);
     public static final LinearVelocity maxElevatorSpeed = MetersPerSecond.of(1);
   }
-
 }

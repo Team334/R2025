@@ -51,7 +51,8 @@ public class Robot extends TimedRobot {
   private final CommandXboxController _driverController =
       new CommandXboxController(Ports.driverController);
 
-  private final CommandXboxController _operatorController = new CommandXboxController(Ports.operatorController);
+  private final CommandXboxController _operatorController =
+      new CommandXboxController(Ports.operatorController);
 
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
@@ -154,16 +155,21 @@ public class Robot extends TimedRobot {
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     _wristevator.setDefaultCommand(
-      _wristevator.setSpeeds(
-        InputStream.of(_operatorController::getRightY)
-          .negate()
-          .scale(WristevatorConstants.maxElevatorSpeed.in(MetersPerSecond)), 
-        InputStream.of(_operatorController::getLeftY)
-          .negate()
-          .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+        _wristevator.setSpeeds(
+            InputStream.of(_operatorController::getRightY)
+                .negate()
+                .scale(WristevatorConstants.maxElevatorSpeed.in(MetersPerSecond)),
+            InputStream.of(_operatorController::getLeftY)
+                .negate()
+                .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
 
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
+
+    // _operatorController.a().onTrue()
+    // _operatorController.b().onTrue()
+    // _operatorController.y().onTrue()
+    // _operatorController.x().onTrue()
 
     _driverController
         .b()

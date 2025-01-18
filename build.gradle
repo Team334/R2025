@@ -26,7 +26,6 @@ deploy {
             artifacts {
                 // First part is artifact name, 2nd is artifact type
                 // getTargetTypeClass is a shortcut to get the class type using a string
-
                 frcJava(getArtifactTypeClass('FRCJavaArtifact')) {
                 }
 
@@ -50,8 +49,6 @@ wpi.java.debugJni = false
 // Set this to true to enable desktop support.
 def includeDesktopSupport = true
 
-// Defining my dependencies. In this case, WPILib (+ friends), and vendor libraries.
-// Also defines JUnit 5.
 dependencies {
     annotationProcessor wpi.java.deps.wpilibAnnotations()
     implementation wpi.java.deps.wpilib()
@@ -119,6 +116,7 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
         endWithNewline()
+        lineEndings 'UNIX'
     }
     groovyGradle {
         target fileTree('.') {
@@ -129,6 +127,7 @@ spotless {
         indentWithSpaces(4)
         trimTrailingWhitespace()
         endWithNewline()
+        lineEndings 'UNIX'
     }
     format 'xml', {
         target fileTree('.') {
@@ -139,6 +138,7 @@ spotless {
         trimTrailingWhitespace()
         indentWithSpaces(2)
         endWithNewline()
+        lineEndings 'UNIX'
     }
     format 'misc', {
         target fileTree('.') {
@@ -148,5 +148,6 @@ spotless {
         trimTrailingWhitespace()
         indentWithSpaces(2)
         endWithNewline()
+        lineEndings 'UNIX'
     }
 }
