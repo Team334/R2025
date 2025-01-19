@@ -122,7 +122,9 @@ public class Robot extends TimedRobot {
 
     FaultLogger.setup(_ntInst);
 
-    configureBindings();
+    configureDefaultCommands();
+    configureDriverBindings();
+    configureOperatorBindings();
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -160,7 +162,7 @@ public class Robot extends TimedRobot {
             new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
   }
 
-  private void configureBindings() {
+  private void configureDefaultCommands() {
     _swerve.setDefaultCommand(
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
@@ -181,14 +183,18 @@ public class Robot extends TimedRobot {
             InputStream.of(_operatorController::getLeftY)
                 .negate()
                 .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+  }
 
+  private void configureDriverBindings() {
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
 
     _driverController
         .b()
         .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+  }
 
+  private void configureOperatorBindings() {
     _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
     _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
     _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
