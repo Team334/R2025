@@ -162,10 +162,6 @@ public class VisionPoseEstimatorTest {
     assertNotEquals(new int[] {0, 0, 0}, estimate.stdDevs());
   }
 
-  // multi-tag does not work due to this issue:
-  // https://github.com/PhotonVision/photonvision/issues/1630
-  // and the field-relative corner coordinates are used in the multi-tag solvepnp:
-  // https://github.com/PhotonVision/photonvision/blob/e8efef476b3b4681c8899a8720774d6dbd5ccf56/photon-targeting/src/main/java/org/photonvision/estimation/OpenCVHelp.java#L573
   // @Test
   public void multiTagEstimate() {
     _visionSystemSim.addAprilTags(_fieldLayout);
@@ -258,9 +254,6 @@ public class VisionPoseEstimatorTest {
     assertArrayEquals(new double[] {-1, -1, -1}, estimate.stdDevs());
   }
 
-  // beta ambiguity issue:
-  // https://github.com/PhotonVision/photonvision/issues/1623
-  // so this isn't gonna work
   // @Test
   public void ambiguityFilter() {
     // TODO
@@ -307,7 +300,6 @@ public class VisionPoseEstimatorTest {
     assertArrayEquals(new double[] {-1, -1, -1}, estimate.stdDevs());
   }
 
-  // multi-tag doesn't work, see other comment about multi-tag above
   // @Test
   public void multiTagDistanceFilter() {
     // TODO
@@ -348,9 +340,6 @@ public class VisionPoseEstimatorTest {
     assertArrayEquals(new double[] {0.3, 0.1, 0.2}, newEstimates.get(2).stdDevs());
   }
 
-  // beta ambiguity issue:
-  // https://github.com/PhotonVision/photonvision/issues/1623
-  // so this isn't gonna work
   // @Test
   public void disambiguation() {
     // TODO
