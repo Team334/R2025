@@ -14,8 +14,8 @@ public class Serializer extends AdvancedSubsystem {
   public Serializer() {
     setDefaultCommand(setSpeed(0));
 
-    _frontBeam = new DigitalInput(SerializerConstants.frontBeam);
-    _backBeam = new DigitalInput(SerializerConstants.backBeam);
+    _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
+    _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
 
     new Trigger(this::getFrontBeam).whileTrue(holdCoral());
   }

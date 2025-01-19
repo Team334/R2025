@@ -7,6 +7,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -41,7 +42,11 @@ public class Wristevator extends AdvancedSubsystem {
     }
   }
 
-  public Wristevator() {}
+  private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
+
+  public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
+    _wristevatorSetpointSetter = wristevatorSetpointSetter;
+  }
 
   @Logged(name = "Height")
   public double getHeight() {
@@ -54,8 +59,10 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   /** Set the wristevator to a setpoint. */
-  public Command setSetpoint(WristevatorSetpoint elevatorSetpoint) {
-    return run(() -> {}).withName("Set Setpoint: " + elevatorSetpoint.toString());
+  public Command setSetpoint(WristevatorSetpoint setpoint) {
+    return run(() -> {})
+        .beforeStarting(() -> _wristevatorSetpointSetter.accept(setpoint))
+        .withName("Set Setpoint: " + setpoint.toString());
   }
 
   /** Control the elevator and wrist speeds individually. */

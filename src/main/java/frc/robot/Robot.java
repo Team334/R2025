@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
 import static frc.robot.subsystems.Wristevator.WristevatorSetpoint.*;
-import static frc.robot.utils.GlobalState.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -43,6 +42,7 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
+import frc.robot.subsystems.Wristevator.WristevatorSetpoint;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -68,10 +68,11 @@ public class Robot extends TimedRobot {
   private final Serializer _serializer = new Serializer();
 
   @Logged(name = "Manipulator")
-  private final Manipulator _manipulator = new Manipulator();
+  private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Wristevator")
-  private final Wristevator _wristevator = new Wristevator();
+  private final Wristevator _wristevator =
+      new Wristevator((WristevatorSetpoint setpoint) -> _setpoint = setpoint);
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
@@ -79,6 +80,22 @@ public class Robot extends TimedRobot {
   private final NetworkTableInstance _ntInst;
 
   private boolean _fileOnlySet = false;
+
+  // global state variables
+  private static Piece _currentPiece = Piece.NONE;
+  private static WristevatorSetpoint _setpoint = WristevatorSetpoint.HOME;
+
+  @Logged(name = "Manipulator Current Piece")
+  /** The current piece in the manipulator. */
+  public static Piece getCurrentPiece() {
+    return _currentPiece;
+  }
+
+  @Logged(name = "Wristevator Setpoint")
+  /** The current setpoint of the wristevator. */
+  public static WristevatorSetpoint getSetpoint() {
+    return _setpoint;
+  }
 
   /**
    * This function is run when the robot is first started up and should be used for any
