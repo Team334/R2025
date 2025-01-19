@@ -67,11 +67,15 @@ public class UnitTestingUtil {
    *
    * @param closeables All closeables that need to be closed.
    */
-  public static void reset(AutoCloseable... closeables) throws Exception {
+  public static void reset(AutoCloseable... closeables) {
     reset();
 
     for (AutoCloseable closeable : closeables) {
-      closeable.close();
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
     }
   }
 

@@ -81,7 +81,7 @@ public class VisionPoseEstimatorTest {
   }
 
   @AfterEach
-  public void close() throws Exception {
+  public void close() {
     reset(_testCam);
   }
 

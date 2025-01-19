@@ -28,7 +28,7 @@ public class CTREUtilTest {
   }
 
   @AfterEach
-  public void close() throws Exception {
+  public void close() {
     reset();
 
     _motor.close();

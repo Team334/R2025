@@ -49,5 +49,8 @@ public class Serializer extends AdvancedSubsystem {
   }
 
   @Override
-  public void close() throws Exception {}
+  public void close() {
+    _frontBeam.close();
+    _backBeam.close();
+  }
 }

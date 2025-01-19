@@ -27,7 +27,7 @@ public class WheelRadiusCharacterizationTest {
   }
 
   @AfterEach
-  public void close() throws Exception {
+  public void close() {
     reset(_swerve);
   }
 

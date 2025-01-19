@@ -76,5 +76,5 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   @Override
-  public void close() throws Exception {}
+  public void close() {}
 }
