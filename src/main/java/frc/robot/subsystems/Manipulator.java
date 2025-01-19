@@ -31,17 +31,19 @@ public class Manipulator extends AdvancedSubsystem {
     return 0;
   }
 
-  /** Set the speed of the manipulator motor in rad/s. */
+  /** Set the speed of the manipulator feed motor in rad/s. */
   public Command setSpeed(double speed) {
-    return run(() -> {});
+    return run(() -> {}).withName("Set Speed");
   }
 
+  /** Hold a coral in place. */
   public Command holdCoral() {
-    return run(() -> {});
+    return run(() -> {}).withName("Hold Coral");
   }
 
+  /** Hold an algae in place. */
   public Command holdAlgae() {
-    return run(() -> {});
+    return run(() -> {}).withName("Hold Algae");
   }
 
   @Override

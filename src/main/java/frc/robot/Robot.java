@@ -85,13 +85,11 @@ public class Robot extends TimedRobot {
   private static Piece _currentPiece = Piece.NONE;
   private static WristevatorSetpoint _setpoint = WristevatorSetpoint.HOME;
 
-  @Logged(name = "Manipulator Current Piece")
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
     return _currentPiece;
   }
 
-  @Logged(name = "Wristevator Setpoint")
   /** The current setpoint of the wristevator. */
   public static WristevatorSetpoint getSetpoint() {
     return _setpoint;
@@ -237,6 +235,9 @@ public class Robot extends TimedRobot {
 
       _fileOnlySet = true;
     }
+
+    DogLog.log("Manipulator Current Piece", _currentPiece);
+    DogLog.log("Wristevator Setpoint", _setpoint);
   }
 
   @Override

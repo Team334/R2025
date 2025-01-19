@@ -24,22 +24,25 @@ public class Superstructure {
   /** Passoff from intake (if needed) -> serializer -> manipulator. */
   public static Command passoff(Intake intake, Serializer serializer, Manipulator manipulator) {
     return parallel(
-        intake.set(0, 0).unless(serializer::getBackBeam),
-        serializer.setSpeed(0),
-        manipulator.setSpeed(0));
+            intake.set(0, 0).unless(serializer::getBackBeam),
+            serializer.setSpeed(0),
+            manipulator.setSpeed(0))
+        .withName("Passoff");
   }
 
   /** Outtake from serializer -> intake. */
   public static Command groundOuttake(Intake intake, Serializer serializer) {
     return sequence(
-        intake.set(0, 0).until(() -> MathUtil.isNear(0, intake.getAngle(), 0.3)),
-        serializer.setSpeed(0));
+            intake.set(0, 0).until(() -> MathUtil.isNear(0, intake.getAngle(), 0.3)),
+            serializer.setSpeed(0))
+        .withName("Ground Outtake");
   }
 
   /** Intake from intake -> serializer. */
   public static Command groundIntake(Intake intake, Serializer serializer) {
     return parallel(
-        intake.set(0, 0).unless(serializer::getBackBeam),
-        serializer.setSpeed(0).unless(serializer::getFrontBeam));
+            intake.set(0, 0).unless(serializer::getBackBeam),
+            serializer.setSpeed(0).unless(serializer::getFrontBeam))
+        .withName("Ground Intake");
   }
 }

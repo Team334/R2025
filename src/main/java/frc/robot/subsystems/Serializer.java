@@ -27,12 +27,12 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Set the speed of the feed motor in rad/s. */
   public Command setSpeed(double speed) {
-    return run(() -> {});
+    return run(() -> {}).withName("Set Speed");
   }
 
   /** Hold the coral inside the serializer. */
   public Command holdCoral() {
-    return run(() -> {});
+    return run(() -> {}).withName("Hold Coral");
   }
 
   public boolean getFrontBeam() {

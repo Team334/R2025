@@ -26,7 +26,7 @@ public class Intake extends AdvancedSubsystem {
    * @param feedSpeed Feed motor speed in rad/s.
    */
   public Command set(double actuatorAngle, double feedSpeed) {
-    return run(() -> {});
+    return run(() -> {}).withName("Set");
   }
 
   @Override
