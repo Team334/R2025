@@ -5,7 +5,6 @@ import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
@@ -33,8 +32,6 @@ public class Serializer extends AdvancedSubsystem {
       _frontBeamSim = null;
       _backBeamSim = null;
     }
-
-    new Trigger(this::getFrontBeam).whileTrue(holdCoral());
   }
 
   @Logged(name = "Speed")
@@ -45,11 +42,6 @@ public class Serializer extends AdvancedSubsystem {
   /** Set the speed of the feed motor in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {}).withName("Set Speed");
-  }
-
-  /** Hold the coral inside the serializer. */
-  public Command holdCoral() {
-    return run(() -> {}).withName("Hold Coral");
   }
 
   public boolean getFrontBeam() {
