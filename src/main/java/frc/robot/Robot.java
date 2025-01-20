@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -128,6 +129,8 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
+    new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1));
+
     SmartDashboard.putData(
         "Robot Self Check",
         sequence(
@@ -185,10 +188,6 @@ public class Robot extends TimedRobot {
             InputStream.of(_operatorController::getLeftY)
                 .negate()
                 .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
-
-    new Trigger(_serializer::getBackBeam)
-        .onTrue(
-            run(() -> rumbleControllers(1)).withTimeout(2).finallyDo(() -> rumbleControllers(0)));
   }
 
   private void configureDriverBindings() {
@@ -230,9 +229,13 @@ public class Robot extends TimedRobot {
     _operatorController.leftTrigger().whileTrue(_manipulator.setSpeed(-0));
   }
 
-  private void rumbleControllers(double rumble) {
-    _driverController.getHID().setRumble(RumbleType.kBothRumble, rumble);
-    _operatorController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+  /** Rumble the driver and operator controllers for some amount of seconds. */
+  private Command rumbleControllers(double rumble, double seconds) {
+    return run(() -> {
+          _driverController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+          _operatorController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+        })
+        .withTimeout(seconds);
   }
 
   /**
