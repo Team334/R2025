@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 import java.util.function.Consumer;
@@ -44,6 +45,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
+  private DigitalInput _elevatorSwitch;
+
   public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
     _wristevatorSetpointSetter = wristevatorSetpointSetter;
   }
@@ -56,6 +59,11 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Angle")
   public double getAngle() {
     return 0;
+  }
+
+  @Logged(name = "Is at Home")
+  public boolean atHome() {
+    return _elevatorSwitch.get();
   }
 
   /** Set the wristevator to a setpoint. */

@@ -23,10 +23,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.Ports;
@@ -183,6 +185,10 @@ public class Robot extends TimedRobot {
             InputStream.of(_operatorController::getLeftY)
                 .negate()
                 .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+
+    new Trigger(_serializer::getBackBeam)
+        .onTrue(
+            run(() -> rumbleControllers(1)).withTimeout(2).finallyDo(() -> rumbleControllers(0)));
   }
 
   private void configureDriverBindings() {
@@ -210,15 +216,23 @@ public class Robot extends TimedRobot {
 
     _operatorController
         .rightBumper()
-        .and(() -> getSetpoint() == HOME)
+        .and(() -> _wristevator.atHome())
         .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
 
     _operatorController
         .rightBumper()
-        .and(() -> getSetpoint() != HOME)
+        .and(() -> !_wristevator.atHome())
         .whileTrue(Superstructure.groundIntake(_intake, _serializer));
 
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+
+    _operatorController.rightTrigger().whileTrue(_manipulator.setSpeed(+0));
+    _operatorController.leftTrigger().whileTrue(_manipulator.setSpeed(-0));
+  }
+
+  private void rumbleControllers(double rumble) {
+    _driverController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+    _operatorController.getHID().setRumble(RumbleType.kBothRumble, rumble);
   }
 
   /**
