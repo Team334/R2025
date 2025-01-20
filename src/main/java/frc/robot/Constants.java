@@ -31,6 +31,8 @@ import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 public final class Constants {
   public static final Frequency simUpdateFrequency = Hertz.of(200);
 
+  public static final String canivoreName = "Drivetrain";
+
   public static class Ports {
     public static final int driverController = 0;
     public static final int operatorController = 1;
@@ -87,6 +89,10 @@ public final class Constants {
     // temporary values
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(Math.PI);
     public static final LinearVelocity maxElevatorSpeed = MetersPerSecond.of(1);
+
+    public static final int leftMotorId = 0;
+    public static final int rightMotorId = 1;
+    public static final int wristMotorId = 2;
   }
 
   public static class SerializerConstants {
