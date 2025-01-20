@@ -7,10 +7,17 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
+import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
+import frc.robot.Robot;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
@@ -46,16 +53,28 @@ public class Wristevator extends AdvancedSubsystem {
     }
   }
 
+  private final Mechanism2d _mech = new Mechanism2d(1.35, 2);
+  private final MechanismRoot2d _root = _mech.getRoot("elevator mount", 1, 0.1);
+
+  private final MechanismLigament2d _elevator =
+      _root.append(
+          new MechanismLigament2d("elevator", getHeight(), 90, 3, new Color8Bit(Color.kBlack)));
+
+  private final MechanismLigament2d _wrist =
+      _elevator.append(
+          new MechanismLigament2d(
+              "wrist", 0.3, Math.toDegrees(getAngle()) - 90, 3, new Color8Bit(Color.kBlueViolet)));
+
   private final TalonFX _leftMotor =
-      new TalonFX(WristevatorConstants.leftMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.leftMotorId, Constants.canivore);
   private final TalonFX _rightMotor =
-      new TalonFX(WristevatorConstants.rightMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.rightMotorId, Constants.canivore);
   private final TalonFX _wristMotor =
-      new TalonFX(WristevatorConstants.wristMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
   private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
-  private DigitalInput _elevatorSwitch;
+  private DigitalInput _elevatorSwitch = new DigitalInput(WristevatorConstants.elevatorSwitchPort);
 
   public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
     _wristevatorSetpointSetter = wristevatorSetpointSetter;
@@ -91,6 +110,13 @@ public class Wristevator extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+
+    if (Robot.isSimulation()) {
+      _elevator.setLength(getHeight());
+      _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
+
+      SmartDashboard.putData("Wristevator Visualizer", _mech);
+    }
   }
 
   @Override
