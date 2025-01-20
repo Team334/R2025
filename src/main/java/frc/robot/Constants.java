@@ -31,7 +31,7 @@ import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 public final class Constants {
   public static final Frequency simUpdateFrequency = Hertz.of(200);
 
-  public static final String canivoreName = "Drivetrain";
+  public static final String canivore = "Drivetrain";
 
   public static class Ports {
     public static final int driverController = 0;

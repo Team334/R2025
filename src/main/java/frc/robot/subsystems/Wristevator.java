@@ -47,11 +47,11 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   private final TalonFX _leftMotor =
-      new TalonFX(WristevatorConstants.leftMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.leftMotorId, Constants.canivore);
   private final TalonFX _rightMotor =
-      new TalonFX(WristevatorConstants.rightMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.rightMotorId, Constants.canivore);
   private final TalonFX _wristMotor =
-      new TalonFX(WristevatorConstants.wristMotorId, Constants.canivoreName);
+      new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
   private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
