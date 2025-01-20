@@ -55,7 +55,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
-  private DigitalInput _elevatorSwitch;
+  private DigitalInput _elevatorSwitch = new DigitalInput(WristevatorConstants.elevatorSwitchPort);
 
   public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
     _wristevatorSetpointSetter = wristevatorSetpointSetter;
