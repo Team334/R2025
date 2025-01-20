@@ -130,6 +130,7 @@ public class Robot extends TimedRobot {
     configureOperatorBindings();
 
     new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1));
+    new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
     SmartDashboard.putData(
         "Robot Self Check",
