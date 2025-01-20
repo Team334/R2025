@@ -7,6 +7,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -14,6 +15,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
@@ -74,10 +77,23 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
-  private DigitalInput _elevatorSwitch = new DigitalInput(WristevatorConstants.elevatorSwitchPort);
+  private final DigitalInput _elevatorSwitch =
+      new DigitalInput(WristevatorConstants.elevatorSwitchPort);
+
+  private final DIOSim _elevatorSwitchSim;
 
   public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
     _wristevatorSetpointSetter = wristevatorSetpointSetter;
+
+    if (Robot.isSimulation()) {
+      _elevatorSwitchSim = new DIOSim(_elevatorSwitch);
+
+      new Trigger(() -> getHeight() == 0)
+          .onTrue(Commands.runOnce(() -> _elevatorSwitchSim.setValue(true)))
+          .onFalse(Commands.runOnce(() -> _elevatorSwitchSim.setValue(false)));
+    } else {
+      _elevatorSwitchSim = null;
+    }
   }
 
   @Logged(name = "Height")
