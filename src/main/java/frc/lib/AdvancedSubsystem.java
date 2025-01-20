@@ -91,4 +91,7 @@ public abstract class AdvancedSubsystem extends SubsystemBase
     DogLog.log(getName() + "/Current Command", currentCommandName());
     DogLog.log(getName() + "/Has Error", _hasError);
   }
+
+  @Override
+  public void close() {}
 }

@@ -10,6 +10,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -51,8 +52,12 @@ public class Wristevator extends AdvancedSubsystem {
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivoreName);
 
-  public Wristevator() {}
+  private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
 
+  public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
+    _wristevatorSetpointSetter = wristevatorSetpointSetter;
+  }
+  
   @Logged(name = "Height")
   public double getHeight() {
     return 0;
@@ -64,8 +69,10 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   /** Set the wristevator to a setpoint. */
-  public Command setSetpoint(WristevatorSetpoint elevatorSetpoint) {
-    return run(() -> {}).withName("Set Setpoint: " + elevatorSetpoint.toString());
+  public Command setSetpoint(WristevatorSetpoint setpoint) {
+    return run(() -> {})
+        .beforeStarting(() -> _wristevatorSetpointSetter.accept(setpoint))
+        .withName("Set Setpoint: " + setpoint.toString());
   }
 
   /** Control the elevator and wrist speeds individually. */
@@ -79,5 +86,5 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   @Override
-  public void close() throws Exception {}
+  public void close() {}
 }

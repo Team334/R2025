@@ -8,7 +8,6 @@ import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
 import static frc.robot.subsystems.Wristevator.WristevatorSetpoint.*;
-import static frc.robot.utils.GlobalState.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -34,6 +33,7 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
+import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
@@ -42,6 +42,7 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
+import frc.robot.subsystems.Wristevator.WristevatorSetpoint;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -67,10 +68,11 @@ public class Robot extends TimedRobot {
   private final Serializer _serializer = new Serializer();
 
   @Logged(name = "Manipulator")
-  private final Manipulator _manipulator = new Manipulator();
+  private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Wristevator")
-  private final Wristevator _wristevator = new Wristevator();
+  private final Wristevator _wristevator =
+      new Wristevator((WristevatorSetpoint setpoint) -> _setpoint = setpoint);
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
@@ -78,6 +80,20 @@ public class Robot extends TimedRobot {
   private final NetworkTableInstance _ntInst;
 
   private boolean _fileOnlySet = false;
+
+  // global state variables
+  private static Piece _currentPiece = Piece.NONE;
+  private static WristevatorSetpoint _setpoint = WristevatorSetpoint.HOME;
+
+  /** The current piece in the manipulator. */
+  public static Piece getCurrentPiece() {
+    return _currentPiece;
+  }
+
+  /** The current setpoint of the wristevator. */
+  public static WristevatorSetpoint getSetpoint() {
+    return _setpoint;
+  }
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -106,7 +122,9 @@ public class Robot extends TimedRobot {
 
     FaultLogger.setup(_ntInst);
 
-    configureBindings();
+    configureDefaultCommands();
+    configureDriverBindings();
+    configureOperatorBindings();
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -144,7 +162,7 @@ public class Robot extends TimedRobot {
             new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
   }
 
-  private void configureBindings() {
+  private void configureDefaultCommands() {
     _swerve.setDefaultCommand(
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
@@ -165,14 +183,18 @@ public class Robot extends TimedRobot {
             InputStream.of(_operatorController::getLeftY)
                 .negate()
                 .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+  }
 
+  private void configureDriverBindings() {
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
 
     _driverController
         .b()
         .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+  }
 
+  private void configureOperatorBindings() {
     _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
     _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
     _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
@@ -185,6 +207,18 @@ public class Robot extends TimedRobot {
         .y()
         .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L3 : UPPER_ALGAE));
     _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
+
+    _operatorController
+        .rightBumper()
+        .and(() -> getSetpoint() == HOME)
+        .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
+
+    _operatorController
+        .rightBumper()
+        .and(() -> getSetpoint() != HOME)
+        .whileTrue(Superstructure.groundIntake(_intake, _serializer));
+
+    _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
   }
 
   /**
@@ -207,6 +241,9 @@ public class Robot extends TimedRobot {
 
       _fileOnlySet = true;
     }
+
+    DogLog.log("Manipulator Current Piece", _currentPiece);
+    DogLog.log("Wristevator Setpoint", _setpoint);
   }
 
   @Override
@@ -220,5 +257,9 @@ public class Robot extends TimedRobot {
     super.close();
 
     _swerve.close();
+    _wristevator.close();
+    _manipulator.close();
+    _intake.close();
+    _serializer.close();
   }
 }

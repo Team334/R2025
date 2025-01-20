@@ -26,7 +26,7 @@ public class AdvancedSubsystemTest {
   }
 
   @AfterEach
-  public void close() throws Exception {
+  public void close() {
     reset(_sub);
   }
 
@@ -130,6 +130,6 @@ public class AdvancedSubsystemTest {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() {}
   }
 }
