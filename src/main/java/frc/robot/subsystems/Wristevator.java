@@ -57,7 +57,7 @@ public class Wristevator extends AdvancedSubsystem {
   public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
     _wristevatorSetpointSetter = wristevatorSetpointSetter;
   }
-  
+
   @Logged(name = "Height")
   public double getHeight() {
     return 0;
