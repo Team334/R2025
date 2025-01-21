@@ -44,10 +44,12 @@ public class Serializer extends AdvancedSubsystem {
     return run(() -> {}).withName("Set Speed");
   }
 
+  @Logged(name = "Front Beam")
   public boolean getFrontBeam() {
     return !_frontBeam.get();
   }
 
+  @Logged(name = "Back Beam")
   public boolean getBackBeam() {
     return !_backBeam.get();
   }
