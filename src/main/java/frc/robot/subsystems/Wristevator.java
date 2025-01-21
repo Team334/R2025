@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
@@ -72,6 +73,9 @@ public class Wristevator extends AdvancedSubsystem {
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
+  StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
+  StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
+
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   private final DIOSim _homeSwitchSim;
@@ -86,12 +90,13 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Height")
   public double getHeight() {
-    return 0.5;
+    return _heightGetter.getValue().in(Rotations)
+        * WristevatorConstants.drumCircumference.in(Meters);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return 0;
+    return _angleGetter.getValue().in(Radians);
   }
 
   @Logged(name = "Home Switch")
