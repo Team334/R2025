@@ -103,13 +103,13 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Height")
   public double getHeight() {
-    return _heightGetter.getValue().in(Rotations)
+    return _heightGetter.refresh().getValue().in(Rotations)
         * WristevatorConstants.drumCircumference.in(Meters);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return _angleGetter.getValue().in(Radians);
+    return _angleGetter.refresh().getValue().in(Radians);
   }
 
   @Logged(name = "Home Switch")

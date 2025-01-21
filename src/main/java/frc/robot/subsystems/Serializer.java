@@ -25,9 +25,9 @@ public class Serializer extends AdvancedSubsystem {
 
   private final TalonFX _feedMotor = new TalonFX(SerializerConstants.feedMotorId);
 
-  private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
-
+  private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
+ 
   public Serializer() {
     setDefaultCommand(setSpeed(0));
 

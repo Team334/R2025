@@ -43,10 +43,10 @@ public class Manipulator extends AdvancedSubsystem {
   private final TalonFX _rightMotor =
       new TalonFX(ManipulatorConstants.rightMotorId, Constants.canivore);
 
-  private final StatusSignal<AngularVelocity> _speedGetter = _leftMotor.getVelocity();
+  private VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
+  private VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
-  private VelocityVoltage _leftMotorVelocitySetter = new VelocityVoltage(0);
-  private VoltageOut _leftMotorVoltageSetter = new VoltageOut(0);
+  private final StatusSignal<AngularVelocity> _speedGetter = _leftMotor.getVelocity();
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     _currentPieceSetter = currentPieceSetter;
@@ -104,7 +104,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return _speedGetter.getValue().in(RadiansPerSecond);
+    return _speedGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Manipulator Beam")
@@ -121,7 +121,7 @@ public class Manipulator extends AdvancedSubsystem {
   /** Set the speed of the back manipulator wheels in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {
-          _leftMotor.setControl(_leftMotorVelocitySetter.withVelocity(speed));
+          _leftMotor.setControl(_feedVelocitySetter.withVelocity(speed));
         })
         .withName("Set Speed");
   }
@@ -129,7 +129,7 @@ public class Manipulator extends AdvancedSubsystem {
   /** Hold a coral in place. */
   public Command holdCoral() {
     return run(() -> {
-          _leftMotor.setControl(_leftMotorVoltageSetter.withOutput(0));
+          _leftMotor.setControl(_feedVoltageSetter.withOutput(0));
         })
         .withName("Hold Coral");
   }
@@ -138,7 +138,7 @@ public class Manipulator extends AdvancedSubsystem {
   public Command holdAlgae() {
     return run(() -> {
           _leftMotor.setControl(
-              _leftMotorVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
+              _feedVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
         })
         .withName("Hold Algae");
   }
