@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -10,6 +12,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.robot.Constants;
 
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
@@ -18,21 +21,26 @@ public class Intake extends AdvancedSubsystem {
   private final MechanismLigament2d _intake =
       _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
 
-  private final TalonFX _feedMotor = new TalonFX(0); // TODO
-  private final TalonFX _actuatorMotor = new TalonFX(0);
+  private final TalonFX _feedMotor = new TalonFX(0, Constants.canivore); // TODO
+  private final TalonFX _actuatorMotor = new TalonFX(0, Constants.canivore);
+
+  private final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
+  private final VelocityVoltage velocity = new VelocityVoltage(0);
 
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
+    _feedMotor.setControl(velocity.withVelocity(0));
+    _actuatorMotor.setControl(m_request.withPosition(0));
   }
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return 0.0;
+    return _feedMotor.getVelocity().getValueAsDouble();
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return 0.0;
+    return _actuatorMotor.getPosition().getValueAsDouble();
   }
 
   /**
