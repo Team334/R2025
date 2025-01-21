@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -16,6 +17,9 @@ public class Intake extends AdvancedSubsystem {
 
   private final MechanismLigament2d _intake =
       _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
+
+  private final TalonFX _feedMotor = new TalonFX(0); // TODO
+  private final TalonFX _actuatorMotor = new TalonFX(0);
 
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
