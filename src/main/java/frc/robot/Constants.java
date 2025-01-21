@@ -107,7 +107,13 @@ public final class Constants {
   }
 
   public static class ManipulatorConstants {
+    // temp values?
+    public static final int leftMotorId = 3;
+    public static final int rightMotorId = 4;
+
     public static final int beamPort = 3;
     public static final int switchPort = 4;
+
+    public static final double holdAlgaeVoltage = 0; // need to find
   }
 }

@@ -1,8 +1,16 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static frc.robot.Robot.*;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -10,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
+import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import java.util.function.Consumer;
@@ -29,6 +38,16 @@ public class Manipulator extends AdvancedSubsystem {
   private final Trigger _beamWithPiece = _beamBroken.and(() -> getCurrentPiece() != Piece.NONE);
   private final Trigger _beamNoPiece = _beamBroken.and(() -> getCurrentPiece() == Piece.NONE);
 
+  private final TalonFX _leftMotor =
+      new TalonFX(ManipulatorConstants.leftMotorId, Constants.canivore);
+  private final TalonFX _rightMotor =
+      new TalonFX(ManipulatorConstants.rightMotorId, Constants.canivore);
+
+  private final StatusSignal<AngularVelocity> _speedGetter = _leftMotor.getVelocity();
+
+  private VelocityVoltage _leftMotorVelocitySetter = new VelocityVoltage(0);
+  private VoltageOut _leftMotorVoltageSetter = new VoltageOut(0);
+
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     _currentPieceSetter = currentPieceSetter;
 
@@ -47,6 +66,14 @@ public class Manipulator extends AdvancedSubsystem {
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
+
+    var leftMotorConfigs = new TalonFXConfiguration();
+    var rightMotorConfigs = new TalonFXConfiguration();
+
+    _leftMotor.getConfigurator().apply(leftMotorConfigs);
+    _rightMotor.getConfigurator().apply(rightMotorConfigs);
+
+    _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
 
     _beamNoPiece.onFalse(
         Commands.runOnce(
@@ -77,7 +104,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return 0;
+    return _speedGetter.getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Manipulator Beam")
@@ -93,17 +120,27 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Set the speed of the back manipulator wheels in rad/s. */
   public Command setSpeed(double speed) {
-    return run(() -> {}).withName("Set Speed");
+    return run(() -> {
+          _leftMotor.setControl(_leftMotorVelocitySetter.withVelocity(speed));
+        })
+        .withName("Set Speed");
   }
 
   /** Hold a coral in place. */
   public Command holdCoral() {
-    return run(() -> {}).withName("Hold Coral");
+    return run(() -> {
+          _leftMotor.setControl(_leftMotorVoltageSetter.withOutput(0));
+        })
+        .withName("Hold Coral");
   }
 
   /** Hold an algae in place. */
   public Command holdAlgae() {
-    return run(() -> {}).withName("Hold Algae");
+    return run(() -> {
+          _leftMotor.setControl(
+              _leftMotorVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
+        })
+        .withName("Hold Algae");
   }
 
   @Override
