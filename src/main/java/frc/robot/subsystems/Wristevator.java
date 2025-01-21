@@ -62,13 +62,11 @@ public class Wristevator extends AdvancedSubsystem {
   private final MechanismRoot2d _root = _mech.getRoot("elevator mount", 1, 0.1);
 
   private final MechanismLigament2d _elevator =
-      _root.append(
-          new MechanismLigament2d("elevator", getHeight(), 90, 3, new Color8Bit(Color.kBlack)));
+      _root.append(new MechanismLigament2d("elevator", 0, 90, 3, new Color8Bit(Color.kBlack)));
 
   private final MechanismLigament2d _wrist =
       _elevator.append(
-          new MechanismLigament2d(
-              "wrist", 0.3, Math.toDegrees(getAngle()) - 90, 3, new Color8Bit(Color.kBlueViolet)));
+          new MechanismLigament2d("wrist", 0.3, -90, 3, new Color8Bit(Color.kBlueViolet)));
 
   private final TalonFX _leftMotor =
       new TalonFX(WristevatorConstants.leftMotorId, Constants.canivore);
