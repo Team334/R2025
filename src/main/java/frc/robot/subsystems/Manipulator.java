@@ -14,10 +14,8 @@ import java.util.function.Consumer;
 public class Manipulator extends AdvancedSubsystem {
   private final Consumer<Piece> _currentPieceSetter;
 
-  private final DigitalInput _manipulatorBeam =
-      new DigitalInput(ManipulatorConstants.manipulatorBeamPort);
-  private final DigitalInput _algaeSwitch =
-      new DigitalInput(ManipulatorConstants.manipulatorSwitchPort);
+  private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
+  private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
 
   private final Trigger _beamBroken = new Trigger(this::getBeam);
   private final Trigger _switchPressed = new Trigger(this::getSwitch);
@@ -67,13 +65,13 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Manipulator Beam")
   public boolean getBeam() {
-    return !_manipulatorBeam.get();
+    return !_beam.get();
   }
 
   @Logged(name = "Manipulator Switch")
   public boolean getSwitch() {
     // TODO: might have two switches
-    return _algaeSwitch.get();
+    return _limitSwitch.get();
   }
 
   /** Set the speed of the manipulator feed motor in rad/s. */

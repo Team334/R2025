@@ -74,8 +74,7 @@ public class Wristevator extends AdvancedSubsystem {
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
-  private final DigitalInput _homeSwitch =
-      new DigitalInput(WristevatorConstants.elevatorSwitchPort);
+  private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   private final DIOSim _homeSwitchSim;
 
