@@ -95,6 +95,8 @@ public final class Constants {
     public static final int leftMotorId = 0;
     public static final int rightMotorId = 1;
     public static final int wristMotorId = 2;
+
+    public static final Distance drumCircumference = Meters.of(2);
   }
 
   public static class SerializerConstants {
