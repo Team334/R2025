@@ -2,11 +2,12 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -22,9 +23,10 @@ public class Serializer extends AdvancedSubsystem {
   private final DIOSim _frontBeamSim;
   private final DIOSim _backBeamSim;
 
-  private final TalonFX _frontBeamMotor;
-  private final TalonFX _backBeamMotor;
-  private final VoltageOut m_request = new VoltageOut(0);
+  private final TalonFX _feedMotor = new TalonFX(SerializerConstants.feedMotorId);
+
+  private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
+  private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
 
   public Serializer() {
     setDefaultCommand(setSpeed(0));
@@ -32,15 +34,8 @@ public class Serializer extends AdvancedSubsystem {
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
 
-    _frontBeamMotor = new TalonFX(SerializerConstants.frontBeamMotorId);
-    _backBeamMotor = new TalonFX(SerializerConstants.backBeamMotorId);
-
     // Apply default configurations
-    _frontBeamMotor.getConfigurator().apply(new TalonFXConfiguration());
-    _backBeamMotor.getConfigurator().apply(new TalonFXConfiguration());
-
-    // Oppose master because you want inverse direction
-    _backBeamMotor.setControl(new Follower(_frontBeamMotor.getDeviceID(), true));
+    _feedMotor.getConfigurator().apply(new TalonFXConfiguration());
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
@@ -56,13 +51,13 @@ public class Serializer extends AdvancedSubsystem {
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return _backBeamMotor.getVelocity().getValue().in(RadiansPerSecond);
+    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   /** Set the speed of the front feed wheels in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {
-          _frontBeamMotor.setControl(m_request.withOutput(SerializerConstants.serializerVolts));
+          _feedMotor.setControl(_feedVelocitySetter.withVelocity(speed));
         })
         .withName("Set Speed");
   }
