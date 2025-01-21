@@ -42,8 +42,6 @@ public class Serializer extends AdvancedSubsystem {
     // Oppose master because you want inverse direction
     _backBeamMotor.setControl(new Follower(_frontBeamMotor.getDeviceID(), true));
 
-    _backBeamMotor.setControl(m_request.withOutput(1.0));
-
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
       _backBeamSim = new DIOSim(_backBeam);
@@ -63,7 +61,10 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Set the speed of the front feed wheels in rad/s. */
   public Command setSpeed(double speed) {
-    return run(() -> {}).withName("Set Speed");
+    return run(() -> {
+          _frontBeamMotor.setControl(m_request.withOutput(SerializerConstants.serializerVolts));
+        })
+        .withName("Set Speed");
   }
 
   @Logged(name = "Front Beam")

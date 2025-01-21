@@ -102,6 +102,8 @@ public final class Constants {
     public static final int backBeamPort = 2; // change later
     public static final int frontBeamMotorId = 1; // change later
     public static final int backBeamMotorId = 2; // change later
+
+    public static final double serializerVolts = 0; // change later
   }
 
   public static class ManipulatorConstants {
