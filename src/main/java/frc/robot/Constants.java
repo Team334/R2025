@@ -101,4 +101,9 @@ public final class Constants {
     public static final int frontBeamPort = 1; // change later
     public static final int backBeamPort = 2; // change later
   }
+
+  public static class ManipulatorConstants {
+    public static final int manipulatorBeamPort = 3;
+    public static final int manipulatorSwitchPort = 4;
+  }
 }

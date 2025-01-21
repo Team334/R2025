@@ -21,7 +21,6 @@ import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Robot;
-import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -75,24 +74,20 @@ public class Wristevator extends AdvancedSubsystem {
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
-  private final Consumer<WristevatorSetpoint> _wristevatorSetpointSetter;
-
-  private final DigitalInput _elevatorSwitch =
+  private final DigitalInput _homeSwitch =
       new DigitalInput(WristevatorConstants.elevatorSwitchPort);
 
-  private final DIOSim _elevatorSwitchSim;
+  private final DIOSim _homeSwitchSim;
 
-  public Wristevator(Consumer<WristevatorSetpoint> wristevatorSetpointSetter) {
-    _wristevatorSetpointSetter = wristevatorSetpointSetter;
-
+  public Wristevator() {
     if (Robot.isSimulation()) {
-      _elevatorSwitchSim = new DIOSim(_elevatorSwitch);
+      _homeSwitchSim = new DIOSim(_homeSwitch);
 
       new Trigger(() -> getHeight() == 0)
-          .onTrue(Commands.runOnce(() -> _elevatorSwitchSim.setValue(true)))
-          .onFalse(Commands.runOnce(() -> _elevatorSwitchSim.setValue(false)));
+          .onTrue(Commands.runOnce(() -> _homeSwitchSim.setValue(true)))
+          .onFalse(Commands.runOnce(() -> _homeSwitchSim.setValue(false)));
     } else {
-      _elevatorSwitchSim = null;
+      _homeSwitchSim = null;
     }
   }
 
@@ -106,16 +101,14 @@ public class Wristevator extends AdvancedSubsystem {
     return 0;
   }
 
-  @Logged(name = "Is at Home")
-  public boolean atHome() {
-    return _elevatorSwitch.get();
+  @Logged(name = "Home Switch")
+  public boolean homeSwitch() {
+    return _homeSwitch.get();
   }
 
   /** Set the wristevator to a setpoint. */
   public Command setSetpoint(WristevatorSetpoint setpoint) {
-    return run(() -> {})
-        .beforeStarting(() -> _wristevatorSetpointSetter.accept(setpoint))
-        .withName("Set Setpoint: " + setpoint.toString());
+    return run(() -> {}).withName("Set Setpoint: " + setpoint.toString());
   }
 
   /** Control the elevator and wrist speeds individually. */

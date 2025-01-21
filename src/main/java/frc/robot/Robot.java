@@ -45,7 +45,6 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
-import frc.robot.subsystems.Wristevator.WristevatorSetpoint;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -74,8 +73,7 @@ public class Robot extends TimedRobot {
   private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Wristevator")
-  private final Wristevator _wristevator =
-      new Wristevator((WristevatorSetpoint setpoint) -> _setpoint = setpoint);
+  private final Wristevator _wristevator = new Wristevator();
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
@@ -86,16 +84,12 @@ public class Robot extends TimedRobot {
 
   // global state variables
   private static Piece _currentPiece = Piece.NONE;
-  private static WristevatorSetpoint _setpoint = WristevatorSetpoint.HOME;
+
+  private final Trigger _noPiece = new Trigger(() -> getCurrentPiece() == Piece.NONE);
 
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
     return _currentPiece;
-  }
-
-  /** The current setpoint of the wristevator. */
-  public static WristevatorSetpoint getSetpoint() {
-    return _setpoint;
   }
 
   /**
@@ -130,7 +124,13 @@ public class Robot extends TimedRobot {
     configureOperatorBindings();
 
     new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1));
-    new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
+    _noPiece.onChange(rumbleControllers(1, 1));
+
+    _noPiece
+        .and(() -> !_manipulator.getBeam())
+        .and(_wristevator::homeSwitch)
+        .and(() -> Math.signum(_manipulator.getSpeed()) == -1)
+        .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -216,12 +216,12 @@ public class Robot extends TimedRobot {
 
     _operatorController
         .rightBumper()
-        .and(() -> _wristevator.atHome())
+        .and(() -> _wristevator.homeSwitch())
         .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
 
     _operatorController
         .rightBumper()
-        .and(() -> !_wristevator.atHome())
+        .and(() -> !_wristevator.homeSwitch())
         .whileTrue(Superstructure.groundIntake(_intake, _serializer));
 
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
@@ -261,7 +261,6 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
-    DogLog.log("Wristevator Setpoint", _setpoint);
   }
 
   @Override

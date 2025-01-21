@@ -40,9 +40,8 @@ public class Superstructure {
 
   /** Intake from intake -> serializer. */
   public static Command groundIntake(Intake intake, Serializer serializer) {
-    return parallel(
-            intake.set(0, 0).unless(serializer::getBackBeam),
-            serializer.setSpeed(0).unless(serializer::getFrontBeam))
+    return parallel(intake.set(0, 0).unless(serializer::getBackBeam), serializer.setSpeed(0))
+        .until(serializer::getFrontBeam)
         .withName("Ground Intake");
   }
 }
