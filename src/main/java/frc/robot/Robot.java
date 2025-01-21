@@ -125,8 +125,12 @@ public class Robot extends TimedRobot {
 
     new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1));
     _noPiece.onChange(rumbleControllers(1, 1));
-    
-    _noPiece.and(() -> !_manipulator.getBeam()).and(_wristevator::homeSwitch).and(() -> Math.signum(_manipulator.getSpeed()) == -1).onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
+
+    _noPiece
+        .and(() -> !_manipulator.getBeam())
+        .and(_wristevator::homeSwitch)
+        .and(() -> Math.signum(_manipulator.getSpeed()) == -1)
+        .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
     SmartDashboard.putData(
         "Robot Self Check",
