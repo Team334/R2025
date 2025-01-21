@@ -1,0 +1,149 @@
+{
+  "version": 1.0,
+  "grid_size": 90,
+  "tabs": [
+    {
+      "name": "Driver Station",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Auto Chooser",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 360.0,
+            "height": 360.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Auto Chooser",
+              "period": 0.06,
+              "sort_options": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Debug",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Total Faults",
+            "x": 810.0,
+            "y": 0.0,
+            "width": 360.0,
+            "height": 540.0,
+            "type": "Alerts",
+            "properties": {
+              "topic": "/Faults/Total Faults",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Active Faults",
+            "x": 450.0,
+            "y": 0.0,
+            "width": 360.0,
+            "height": 540.0,
+            "type": "Alerts",
+            "properties": {
+              "topic": "/Faults/Active Faults",
+              "period": 0.06
+            }
+          },
+          {
+            "title": "Wheel Radius Characterization",
+            "x": 0.0,
+            "y": 0.0,
+            "width": 360.0,
+            "height": 180.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Wheel Radius Characterization",
+              "period": 0.06,
+              "show_type": false
+            }
+          },
+          {
+            "title": "Clear Faults",
+            "x": 0.0,
+            "y": 180.0,
+            "width": 360.0,
+            "height": 180.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Clear Faults",
+              "period": 0.06,
+              "show_type": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sim",
+      "grid_layout": {
+        "layouts": [],
+        "containers": [
+          {
+            "title": "Back Beam Value",
+            "x": 270.0,
+            "y": 270.0,
+            "width": 180.0,
+            "height": 180.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Back Beam Value",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "Front Beam Value",
+            "x": 90.0,
+            "y": 270.0,
+            "width": 180.0,
+            "height": 180.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Front Beam Value",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "Beam Value",
+            "x": 90.0,
+            "y": 90.0,
+            "width": 180.0,
+            "height": 180.0,
+            "type": "Toggle Switch",
+            "properties": {
+              "topic": "/SmartDashboard/Beam Value",
+              "period": 0.06,
+              "data_type": "boolean"
+            }
+          },
+          {
+            "title": "Limit Switch Value",
+            "x": 270.0,
+            "y": 90.0,
+            "width": 180.0,
+            "height": 180.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Limit Switch Value",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -13,6 +13,7 @@
     {
       "axisConfig": [
         {
+          "decKey": 65,
           "incKey": 68
         },
         {
@@ -64,7 +65,7 @@
       "axisCount": 2,
       "buttonCount": 4,
       "buttonKeys": [
-        65,
+        -1,
         44,
         46,
         47
