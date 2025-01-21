@@ -3,6 +3,9 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
@@ -76,6 +79,9 @@ public class Wristevator extends AdvancedSubsystem {
   StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
   StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
 
+  private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
+  private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
+
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   private final DIOSim _homeSwitchSim;
@@ -86,6 +92,14 @@ public class Wristevator extends AdvancedSubsystem {
     } else {
       _homeSwitchSim = null;
     }
+
+    var leftMotorConfigs = new TalonFXConfiguration();
+    var rightMotorConfigs = new TalonFXConfiguration();
+
+    _leftMotor.getConfigurator().apply(leftMotorConfigs);
+    _rightMotor.getConfigurator().apply(rightMotorConfigs);
+
+    _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
   }
 
   @Logged(name = "Height")
@@ -111,7 +125,11 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Control the elevator and wrist speeds individually. */
   public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
-    return run(() -> {}).withName("Set Speeds");
+    return run(() -> {
+          _leftMotor.setControl(_elevatorVelocitySetter.withVelocity(elevatorSpeed.getAsDouble()));
+          _wristMotor.setControl(_wristVelocitySetter.withVelocity(wristSpeed.getAsDouble()));
+        })
+        .withName("Set Speeds");
   }
 
   @Override
