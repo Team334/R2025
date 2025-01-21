@@ -74,7 +74,7 @@ public class Manipulator extends AdvancedSubsystem {
     return _limitSwitch.get();
   }
 
-  /** Set the speed of the manipulator feed motor in rad/s. */
+  /** Set the speed of the back manipulator wheels in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {}).withName("Set Speed");
   }

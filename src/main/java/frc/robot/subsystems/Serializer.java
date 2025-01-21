@@ -39,7 +39,7 @@ public class Serializer extends AdvancedSubsystem {
     return 0;
   }
 
-  /** Set the speed of the feed motor in rad/s. */
+  /** Set the speed of the front feed wheels in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {}).withName("Set Speed");
   }

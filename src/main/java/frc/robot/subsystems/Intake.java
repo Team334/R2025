@@ -36,7 +36,7 @@ public class Intake extends AdvancedSubsystem {
    * Set the actuator angle and feed speed.
    *
    * @param actuatorAngle Actuator angle in rad.
-   * @param feedSpeed Feed motor speed in rad/s.
+   * @param feedSpeed Feed wheel speed in rad/s.
    */
   public Command set(double actuatorAngle, double feedSpeed) {
     return run(() -> {}).withName("Set");
