@@ -118,13 +118,14 @@ public class Wristevator extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+  }
 
-    if (Robot.isSimulation()) {
-      _elevator.setLength(getHeight());
-      _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
+  @Override
+  public void simulationPeriodic() {
+    _elevator.setLength(getHeight());
+    _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
 
-      SmartDashboard.putData("Wristevator Visualizer", _mech);
-    }
+    SmartDashboard.putData("Wristevator Visualizer", _mech);
   }
 
   @Override

@@ -9,7 +9,6 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
-import frc.robot.Robot;
 
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
@@ -45,12 +44,15 @@ public class Intake extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+  }
 
-    if (Robot.isSimulation()) {
-      _intake.setAngle(Math.toDegrees(getAngle()));
+  @Override
+  public void simulationPeriodic() {
+    super.simulationPeriodic();
 
-      SmartDashboard.putData("Intake Visualizer", _mech);
-    }
+    _intake.setAngle(Math.toDegrees(getAngle()));
+
+    SmartDashboard.putData("Intake Visualizer", _mech);
   }
 
   @Override

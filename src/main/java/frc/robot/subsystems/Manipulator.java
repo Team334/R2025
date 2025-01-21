@@ -4,11 +4,14 @@ import static frc.robot.Robot.*;
 
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.simulation.DIOSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants.ManipulatorConstants;
+import frc.robot.Robot;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
@@ -16,6 +19,9 @@ public class Manipulator extends AdvancedSubsystem {
 
   private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
   private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
+
+  private final DIOSim _beamSim;
+  private final DIOSim _limitSwitchSim;
 
   private final Trigger _beamBroken = new Trigger(this::getBeam);
   private final Trigger _switchPressed = new Trigger(this::getSwitch);
@@ -27,6 +33,17 @@ public class Manipulator extends AdvancedSubsystem {
     _currentPieceSetter = currentPieceSetter;
 
     setDefaultCommand(setSpeed(0));
+
+    if (Robot.isSimulation()) {
+      _beamSim = new DIOSim(_beam);
+      _limitSwitchSim = new DIOSim(_limitSwitch);
+
+      SmartDashboard.putBoolean("Beam Value", getBeam());
+      SmartDashboard.putBoolean("Limit Switch Value", getSwitch());
+    } else {
+      _beamSim = null;
+      _limitSwitchSim = null;
+    }
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
@@ -92,6 +109,14 @@ public class Manipulator extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+  }
+
+  @Override
+  public void simulationPeriodic() {
+    super.simulationPeriodic();
+
+    _beamSim.setValue(SmartDashboard.getBoolean("Beam Value", getBeam()));
+    _limitSwitchSim.setValue(SmartDashboard.getBoolean("Limit Switch Value", getSwitch()));
   }
 
   @Override
