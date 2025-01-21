@@ -56,7 +56,7 @@ public class Manipulator extends AdvancedSubsystem {
         Commands.runOnce(() -> currentPieceSetter.accept(Piece.NONE))); // any piece came out
 
     _switchPressed.onTrue(
-        Commands.runOnce(() -> _currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
+        Commands.runOnce(() -> currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
   }
 
   public static enum Piece {
@@ -115,7 +115,7 @@ public class Manipulator extends AdvancedSubsystem {
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    _beamSim.setValue(SmartDashboard.getBoolean("Beam Value", getBeam()));
+    _beamSim.setValue(!SmartDashboard.getBoolean("Beam Value", getBeam()));
     _limitSwitchSim.setValue(SmartDashboard.getBoolean("Limit Switch Value", getSwitch()));
   }
 

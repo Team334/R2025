@@ -62,8 +62,8 @@ public class Serializer extends AdvancedSubsystem {
     super.simulationPeriodic();
 
     // TODO: switch to tuning class once that's made
-    _frontBeamSim.setValue(SmartDashboard.getBoolean("Front Beam Value", getFrontBeam()));
-    _backBeamSim.setValue(SmartDashboard.getBoolean("Back Beam Value", getBackBeam()));
+    _frontBeamSim.setValue(!SmartDashboard.getBoolean("Front Beam Value", getFrontBeam()));
+    _backBeamSim.setValue(!SmartDashboard.getBoolean("Back Beam Value", getBackBeam()));
   }
 
   @Override

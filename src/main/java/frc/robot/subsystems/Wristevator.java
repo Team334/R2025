@@ -15,8 +15,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
@@ -81,10 +79,6 @@ public class Wristevator extends AdvancedSubsystem {
   public Wristevator() {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
-
-      new Trigger(() -> getHeight() == 0)
-          .onTrue(Commands.runOnce(() -> _homeSwitchSim.setValue(true)))
-          .onFalse(Commands.runOnce(() -> _homeSwitchSim.setValue(false)));
     } else {
       _homeSwitchSim = null;
     }
@@ -92,7 +86,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Height")
   public double getHeight() {
-    return 0;
+    return 0.5;
   }
 
   @Logged(name = "Angle")
@@ -122,6 +116,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Override
   public void simulationPeriodic() {
+    _homeSwitchSim.setValue(getHeight() == 0);
+
     _elevator.setLength(getHeight());
     _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
 
