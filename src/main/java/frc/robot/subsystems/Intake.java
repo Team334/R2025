@@ -1,6 +1,15 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
+import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -9,6 +18,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.robot.Constants;
 
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
@@ -17,18 +27,27 @@ public class Intake extends AdvancedSubsystem {
   private final MechanismLigament2d _intake =
       _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
 
+  private final TalonFX _feedMotor = new TalonFX(0, Constants.canivore); // TODO
+  private final TalonFX _actuatorMotor = new TalonFX(0, Constants.canivore);
+
+  private final MotionMagicVoltage _actuatorPositionSetter = new MotionMagicVoltage(0);
+  private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
+
+  private final StatusSignal<Angle> _actuatorPositionGetter = _actuatorMotor.getPosition();
+  private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
+
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
   }
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return 0.0;
+    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return 0.0;
+    return _actuatorPositionGetter.refresh().getValue().in(Radians);
   }
 
   /**
@@ -38,7 +57,11 @@ public class Intake extends AdvancedSubsystem {
    * @param feedSpeed Feed wheel speed in rad/s.
    */
   public Command set(double actuatorAngle, double feedSpeed) {
-    return run(() -> {}).withName("Set");
+    return run(() -> {
+          _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(actuatorAngle));
+          _feedMotor.setControl(_feedVelocitySetter.withVelocity(feedSpeed));
+        })
+        .withName("Set");
   }
 
   @Override
