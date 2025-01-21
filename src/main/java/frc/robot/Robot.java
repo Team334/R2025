@@ -205,12 +205,23 @@ public class Robot extends TimedRobot {
     _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
 
     _operatorController.a().whileTrue(_wristevator.setSetpoint(L1));
+
     _operatorController
         .b()
-        .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L2 : LOWER_ALGAE));
+        .whileTrue(
+            either(
+                _wristevator.setSetpoint(L2),
+                _wristevator.setSetpoint(LOWER_ALGAE),
+                () -> getCurrentPiece() == Piece.CORAL));
+
     _operatorController
         .y()
-        .whileTrue(_wristevator.setSetpoint(getCurrentPiece() == Piece.CORAL ? L3 : UPPER_ALGAE));
+        .whileTrue(
+            either(
+                _wristevator.setSetpoint(L3),
+                _wristevator.setSetpoint(UPPER_ALGAE),
+                () -> getCurrentPiece() == Piece.CORAL));
+
     _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
 
     _operatorController
@@ -235,6 +246,11 @@ public class Robot extends TimedRobot {
           _driverController.getHID().setRumble(RumbleType.kBothRumble, rumble);
           _operatorController.getHID().setRumble(RumbleType.kBothRumble, rumble);
         })
+        .finallyDo(
+            () -> {
+              _driverController.getHID().setRumble(RumbleType.kBothRumble, 0);
+              _operatorController.getHID().setRumble(RumbleType.kBothRumble, 0);
+            })
         .withTimeout(seconds);
   }
 

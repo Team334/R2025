@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.hardware.TalonFX;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
@@ -101,7 +102,9 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Set the wristevator to a setpoint. */
   public Command setSetpoint(WristevatorSetpoint setpoint) {
-    return run(() -> {}).withName("Set Setpoint: " + setpoint.toString());
+    return run(() -> {})
+        .beforeStarting(() -> DogLog.log("Wristevator/Setpoint", setpoint.toString()))
+        .withName("Set Setpoint: " + setpoint.toString());
   }
 
   /** Control the elevator and wrist speeds individually. */
