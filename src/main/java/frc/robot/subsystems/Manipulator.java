@@ -46,7 +46,7 @@ public class Manipulator extends AdvancedSubsystem {
   private VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
-  private final StatusSignal<AngularVelocity> _speedGetter = _leftMotor.getVelocity();
+  private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     _currentPieceSetter = currentPieceSetter;
@@ -104,7 +104,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return _speedGetter.refresh().getValue().in(RadiansPerSecond);
+    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Manipulator Beam")
