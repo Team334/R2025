@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static frc.robot.Robot.*;
 
+import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
@@ -29,6 +30,9 @@ public class Manipulator extends AdvancedSubsystem {
   private final Trigger _beamWithPiece = _beamBroken.and(() -> getCurrentPiece() != Piece.NONE);
   private final Trigger _beamNoPiece = _beamBroken.and(() -> getCurrentPiece() == Piece.NONE);
 
+  private final TalonFX _leftMotor;
+  private final TalonFX _rightMotor;
+
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     _currentPieceSetter = currentPieceSetter;
 
@@ -47,6 +51,9 @@ public class Manipulator extends AdvancedSubsystem {
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
+
+    _leftMotor = new TalonFX(0); // TODO
+    _rightMotor = new TalonFX(0); // TODO
 
     _beamNoPiece.onFalse(
         Commands.runOnce(
