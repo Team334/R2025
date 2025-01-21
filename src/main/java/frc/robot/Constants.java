@@ -109,5 +109,7 @@ public final class Constants {
 
     public static final int beamPort = 3;
     public static final int switchPort = 4;
+
+    public static final double holdAlgaeVoltage = 0; // need to find
   }
 }

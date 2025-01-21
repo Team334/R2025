@@ -7,6 +7,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.units.measure.AngularVelocity;
@@ -45,6 +46,7 @@ public class Manipulator extends AdvancedSubsystem {
   private final StatusSignal<AngularVelocity> _speedGetter = _leftMotor.getVelocity();
 
   private VelocityVoltage _leftMotorVelocitySetter = new VelocityVoltage(0);
+  private VoltageOut _leftMotorVoltageSetter = new VoltageOut(0);
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     _currentPieceSetter = currentPieceSetter;
@@ -126,12 +128,19 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Hold a coral in place. */
   public Command holdCoral() {
-    return run(() -> {}).withName("Hold Coral");
+    return run(() -> {
+          _leftMotor.setControl(_leftMotorVoltageSetter.withOutput(0));
+        })
+        .withName("Hold Coral");
   }
 
   /** Hold an algae in place. */
   public Command holdAlgae() {
-    return run(() -> {}).withName("Hold Algae");
+    return run(() -> {
+          _leftMotor.setControl(
+              _leftMotorVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
+        })
+        .withName("Hold Algae");
   }
 
   @Override
