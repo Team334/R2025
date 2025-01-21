@@ -1,5 +1,7 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.hardware.TalonFX;
+
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
@@ -16,11 +18,15 @@ public class Serializer extends AdvancedSubsystem {
   private final DIOSim _frontBeamSim;
   private final DIOSim _backBeamSim;
 
+  private final TalonFX _feedMotor;
+
   public Serializer() {
     setDefaultCommand(setSpeed(0));
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
+
+    _feedMotor = new TalonFX(0); // TODO
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
