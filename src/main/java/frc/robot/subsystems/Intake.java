@@ -1,9 +1,18 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Radian;
+import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+
+import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Velocity;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -27,6 +36,10 @@ public class Intake extends AdvancedSubsystem {
   private final MotionMagicVoltage m_request = new MotionMagicVoltage(0);
   private final VelocityVoltage velocity = new VelocityVoltage(0);
 
+  private final StatusSignal<AngularVelocity> _feedVelocity = _feedMotor.getVelocity();
+  private final StatusSignal<Angle> _actuatorPosition = _actuatorMotor.getPosition();
+
+
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
     _feedMotor.setControl(velocity.withVelocity(0));
@@ -35,12 +48,12 @@ public class Intake extends AdvancedSubsystem {
 
   @Logged(name = "Speed")
   public double getSpeed() {
-    return _feedMotor.getVelocity().getValueAsDouble();
+    return _feedVelocity.getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return _actuatorMotor.getPosition().getValueAsDouble();
+    return _actuatorPosition.getValue().in(Radians);
   }
 
   /**
