@@ -95,11 +95,15 @@ public final class Constants {
     public static final int leftMotorId = 0;
     public static final int rightMotorId = 1;
     public static final int wristMotorId = 2;
+
+    public static final Distance drumCircumference = Meters.of(2);
   }
 
   public static class SerializerConstants {
     public static final int frontBeamPort = 1; // change later
     public static final int backBeamPort = 2; // change later
+
+    public static final int feedMotorId = 1;
   }
 
   public static class ManipulatorConstants {

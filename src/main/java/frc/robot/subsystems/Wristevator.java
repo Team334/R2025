@@ -2,6 +2,10 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
@@ -58,13 +62,11 @@ public class Wristevator extends AdvancedSubsystem {
   private final MechanismRoot2d _root = _mech.getRoot("elevator mount", 1, 0.1);
 
   private final MechanismLigament2d _elevator =
-      _root.append(
-          new MechanismLigament2d("elevator", getHeight(), 90, 3, new Color8Bit(Color.kBlack)));
+      _root.append(new MechanismLigament2d("elevator", 0, 90, 3, new Color8Bit(Color.kBlack)));
 
   private final MechanismLigament2d _wrist =
       _elevator.append(
-          new MechanismLigament2d(
-              "wrist", 0.3, Math.toDegrees(getAngle()) - 90, 3, new Color8Bit(Color.kBlueViolet)));
+          new MechanismLigament2d("wrist", 0.3, -90, 3, new Color8Bit(Color.kBlueViolet)));
 
   private final TalonFX _leftMotor =
       new TalonFX(WristevatorConstants.leftMotorId, Constants.canivore);
@@ -72,6 +74,12 @@ public class Wristevator extends AdvancedSubsystem {
       new TalonFX(WristevatorConstants.rightMotorId, Constants.canivore);
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
+
+  StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
+  StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
+
+  private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
+  private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
@@ -83,16 +91,25 @@ public class Wristevator extends AdvancedSubsystem {
     } else {
       _homeSwitchSim = null;
     }
+
+    var leftMotorConfigs = new TalonFXConfiguration();
+    var rightMotorConfigs = new TalonFXConfiguration();
+
+    _leftMotor.getConfigurator().apply(leftMotorConfigs);
+    _rightMotor.getConfigurator().apply(rightMotorConfigs);
+
+    _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
   }
 
   @Logged(name = "Height")
   public double getHeight() {
-    return 0.5;
+    return _heightGetter.getValue().in(Rotations)
+        * WristevatorConstants.drumCircumference.in(Meters);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
-    return 0;
+    return _angleGetter.getValue().in(Radians);
   }
 
   @Logged(name = "Home Switch")
@@ -109,7 +126,11 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Control the elevator and wrist speeds individually. */
   public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
-    return run(() -> {}).withName("Set Speeds");
+    return run(() -> {
+          _leftMotor.setControl(_elevatorVelocitySetter.withVelocity(elevatorSpeed.getAsDouble()));
+          _wristMotor.setControl(_wristVelocitySetter.withVelocity(wristSpeed.getAsDouble()));
+        })
+        .withName("Set Speeds");
   }
 
   @Override
