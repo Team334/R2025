@@ -85,8 +85,6 @@ public class Robot extends TimedRobot {
   // global state variables
   private static Piece _currentPiece = Piece.NONE;
 
-  private final Trigger _noPiece = new Trigger(() -> getCurrentPiece() == Piece.NONE);
-
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
     return _currentPiece;
@@ -124,10 +122,11 @@ public class Robot extends TimedRobot {
     configureOperatorBindings();
 
     new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1));
-    _noPiece.onChange(rumbleControllers(1, 1));
+    new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
-    _noPiece
-        .and(() -> !_manipulator.getBeam())
+    // a coral was passoff'ed
+    _manipulator
+        .getBeamNoPiece()
         .and(_wristevator::homeSwitch)
         .and(() -> Math.signum(_manipulator.getSpeed()) == -1)
         .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
