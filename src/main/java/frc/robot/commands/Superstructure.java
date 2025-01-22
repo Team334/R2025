@@ -24,7 +24,7 @@ public class Superstructure {
   /** Passoff from intake (if needed) -> serializer -> manipulator. */
   public static Command passoff(Intake intake, Serializer serializer, Manipulator manipulator) {
     return parallel(
-            intake.set(0, 0).unless(serializer::getBackBeam),
+            intake.set(Math.PI, 0).unless(serializer::getBackBeam),
             serializer.setSpeed(0),
             manipulator.setSpeed(0))
         .withName("Passoff");
@@ -40,7 +40,7 @@ public class Superstructure {
 
   /** Intake from intake -> serializer. */
   public static Command groundIntake(Intake intake, Serializer serializer) {
-    return parallel(intake.set(0, 0).unless(serializer::getBackBeam), serializer.setSpeed(0))
+    return parallel(intake.set(Math.PI, 0).unless(serializer::getBackBeam), serializer.setSpeed(0))
         .until(serializer::getFrontBeam)
         .withName("Ground Intake");
   }

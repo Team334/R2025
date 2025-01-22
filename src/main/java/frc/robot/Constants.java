@@ -11,12 +11,16 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.AngularAccelerationUnit;
+import edu.wpi.first.units.AngularVelocityUnit;
+import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
+import edu.wpi.first.units.measure.Per;
 import frc.robot.generated.TunerConstants;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 
@@ -86,8 +90,19 @@ public final class Constants {
   }
 
   public static class IntakeConstants {
-    public static final int feedMotorId = 0;
-    public static final int actuatorMotorId = 0;
+    public static final int feedMotorId = 13;
+    public static final int actuatorMotorId = 14;
+
+    public static final Per<VoltageUnit, AngularVelocityUnit> actuatorkV =
+        VoltsPerRadianPerSecond.ofNative(0.1);
+    public static final Per<VoltageUnit, AngularAccelerationUnit> actuatorkA =
+        VoltsPerRadianPerSecondSquared.ofNative(0.1);
+
+    public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(1);
+    public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(2);
+
+    public static final double feedGearRatio = 1;
+    public static final double actuatorGearRatio = 1;
   }
 
   public static class WristevatorConstants {

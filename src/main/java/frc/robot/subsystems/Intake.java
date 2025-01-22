@@ -1,9 +1,6 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.Hertz;
-import static edu.wpi.first.units.Units.Radians;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -17,6 +14,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -29,8 +27,8 @@ import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
-import frc.robot.Robot;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Robot;
 
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
@@ -60,47 +58,69 @@ public class Intake extends AdvancedSubsystem {
     setDefaultCommand(set(0.0, 0.0));
 
     if (Robot.isSimulation()) {
-      _actuatorMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(
-        0,
-        0
-      ), DCMotor.getKrakenX60(1));
+      _actuatorMotorSim =
+          new DCMotorSim(
+              LinearSystemId.createDCMotorSystem(12.0 / 3.14, 12.0 / 6), DCMotor.getKrakenX60(1));
 
-      _feedMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(
-        0,
-        0
-      ), DCMotor.getKrakenX60(1));
+      _feedMotorSim =
+          new DCMotorSim(LinearSystemId.createDCMotorSystem(0.1, 0.01), DCMotor.getKrakenX60(1));
 
       startSimThread();
     }
 
     var feedMotorConfigs = new TalonFXConfiguration();
+    var actuatorMotorConfigs = new TalonFXConfiguration();
+
+    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
+    actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
+
+    actuatorMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
+        IntakeConstants.actuatorVelocity.in(RadiansPerSecond);
+    actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
+        IntakeConstants.actuatorAcceleration.in(RadiansPerSecondPerSecond);
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+    CTREUtil.attempt(
+        () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
 
     FaultLogger.register(_feedMotor);
+    FaultLogger.register(_actuatorMotor);
   }
 
   private void startSimThread() {
     _lastSimTime = Utils.getCurrentTimeSeconds();
 
-    _simNotifier = new Notifier(() -> {
-      final double currentTime = Utils.getCurrentTimeSeconds();
-      final double deltaTime = currentTime - _lastSimTime;
+    _simNotifier =
+        new Notifier(
+            () -> {
+              final double currentTime = Utils.getCurrentTimeSeconds();
+              final double deltaTime = currentTime - _lastSimTime;
 
-      var actuatorMotorSimState = _actuatorMotor.getSimState();
-      var feedMotorSimState = _feedMotor.getSimState();
+              var actuatorMotorSimState = _actuatorMotor.getSimState();
+              var feedMotorSimState = _feedMotor.getSimState();
 
-      actuatorMotorSimState.setRawRotorPosition(_actuatorMotorSim.getAngularPosition().div(0));
-      feedMotorSimState.setRawRotorPosition(_feedMotorSim.getAngularPosition().div(0));
+              actuatorMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
+              feedMotorSimState.setSupplyVoltage(RobotController.getBatteryVoltage());
 
-      actuatorMotorSimState.setRotorVelocity(_actuatorMotorSim.getAngularVelocity().div(0));
-      feedMotorSimState.setRotorVelocity(_feedMotorSim.getAngularVelocity().div(0));
+              _actuatorMotorSim.setInputVoltage(
+                  actuatorMotorSimState.getMotorVoltageMeasure().in(Volts));
+              _feedMotorSim.setInputVoltage(feedMotorSimState.getMotorVoltageMeasure().in(Volts));
 
-      _actuatorMotorSim.update(deltaTime);
-      _feedMotorSim.update(deltaTime);
+              _actuatorMotorSim.update(deltaTime);
+              _feedMotorSim.update(deltaTime);
 
-      _lastSimTime = currentTime;
-    });
+              actuatorMotorSimState.setRawRotorPosition(
+                  _actuatorMotorSim.getAngularPosition().times(IntakeConstants.actuatorGearRatio));
+              feedMotorSimState.setRawRotorPosition(
+                  _feedMotorSim.getAngularPosition().times(IntakeConstants.feedGearRatio));
+
+              actuatorMotorSimState.setRotorVelocity(
+                  _actuatorMotorSim.getAngularVelocity().times(IntakeConstants.actuatorGearRatio));
+              feedMotorSimState.setRotorVelocity(
+                  _feedMotorSim.getAngularVelocity().times(IntakeConstants.feedGearRatio));
+
+              _lastSimTime = currentTime;
+            });
 
     _simNotifier.setName("Intake Sim Thread");
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
