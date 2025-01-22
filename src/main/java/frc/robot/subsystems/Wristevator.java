@@ -9,9 +9,12 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -83,16 +86,20 @@ public class Wristevator extends AdvancedSubsystem {
   private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
+  private DCMotorSim _leftMotorSim;
+
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
-  private final DIOSim _homeSwitchSim;
+  private DIOSim _homeSwitchSim;
 
   public Wristevator() {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
-    } else {
-      _homeSwitchSim = null;
-    }
+      
+      _leftMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem
+      (0, 0), 
+      DCMotor.getKrakenX60(1));
+    } 
 
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
