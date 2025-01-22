@@ -70,7 +70,7 @@ public class Intake extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
-
+    
     actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
     actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
 
