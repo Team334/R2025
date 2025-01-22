@@ -86,8 +86,6 @@ public class Wristevator extends AdvancedSubsystem {
   private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
-  private DCMotorSim _leftMotorSim;
-
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   private DIOSim _homeSwitchSim;
@@ -95,11 +93,10 @@ public class Wristevator extends AdvancedSubsystem {
   public Wristevator() {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
-      
-      _leftMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem
-      (0, 0), 
-      DCMotor.getKrakenX60(1));
-    } 
+    }
+    else {
+      _homeSwitchSim = null;
+    }
 
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
