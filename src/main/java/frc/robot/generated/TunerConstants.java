@@ -51,7 +51,7 @@ public class TunerConstants {
 
   // The remote sensor feedback type to use for the steer motors;
   // When not Pro-licensed, FusedCANcoder/SyncCANcoder automatically fall back to RemoteCANcoder
-  private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.FusedCANcoder;
+  private static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.RemoteCANcoder;
 
   // The stator current at which the wheels start to slip;
   // This needs to be tuned to your individual robot
@@ -134,7 +134,7 @@ public class TunerConstants {
               .withDriveFrictionVoltage(kDriveFrictionVoltage);
 
   // Front Left
-  private static final int kFrontLeftDriveMotorId = 13;
+  private static final int kFrontLeftDriveMotorId = 7;
   private static final int kFrontLeftSteerMotorId = 1;
   private static final int kFrontLeftEncoderId = 3;
   private static final Angle kFrontLeftEncoderOffset = Rotations.of(-0.10888671875);

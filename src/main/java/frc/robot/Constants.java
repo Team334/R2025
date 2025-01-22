@@ -86,8 +86,8 @@ public final class Constants {
   }
 
   public static class IntakeConstants {
-    public static final int feedMotorId = 0;
-    public static final int actuatorMotorId = 0;
+    public static final int feedMotorId = 8;
+    public static final int actuatorMotorId = 9;
   }
 
   public static class WristevatorConstants {
@@ -97,9 +97,9 @@ public final class Constants {
 
     public static final int homeSwitch = 0;
 
-    public static final int leftMotorId = 0;
-    public static final int rightMotorId = 1;
-    public static final int wristMotorId = 2;
+    public static final int leftMotorId = 10;
+    public static final int rightMotorId = 11;
+    public static final int wristMotorId = 12;
 
     public static final Distance drumCircumference = Meters.of(2);
   }
@@ -108,13 +108,13 @@ public final class Constants {
     public static final int frontBeamPort = 1; // change later
     public static final int backBeamPort = 2; // change later
 
-    public static final int feedMotorId = 1;
+    public static final int feedMotorId = 13;
   }
 
   public static class ManipulatorConstants {
     // temp values?
-    public static final int leftMotorId = 3;
-    public static final int rightMotorId = 4;
+    public static final int leftMotorId = 14;
+    public static final int rightMotorId = 15;
 
     public static final int beamPort = 3;
     public static final int switchPort = 4;

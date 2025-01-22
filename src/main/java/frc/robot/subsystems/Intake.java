@@ -45,10 +45,14 @@ public class Intake extends AdvancedSubsystem {
     setDefaultCommand(set(0.0, 0.0));
 
     var feedMotorConfigs = new TalonFXConfiguration();
+    var actuatorMotorConfigs = new TalonFXConfiguration();
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+    CTREUtil.attempt(
+        () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
 
     FaultLogger.register(_feedMotor);
+    FaultLogger.register(_actuatorMotor);
   }
 
   @Logged(name = "Angle")
