@@ -60,7 +60,10 @@ public class Intake extends AdvancedSubsystem {
     if (Robot.isSimulation()) {
       _actuatorMotorSim =
           new DCMotorSim(
-              LinearSystemId.createDCMotorSystem(12.0 / 3.14, 12.0 / 6), DCMotor.getKrakenX60(1));
+              LinearSystemId.createDCMotorSystem(
+                  IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond),
+                  IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared)),
+              DCMotor.getKrakenX60(1));
 
       _feedMotorSim =
           new DCMotorSim(LinearSystemId.createDCMotorSystem(0.1, 0.01), DCMotor.getKrakenX60(1));
@@ -70,7 +73,7 @@ public class Intake extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
-    
+
     actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
     actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
 
