@@ -18,8 +18,6 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -172,12 +170,15 @@ public class Robot extends TimedRobot {
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getLeftX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getRightX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     _wristevator.setDefaultCommand(
@@ -194,9 +195,9 @@ public class Robot extends TimedRobot {
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
 
-    _driverController
-        .b()
-        .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+    // _driverController
+    //     .b()
+    //     .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
   }
 
   private void configureOperatorBindings() {
