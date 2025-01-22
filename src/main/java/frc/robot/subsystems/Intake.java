@@ -1,16 +1,23 @@
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -22,6 +29,7 @@ import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
+import frc.robot.Robot;
 import frc.robot.Constants.IntakeConstants;
 
 public class Intake extends AdvancedSubsystem {
@@ -41,14 +49,61 @@ public class Intake extends AdvancedSubsystem {
   private final StatusSignal<Angle> _actuatorPositionGetter = _actuatorMotor.getPosition();
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
+  private DCMotorSim _actuatorMotorSim;
+  private DCMotorSim _feedMotorSim;
+
+  private double _lastSimTime;
+
+  private Notifier _simNotifier;
+
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
+
+    if (Robot.isSimulation()) {
+      _actuatorMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(
+        0,
+        0
+      ), DCMotor.getKrakenX60(1));
+
+      _feedMotorSim = new DCMotorSim(LinearSystemId.createDCMotorSystem(
+        0,
+        0
+      ), DCMotor.getKrakenX60(1));
+
+      startSimThread();
+    }
 
     var feedMotorConfigs = new TalonFXConfiguration();
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     FaultLogger.register(_feedMotor);
+  }
+
+  private void startSimThread() {
+    _lastSimTime = Utils.getCurrentTimeSeconds();
+
+    _simNotifier = new Notifier(() -> {
+      final double currentTime = Utils.getCurrentTimeSeconds();
+      final double deltaTime = currentTime - _lastSimTime;
+
+      var actuatorMotorSimState = _actuatorMotor.getSimState();
+      var feedMotorSimState = _feedMotor.getSimState();
+
+      actuatorMotorSimState.setRawRotorPosition(_actuatorMotorSim.getAngularPosition().div(0));
+      feedMotorSimState.setRawRotorPosition(_feedMotorSim.getAngularPosition().div(0));
+
+      actuatorMotorSimState.setRotorVelocity(_actuatorMotorSim.getAngularVelocity().div(0));
+      feedMotorSimState.setRotorVelocity(_feedMotorSim.getAngularVelocity().div(0));
+
+      _actuatorMotorSim.update(deltaTime);
+      _feedMotorSim.update(deltaTime);
+
+      _lastSimTime = currentTime;
+    });
+
+    _simNotifier.setName("Intake Sim Thread");
+    _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
   @Logged(name = "Angle")
