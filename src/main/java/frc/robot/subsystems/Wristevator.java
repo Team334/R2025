@@ -3,15 +3,21 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -87,9 +93,30 @@ public class Wristevator extends AdvancedSubsystem {
 
   private DIOSim _homeSwitchSim;
 
+  private DCMotorSim _leftMotorSim;
+  private DCMotorSim _rightMotorSim;
+  private DCMotorSim _wristMotorSim;
+
+  private double _lastSimTime;
+
+  private Notifier _simNotifier;
+
   public Wristevator() {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
+      _leftMotorSim = 
+        new DCMotorSim(
+          LinearSystemId.createDCMotorSystem(
+            WristevatorConstants.elevatorkV.in(VoltsPerRadianPerSecond), 
+            WristevatorConstants.elevatorkA.in(VoltsPerRadianPerSecondSquared)), 
+          DCMotor.getKrakenX60(2));
+
+      _wristMotorSim = 
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(
+              WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond), 
+              WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared)), 
+            DCMotor.getKrakenX60(1));
     } else {
       _homeSwitchSim = null;
     }
@@ -107,6 +134,38 @@ public class Wristevator extends AdvancedSubsystem {
     FaultLogger.register(_wristMotor);
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
+  }
+
+  private void startSimThread() {
+    _lastSimTime = Utils.getCurrentTimeSeconds();
+
+    _simNotifier =
+      new Notifier(
+        () -> {
+          final double batteryVolts = RobotController.getBatteryVoltage();
+
+          final double currentTime = Utils.getCurrentTimeSeconds();
+          final double deltaTime = currentTime - _lastSimTime;
+          
+          var leftMotorSimState = _leftMotor.getSimState();
+          var rightMotorSimState = _rightMotor.getSimState();
+          var wristMotorSimState = _wristMotor.getSimState();
+
+          leftMotorSimState.setSupplyVoltage(batteryVolts);
+          rightMotorSimState.setSupplyVoltage(batteryVolts);
+          wristMotorSimState.setSupplyVoltage(batteryVolts);
+
+          _leftMotorSim.setInputVoltage(leftMotorSimState.getMotorVoltageMeasure().in(Volts));
+          _rightMotorSim.setInputVoltage(rightMotorSimState.getMotorVoltageMeasure().in(Volts));
+          _wristMotorSim.setInputVoltage(wristMotorSimState.getMotorVoltageMeasure().in(Volts));
+
+          _leftMotorSim.update(deltaTime);
+          _rightMotorSim.update(deltaTime);
+          _wristMotorSim.update(deltaTime);
+
+
+
+        });
   }
 
   @Logged(name = "Height")
