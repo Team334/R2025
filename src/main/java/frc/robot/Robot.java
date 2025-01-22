@@ -171,13 +171,10 @@ public class Robot extends TimedRobot {
     _swerve.setDefaultCommand(
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
-                .negate()
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getLeftX)
-                .negate()
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getRightX)
-                .negate()
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     _wristevator.setDefaultCommand(
