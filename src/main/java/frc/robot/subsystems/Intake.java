@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 
 import com.ctre.phoenix6.StatusSignal;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants;
+import frc.robot.Constants.IntakeConstants;
 
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
@@ -27,8 +29,9 @@ public class Intake extends AdvancedSubsystem {
   private final MechanismLigament2d _intake =
       _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
 
-  private final TalonFX _feedMotor = new TalonFX(0, Constants.canivore); // TODO
-  private final TalonFX _actuatorMotor = new TalonFX(0, Constants.canivore);
+  private final TalonFX _actuatorMotor =
+      new TalonFX(IntakeConstants.actuatorMotorId, Constants.canivore);
+  private final TalonFX _feedMotor = new TalonFX(IntakeConstants.feedMotorId, Constants.canivore);
 
   private final MotionMagicVoltage _actuatorPositionSetter = new MotionMagicVoltage(0);
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
@@ -38,16 +41,20 @@ public class Intake extends AdvancedSubsystem {
 
   public Intake() {
     setDefaultCommand(set(0.0, 0.0));
-  }
 
-  @Logged(name = "Speed")
-  public double getSpeed() {
-    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
+    var feedMotorConfigs = new TalonFXConfiguration();
+
+    _feedMotor.getConfigurator().apply(feedMotorConfigs);
   }
 
   @Logged(name = "Angle")
   public double getAngle() {
     return _actuatorPositionGetter.refresh().getValue().in(Radians);
+  }
+
+  @Logged(name = "Speed")
+  public double getSpeed() {
+    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   /**

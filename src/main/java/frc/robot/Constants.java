@@ -85,6 +85,11 @@ public final class Constants {
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.1);
   }
 
+  public static class IntakeConstants {
+    public static final int feedMotorId = 0;
+    public static final int actuatorMotorId = 0;
+  }
+
   public static class WristevatorConstants {
     // temporary values
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(Math.PI);

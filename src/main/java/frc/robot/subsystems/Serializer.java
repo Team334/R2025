@@ -34,8 +34,9 @@ public class Serializer extends AdvancedSubsystem {
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
 
-    // Apply default configurations
-    _feedMotor.getConfigurator().apply(new TalonFXConfiguration());
+    var feedMotorConfigs = new TalonFXConfiguration();
+
+    _feedMotor.getConfigurator().apply(feedMotorConfigs);
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);

@@ -24,8 +24,6 @@ import frc.robot.Robot;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
-  private final Consumer<Piece> _currentPieceSetter;
-
   private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
   private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
 
@@ -43,14 +41,12 @@ public class Manipulator extends AdvancedSubsystem {
   private final TalonFX _rightMotor =
       new TalonFX(ManipulatorConstants.rightMotorId, Constants.canivore);
 
-  private VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
-  private VoltageOut _feedVoltageSetter = new VoltageOut(0);
+  private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
+  private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
-    _currentPieceSetter = currentPieceSetter;
-
     setDefaultCommand(setSpeed(0));
 
     if (Robot.isSimulation()) {
@@ -86,6 +82,7 @@ public class Manipulator extends AdvancedSubsystem {
         Commands.runOnce(() -> currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
   }
 
+  /** Represents a possible game piece in the manipulator. */
   public static enum Piece {
     CORAL,
     ALGAE,
@@ -107,18 +104,18 @@ public class Manipulator extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  @Logged(name = "Manipulator Beam")
+  @Logged(name = "Beam")
   public boolean getBeam() {
     return !_beam.get();
   }
 
-  @Logged(name = "Manipulator Switch")
+  @Logged(name = "Switch")
   public boolean getSwitch() {
     // TODO: might have two switches
     return _limitSwitch.get();
   }
 
-  /** Set the speed of the back manipulator wheels in rad/s. */
+  /** Set the speed of the back feed wheels in rad/s. */
   public Command setSpeed(double speed) {
     return run(() -> {
           _leftMotor.setControl(_feedVelocitySetter.withVelocity(speed));
