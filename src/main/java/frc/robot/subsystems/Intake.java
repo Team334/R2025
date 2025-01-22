@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.lib.CTREUtil;
+import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.IntakeConstants;
 
@@ -44,7 +46,9 @@ public class Intake extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
 
-    _feedMotor.getConfigurator().apply(feedMotorConfigs);
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+
+    FaultLogger.register(_feedMotor);
   }
 
   @Logged(name = "Angle")
@@ -87,6 +91,7 @@ public class Intake extends AdvancedSubsystem {
 
   @Override
   public void close() {
-    _mech.close();
+    _actuatorMotor.close();
+    _feedMotor.close();
   }
 }

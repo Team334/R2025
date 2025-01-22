@@ -7,12 +7,15 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.lib.CTREUtil;
+import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
 
@@ -20,8 +23,11 @@ public class Serializer extends AdvancedSubsystem {
   private final DigitalInput _frontBeam;
   private final DigitalInput _backBeam;
 
-  private final DIOSim _frontBeamSim;
-  private final DIOSim _backBeamSim;
+  private DIOSim _frontBeamSim;
+  private DIOSim _backBeamSim;
+
+  private BooleanEntry _frontBeamSimValue;
+  private BooleanEntry _backBeamSimValue;
 
   private final TalonFX _feedMotor = new TalonFX(SerializerConstants.feedMotorId);
 
@@ -34,20 +40,19 @@ public class Serializer extends AdvancedSubsystem {
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
 
-    var feedMotorConfigs = new TalonFXConfiguration();
-
-    _feedMotor.getConfigurator().apply(feedMotorConfigs);
-
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
       _backBeamSim = new DIOSim(_backBeam);
 
-      SmartDashboard.putBoolean("Front Beam Value", getBackBeam());
-      SmartDashboard.putBoolean("Back Beam Value", getBackBeam());
-    } else {
-      _frontBeamSim = null;
-      _backBeamSim = null;
+      _frontBeamSimValue = Tuning.entry("/Tuning/Serializer Front Beam", false);
+      _backBeamSimValue = Tuning.entry("/Tuning/Serializer Back Beam", false);
     }
+
+    var feedMotorConfigs = new TalonFXConfiguration();
+
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+
+    FaultLogger.register(_feedMotor);
   }
 
   @Logged(name = "Speed")
@@ -82,14 +87,18 @@ public class Serializer extends AdvancedSubsystem {
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    // TODO: switch to tuning class once that's made
-    _frontBeamSim.setValue(!SmartDashboard.getBoolean("Front Beam Value", getFrontBeam()));
-    _backBeamSim.setValue(!SmartDashboard.getBoolean("Back Beam Value", getBackBeam()));
+    _frontBeamSim.setValue(!_frontBeamSimValue.get());
+    _backBeamSim.setValue(!_backBeamSimValue.get());
   }
 
   @Override
   public void close() {
     _frontBeam.close();
     _backBeam.close();
+
+    _feedMotor.close();
+
+    _frontBeamSimValue.close();
+    _backBeamSimValue.close();
   }
 }

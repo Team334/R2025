@@ -21,6 +21,8 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
+import frc.lib.CTREUtil;
+import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Robot;
@@ -94,9 +96,15 @@ public class Wristevator extends AdvancedSubsystem {
 
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
+    var wristMotorConfigs = new TalonFXConfiguration();
 
-    _leftMotor.getConfigurator().apply(leftMotorConfigs);
-    _rightMotor.getConfigurator().apply(rightMotorConfigs);
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
+    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+
+    FaultLogger.register(_leftMotor);
+    FaultLogger.register(_rightMotor);
+    FaultLogger.register(_wristMotor);
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
   }
@@ -149,5 +157,9 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    _leftMotor.close();
+    _rightMotor.close();
+    _wristMotor.close();
+  }
 }

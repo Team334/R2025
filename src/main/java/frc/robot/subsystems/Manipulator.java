@@ -10,14 +10,17 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
+import frc.lib.CTREUtil;
+import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
@@ -26,9 +29,6 @@ import java.util.function.Consumer;
 public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
   private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
-
-  private final DIOSim _beamSim;
-  private final DIOSim _limitSwitchSim;
 
   private final Trigger _beamBroken = new Trigger(this::getBeam);
   private final Trigger _switchPressed = new Trigger(this::getSwitch);
@@ -46,6 +46,12 @@ public class Manipulator extends AdvancedSubsystem {
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
+  private DIOSim _beamSim;
+  private DIOSim _limitSwitchSim;
+
+  private BooleanEntry _beamSimValue;
+  private BooleanEntry _limitSwitchSimValue;
+
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(setSpeed(0));
 
@@ -53,11 +59,8 @@ public class Manipulator extends AdvancedSubsystem {
       _beamSim = new DIOSim(_beam);
       _limitSwitchSim = new DIOSim(_limitSwitch);
 
-      SmartDashboard.putBoolean("Beam Value", getBeam());
-      SmartDashboard.putBoolean("Limit Switch Value", getSwitch());
-    } else {
-      _beamSim = null;
-      _limitSwitchSim = null;
+      _beamSimValue = Tuning.entry("/Tuning/Manipulator Beam", false);
+      _limitSwitchSimValue = Tuning.entry("/Tuning/Manipulator Limit Switch", false);
     }
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
@@ -66,10 +69,13 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
-    _leftMotor.getConfigurator().apply(leftMotorConfigs);
-    _rightMotor.getConfigurator().apply(rightMotorConfigs);
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
+
+    FaultLogger.register(_leftMotor);
+    FaultLogger.register(_rightMotor);
 
     _beamNoPiece.onFalse(
         Commands.runOnce(
@@ -149,10 +155,19 @@ public class Manipulator extends AdvancedSubsystem {
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    _beamSim.setValue(!SmartDashboard.getBoolean("Beam Value", getBeam()));
-    _limitSwitchSim.setValue(SmartDashboard.getBoolean("Limit Switch Value", getSwitch()));
+    _beamSim.setValue(!_beamSimValue.get());
+    _limitSwitchSim.setValue(_limitSwitchSimValue.get());
   }
 
   @Override
-  public void close() {}
+  public void close() {
+    _beam.close();
+    _limitSwitch.close();
+
+    _leftMotor.close();
+    _rightMotor.close();
+
+    _beamSimValue.close();
+    _limitSwitchSimValue.close();
+  }
 }
