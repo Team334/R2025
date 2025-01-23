@@ -16,6 +16,7 @@ import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.LinearAccelerationUnit;
 import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -119,7 +120,13 @@ public final class Constants {
     public static final int wristMotorId = 12;
 
     public static final Distance drumCircumference = Meters.of(1.504 * Math.PI);
+    public static final double elevatorGearRatio = 1;
     public static final double wristGearRatio = 4;
+    public static final Distance minHeight = Meters.of(0);
+    public static final Distance maxHeight = Meters.of(2);
+    public static final Angle minWristAngle = Radians.of(-Math.PI);
+    public static final Angle maxWristAngle = Radians.of(Math.PI);
+    public static final Distance manipulatorLength = Meters.of(1);
 
     public static final Per<VoltageUnit, LinearVelocityUnit> elevatorkV =
         VoltsPerMeterPerSecond.ofNative(0.1);
@@ -129,8 +136,6 @@ public final class Constants {
         VoltsPerRadianPerSecond.ofNative(0.1);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
         VoltsPerRadianPerSecondSquared.ofNative(0.1);
-
-    public static final double elevatorGearRatio = 1;
   }
 
   public static class SerializerConstants {

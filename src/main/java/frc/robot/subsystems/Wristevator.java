@@ -12,14 +12,14 @@ import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
+import edu.wpi.first.wpilibj.simulation.ElevatorSim;
+import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismRoot2d;
@@ -94,8 +94,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   private DIOSim _homeSwitchSim;
 
-  private DCMotorSim _elevatorMotorsSim;
-  private DCMotorSim _wristMotorSim;
+  private ElevatorSim _elevatorMotorsSim;
+  private SingleJointedArmSim _wristMotorSim;
 
   private double _lastSimTime;
 
@@ -106,22 +106,27 @@ public class Wristevator extends AdvancedSubsystem {
       _homeSwitchSim = new DIOSim(_homeSwitch);
 
       _elevatorMotorsSim =
-          new DCMotorSim(
-              LinearSystemId.createDCMotorSystem(
-                  WristevatorConstants.elevatorkV.in(VoltsPerMeterPerSecond)
-                      / Units.rotationsToRadians(
-                          1 / WristevatorConstants.drumCircumference.in(Meters)),
-                  WristevatorConstants.elevatorkA.in(VoltsPerMeterPerSecondSquared)
-                      / Units.rotationsToRadians(
-                          1 / WristevatorConstants.drumCircumference.in(Meters))),
-              DCMotor.getKrakenX60(2));
+          new ElevatorSim(
+              WristevatorConstants.elevatorkV.in(VoltsPerMeterPerSecond),
+              WristevatorConstants.elevatorkA.in(VoltsPerMeterPerSecondSquared),
+              DCMotor.getKrakenX60(2),
+              WristevatorConstants.minHeight.in(Meters),
+              WristevatorConstants.maxHeight.in(Meters),
+              false,
+              0);
 
       _wristMotorSim =
-          new DCMotorSim(
+          new SingleJointedArmSim(
               LinearSystemId.createDCMotorSystem(
-                  WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond),
-                  WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared)),
-              DCMotor.getKrakenX60(1));
+                  WristevatorConstants.elevatorkV.in(VoltsPerMeterPerSecond),
+                  WristevatorConstants.elevatorkA.in(VoltsPerMeterPerSecondSquared)),
+              DCMotor.getKrakenX60(1),
+              WristevatorConstants.wristGearRatio,
+              WristevatorConstants.manipulatorLength.in(Meters),
+              WristevatorConstants.minWristAngle.in(Radians),
+              WristevatorConstants.maxWristAngle.in(Radians),
+              false,
+              0);
 
       startSimThread();
     }
@@ -160,35 +165,33 @@ public class Wristevator extends AdvancedSubsystem {
               wristMotorSimState.setSupplyVoltage(batteryVolts);
 
               _elevatorMotorsSim.setInputVoltage(
-                  leftMotorSimState.getMotorVoltageMeasure().in(Volts) * 2);
+                  leftMotorSimState.getMotorVoltageMeasure().in(Volts));
               _wristMotorSim.setInputVoltage(wristMotorSimState.getMotorVoltageMeasure().in(Volts));
 
               _elevatorMotorsSim.update(deltaTime);
               _wristMotorSim.update(deltaTime);
 
               leftMotorSimState.setRawRotorPosition(
-                  _elevatorMotorsSim
-                      .getAngularPosition()
-                      .times(WristevatorConstants.elevatorGearRatio));
+                  _elevatorMotorsSim.getPositionMeters()
+                      / WristevatorConstants.drumCircumference.in(Meters)
+                      * WristevatorConstants.elevatorGearRatio);
               rightMotorSimState.setRawRotorPosition(
-                  _elevatorMotorsSim
-                      .getAngularPosition()
-                      .times(WristevatorConstants.elevatorGearRatio)
-                      .unaryMinus());
+                  _elevatorMotorsSim.getPositionMeters()
+                      / WristevatorConstants.drumCircumference.in(Meters)
+                      * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRawRotorPosition(
-                  _wristMotorSim.getAngularPosition().times(WristevatorConstants.wristGearRatio));
+                  _wristMotorSim.getAngleRads() * WristevatorConstants.wristGearRatio);
 
               leftMotorSimState.setRotorVelocity(
-                  _elevatorMotorsSim
-                      .getAngularVelocity()
-                      .times(WristevatorConstants.elevatorGearRatio));
+                  _elevatorMotorsSim.getVelocityMetersPerSecond()
+                      / WristevatorConstants.drumCircumference.in(Meters)
+                      * WristevatorConstants.elevatorGearRatio);
               rightMotorSimState.setRotorVelocity(
-                  _elevatorMotorsSim
-                      .getAngularVelocity()
-                      .times(WristevatorConstants.elevatorGearRatio)
-                      .unaryMinus());
+                  _elevatorMotorsSim.getVelocityMetersPerSecond()
+                      / WristevatorConstants.drumCircumference.in(Meters)
+                      * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRotorVelocity(
-                  _wristMotorSim.getAngularVelocity().times(WristevatorConstants.wristGearRatio));
+                  _wristMotorSim.getVelocityRadPerSec() * WristevatorConstants.wristGearRatio);
 
               _lastSimTime = currentTime;
             });
