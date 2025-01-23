@@ -12,6 +12,7 @@ import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -93,8 +94,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   private DIOSim _homeSwitchSim;
 
-  private DCMotorSim _leftMotorSim;
-  private DCMotorSim _rightMotorSim;
+  private DCMotorSim _elevatorMotorsSim;
   private DCMotorSim _wristMotorSim;
 
   private double _lastSimTime;
@@ -104,21 +104,26 @@ public class Wristevator extends AdvancedSubsystem {
   public Wristevator() {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
-      _leftMotorSim = 
-        new DCMotorSim(
-          LinearSystemId.createDCMotorSystem(
-            WristevatorConstants.elevatorkV.in(VoltsPerRadianPerSecond), 
-            WristevatorConstants.elevatorkA.in(VoltsPerRadianPerSecondSquared)), 
-          DCMotor.getKrakenX60(2));
 
-      _wristMotorSim = 
-        new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(
-              WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond), 
-              WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared)), 
-            DCMotor.getKrakenX60(1));
-    } else {
-      _homeSwitchSim = null;
+      _elevatorMotorsSim =
+          new DCMotorSim(
+              LinearSystemId.createDCMotorSystem(
+                  WristevatorConstants.elevatorkV.in(VoltsPerMeterPerSecond)
+                      / Units.rotationsToRadians(
+                          1 / WristevatorConstants.drumCircumference.in(Meters)),
+                  WristevatorConstants.elevatorkA.in(VoltsPerMeterPerSecondSquared)
+                      / Units.rotationsToRadians(
+                          1 / WristevatorConstants.drumCircumference.in(Meters))),
+              DCMotor.getKrakenX60(2));
+
+      _wristMotorSim =
+          new DCMotorSim(
+              LinearSystemId.createDCMotorSystem(
+                  WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond),
+                  WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared)),
+              DCMotor.getKrakenX60(1));
+
+      startSimThread();
     }
 
     var leftMotorConfigs = new TalonFXConfiguration();
@@ -140,32 +145,56 @@ public class Wristevator extends AdvancedSubsystem {
     _lastSimTime = Utils.getCurrentTimeSeconds();
 
     _simNotifier =
-      new Notifier(
-        () -> {
-          final double batteryVolts = RobotController.getBatteryVoltage();
+        new Notifier(
+            () -> {
+              final double batteryVolts = RobotController.getBatteryVoltage();
 
-          final double currentTime = Utils.getCurrentTimeSeconds();
-          final double deltaTime = currentTime - _lastSimTime;
-          
-          var leftMotorSimState = _leftMotor.getSimState();
-          var rightMotorSimState = _rightMotor.getSimState();
-          var wristMotorSimState = _wristMotor.getSimState();
+              final double currentTime = Utils.getCurrentTimeSeconds();
+              final double deltaTime = currentTime - _lastSimTime;
 
-          leftMotorSimState.setSupplyVoltage(batteryVolts);
-          rightMotorSimState.setSupplyVoltage(batteryVolts);
-          wristMotorSimState.setSupplyVoltage(batteryVolts);
+              var leftMotorSimState = _leftMotor.getSimState();
+              var rightMotorSimState = _rightMotor.getSimState();
+              var wristMotorSimState = _wristMotor.getSimState();
 
-          _leftMotorSim.setInputVoltage(leftMotorSimState.getMotorVoltageMeasure().in(Volts));
-          _rightMotorSim.setInputVoltage(rightMotorSimState.getMotorVoltageMeasure().in(Volts));
-          _wristMotorSim.setInputVoltage(wristMotorSimState.getMotorVoltageMeasure().in(Volts));
+              leftMotorSimState.setSupplyVoltage(batteryVolts);
+              wristMotorSimState.setSupplyVoltage(batteryVolts);
 
-          _leftMotorSim.update(deltaTime);
-          _rightMotorSim.update(deltaTime);
-          _wristMotorSim.update(deltaTime);
+              _elevatorMotorsSim.setInputVoltage(
+                  leftMotorSimState.getMotorVoltageMeasure().in(Volts) * 2);
+              _wristMotorSim.setInputVoltage(wristMotorSimState.getMotorVoltageMeasure().in(Volts));
 
+              _elevatorMotorsSim.update(deltaTime);
+              _wristMotorSim.update(deltaTime);
 
+              leftMotorSimState.setRawRotorPosition(
+                  _elevatorMotorsSim
+                      .getAngularPosition()
+                      .times(WristevatorConstants.elevatorGearRatio));
+              rightMotorSimState.setRawRotorPosition(
+                  _elevatorMotorsSim
+                      .getAngularPosition()
+                      .times(WristevatorConstants.elevatorGearRatio)
+                      .unaryMinus());
+              wristMotorSimState.setRawRotorPosition(
+                  _wristMotorSim.getAngularPosition().times(WristevatorConstants.wristGearRatio));
 
-        });
+              leftMotorSimState.setRotorVelocity(
+                  _elevatorMotorsSim
+                      .getAngularVelocity()
+                      .times(WristevatorConstants.elevatorGearRatio));
+              rightMotorSimState.setRotorVelocity(
+                  _elevatorMotorsSim
+                      .getAngularVelocity()
+                      .times(WristevatorConstants.elevatorGearRatio)
+                      .unaryMinus());
+              wristMotorSimState.setRotorVelocity(
+                  _wristMotorSim.getAngularVelocity().times(WristevatorConstants.wristGearRatio));
+
+              _lastSimTime = currentTime;
+            });
+
+    _simNotifier.setName("Wristevator Sim Thread");
+    _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
   @Logged(name = "Height")
@@ -220,5 +249,7 @@ public class Wristevator extends AdvancedSubsystem {
     _leftMotor.close();
     _rightMotor.close();
     _wristMotor.close();
+
+    _simNotifier.close();
   }
 }
