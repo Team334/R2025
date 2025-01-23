@@ -118,8 +118,8 @@ public class Wristevator extends AdvancedSubsystem {
       _wristMotorSim =
           new SingleJointedArmSim(
               LinearSystemId.createDCMotorSystem(
-                  WristevatorConstants.elevatorkV.in(VoltsPerMeterPerSecond),
-                  WristevatorConstants.elevatorkA.in(VoltsPerMeterPerSecondSquared)),
+                  WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond),
+                  WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared)),
               DCMotor.getKrakenX60(1),
               WristevatorConstants.wristGearRatio,
               WristevatorConstants.manipulatorLength.in(Meters),
@@ -176,7 +176,7 @@ public class Wristevator extends AdvancedSubsystem {
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               rightMotorSimState.setRawRotorPosition(
-                  _elevatorMotorsSim.getPositionMeters()
+                  -_elevatorMotorsSim.getPositionMeters()
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRawRotorPosition(
@@ -187,7 +187,7 @@ public class Wristevator extends AdvancedSubsystem {
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               rightMotorSimState.setRotorVelocity(
-                  _elevatorMotorsSim.getVelocityMetersPerSecond()
+                  -_elevatorMotorsSim.getVelocityMetersPerSecond()
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRotorVelocity(
