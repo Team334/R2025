@@ -237,7 +237,14 @@ public class Robot extends TimedRobot {
 
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
 
-    _operatorController.rightTrigger().whileTrue(_manipulator.setSpeed(+0));
+    _operatorController
+        .rightTrigger()
+        .whileTrue(
+            either(
+                Superstructure.inversePassoff(_serializer, _manipulator),
+                _manipulator.setSpeed(+0),
+                _wristevator::homeSwitch));
+
     _operatorController.leftTrigger().whileTrue(_manipulator.setSpeed(-0));
   }
 
