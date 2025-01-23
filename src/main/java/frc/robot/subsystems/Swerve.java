@@ -326,6 +326,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
+  /** Resets the gyro to zero */
+  public Command resetGyro() {
+    return runOnce(() -> getPigeon2().reset());
+  }
+
   /**
    * Creates a new Command that drives the chassis.
    *
