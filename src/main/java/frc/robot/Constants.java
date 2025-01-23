@@ -120,13 +120,13 @@ public final class Constants {
     public static final int wristMotorId = 12;
 
     public static final Distance drumCircumference = Meters.of(1.504 * Math.PI);
-    public static final double elevatorGearRatio = 1;
-    public static final double wristGearRatio = 4;
+    public static final double elevatorGearRatio = 9;
+    public static final double wristGearRatio = 45;
     public static final Distance minHeight = Meters.of(0);
-    public static final Distance maxHeight = Meters.of(2);
+    public static final Distance maxHeight = Meters.of(1.4732);
     public static final Angle minWristAngle = Radians.of(-Math.PI);
     public static final Angle maxWristAngle = Radians.of(Math.PI);
-    public static final Distance manipulatorLength = Meters.of(1);
+    public static final Distance manipulatorLength = Meters.of(0.18415);
 
     public static final Per<VoltageUnit, LinearVelocityUnit> elevatorkV =
         VoltsPerMeterPerSecond.ofNative(0.1);
