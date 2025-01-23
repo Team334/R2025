@@ -30,6 +30,11 @@ public class Superstructure {
         .withName("Passoff");
   }
 
+  public static Command inversePassoff(Serializer serializer, Manipulator manipulator) {
+    return parallel(
+        manipulator.setSpeed(0), serializer.setSpeed(0).unless(serializer::getBackBeam));
+  }
+
   /** Outtake from serializer -> intake. */
   public static Command groundOuttake(Intake intake, Serializer serializer) {
     return sequence(
