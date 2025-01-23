@@ -1,24 +1,19 @@
+#!/bin/zsh
+
 # all inputs
-echo -n "Enter camera name (ex: arducam-1): "
-read -r name
+read "name?Enter camera name (ex: arducam-1): "
 
-echo -n "Enter calibration resolution (ex: 1280x720): "
-read -r resolution
+read "resolution?Enter calibration resolution (ex: 1280x720): "
 
-echo -n "Enter input video file path (ex: /path/to/input.mkv): "
-read -r input
+read "input?Enter input video file path (ex: /path/to/input.mkv): "
 
-echo -n "Enter desired ffmpeg fps (ex: 2): "
-read -r fps
+read "fps?Enter desired ffmpeg fps (ex: 2): "
 
-echo -n "Enter grid size (ex: 14): "
-read -r n
+read "n?Enter grid size (ex: 14): "
 
-echo -n "Enter grid spacing in meters (ex: 0.012): "
-read -r spacing
+read "spacing?Enter grid spacing in meters (ex: 0.012): "
 
-echo -n "Enter focal length in pixels (ex: 1015): "
-read -r focal
+read "focal?Enter focal length in pixels (ex: 1015): "
 
 mrcal_to_photon="$PWD/mrcal_to_photon.py"
 
