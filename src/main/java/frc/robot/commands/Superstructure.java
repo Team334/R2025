@@ -32,7 +32,7 @@ public class Superstructure {
 
   /** Coral passoff from manipulator -> serializer. */
   public static Command inversePassoff(Serializer serializer, Manipulator manipulator) {
-    return parallel(manipulator.setSpeed(0), serializer.setSpeed(0).unless(serializer::getBackBeam))
+    return parallel(manipulator.setSpeed(0), serializer.setSpeed(0))
         .until(serializer::getBackBeam)
         .withName("Inverse Passoff");
   }

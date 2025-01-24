@@ -119,11 +119,17 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
+    // piece comes into the robot from ground intake
     new Trigger(_serializer::getBackBeam)
-        .onTrue(rumbleControllers(1, 1).onlyIf(() -> Math.signum(_manipulator.getSpeed()) != 1));
+        .and(() -> Math.signum(_manipulator.getSpeed()) != 1)
+        .onTrue(rumbleControllers(1, 1));
+
+    // inverse passoff
     new Trigger(_serializer::getBackBeam)
-        .onTrue(
-            runOnce(() -> _currentPiece = Piece.NONE).onlyIf(() -> _currentPiece == Piece.CORAL));
+        .and(() -> getCurrentPiece() == Piece.CORAL)
+        .onTrue(runOnce(() -> _currentPiece = Piece.NONE));
+
+    // piece in manipulator changes
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
     // a coral was passoff'ed
