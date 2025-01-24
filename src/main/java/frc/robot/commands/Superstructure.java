@@ -10,6 +10,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.IntakeConstants;
+import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Serializer;
@@ -32,13 +33,15 @@ public class Superstructure {
                     IntakeConstants.feedSpeed.in(RadiansPerSecond))
                 .unless(serializer::getBackBeam),
             serializer.setSpeed(0),
-            manipulator.setSpeed(0))
+            manipulator.setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond)))
         .withName("Passoff");
   }
 
   /** Coral passoff from manipulator -> serializer. */
   public static Command inversePassoff(Serializer serializer, Manipulator manipulator) {
-    return parallel(manipulator.setSpeed(0), serializer.setSpeed(0))
+    return parallel(
+            manipulator.setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond)),
+            serializer.setSpeed(0))
         .until(serializer::getBackBeam)
         .withName("Inverse Passoff");
   }

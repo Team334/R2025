@@ -162,19 +162,24 @@ public final class Constants {
   }
 
   public static class SerializerConstants {
-    public static final int frontBeamPort = 1; // change later
-    public static final int backBeamPort = 2; // change later
+    public static final int frontBeamPort = 1;
+    public static final int backBeamPort = 2;
 
     public static final int feedMotorId = 13;
   }
 
   public static class ManipulatorConstants {
-    // temp values?
     public static final int leftMotorId = 14;
     public static final int rightMotorId = 15;
 
     public static final int beamPort = 3;
     public static final int switchPort = 4;
+
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
+
+    public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
+        VoltsPerRadianPerSecond.ofNative(0.018994229273918);
+    public static final double flywheelGearRatio = 1;
 
     public static final double holdAlgaeVoltage = 0; // need to find
   }
