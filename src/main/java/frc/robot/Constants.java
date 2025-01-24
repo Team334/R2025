@@ -94,16 +94,28 @@ public final class Constants {
     public static final int feedMotorId = 8;
     public static final int actuatorMotorId = 9;
 
+    // kv is the voltage necessary to spin the pivot 1 rad/s
+    // ka is the voltage necessary to accel the pivot 1 rad/s^2
     public static final Per<VoltageUnit, AngularVelocityUnit> actuatorkV =
-        VoltsPerRadianPerSecond.ofNative(0.1);
+        VoltsPerRadianPerSecond.ofNative(0.9497114636959001);
     public static final Per<VoltageUnit, AngularAccelerationUnit> actuatorkA =
         VoltsPerRadianPerSecondSquared.ofNative(0.1);
 
-    public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(1);
-    public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(2);
+    public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(12.63541660674576);
+    public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(24);
 
     public static final double feedGearRatio = 1;
-    public static final double actuatorGearRatio = 1;
+    public static final double actuatorGearRatio = 50;
+
+    public static final Distance intakeLength = Inches.of(15);
+
+    public static final Angle maxAngle = Radians.of(Math.PI);
+    public static final Angle minAngle = Radians.of(Math.PI / 2);
+
+    public static final Angle actuatorStowed = Radians.of(Math.PI / 2);
+    public static final Angle actuatorOut = Radians.of(Math.PI);
+
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
   }
 
   public static class WristevatorConstants {
