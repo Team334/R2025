@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -255,10 +256,12 @@ public class Robot extends TimedRobot {
         .whileTrue(
             either(
                 Superstructure.inversePassoff(_serializer, _manipulator),
-                _manipulator.setSpeed(+0),
+                _manipulator.setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond)),
                 _wristevator::homeSwitch));
 
-    _operatorController.leftTrigger().whileTrue(_manipulator.setSpeed(-0));
+    _operatorController
+        .leftTrigger()
+        .whileTrue(_manipulator.setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond)));
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */
