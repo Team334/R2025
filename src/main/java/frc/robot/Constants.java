@@ -13,8 +13,6 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
-import edu.wpi.first.units.LinearAccelerationUnit;
-import edu.wpi.first.units.LinearVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
@@ -119,19 +117,31 @@ public final class Constants {
     public static final int rightMotorId = 11;
     public static final int wristMotorId = 12;
 
-    public static final Distance drumCircumference = Meters.of(1.504 * Math.PI);
     public static final double elevatorGearRatio = 9;
-    public static final double wristGearRatio = 45;
-    public static final Distance minHeight = Meters.of(0);
-    public static final Distance maxHeight = Meters.of(1.4732);
-    public static final Angle minWristAngle = Radians.of(-Math.PI);
-    public static final Angle maxWristAngle = Radians.of(Math.PI);
+    public static final Distance drumCircumference = Meters.of(1.504 * Math.PI);
+
+    public static final Distance minElevatorHeight = Meters.of(0);
+    public static final Distance maxElevatorHeight = Meters.of(1);
+
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Per<VoltageUnit, LinearVelocityUnit> elevatorkV =
-        VoltsPerMeterPerSecond.ofNative(0.1);
-    public static final Per<VoltageUnit, LinearAccelerationUnit> elevatorkA =
-        VoltsPerMeterPerSecondSquared.ofNative(0.1);
+    public static final Angle minWristAngle = Radians.of(-Math.PI);
+    public static final Angle maxWristAngle = Radians.of(Math.PI);
+
+    public static final double wristGearRatio = 45;
+
+    // elevator feedforward for the DRUM
+    // kv is the voltage necessary to spin the drum 1 rad/s
+    // ka is the voltage necessary to accel the drum 1 rad/s^2 (lower since there are 2 motors, the
+    // torque is doubled at a voltage)
+    public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
+        VoltsPerRadianPerSecond.ofNative(0.1);
+    public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
+        VoltsPerRadianPerSecondSquared.ofNative(0.1);
+
+    // wrist feedforward for the pivot (after the gear ratio)
+    // kv is the voltage necessary to spin the pivot 1 rad/s
+    // ka is the voltage necessary to accel the pivot 1 rad/s^2
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
         VoltsPerRadianPerSecond.ofNative(0.1);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
