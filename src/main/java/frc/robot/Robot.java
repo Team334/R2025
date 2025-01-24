@@ -119,8 +119,11 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
-    new Trigger(_serializer::getBackBeam).onTrue(rumbleControllers(1, 1).onlyIf(() -> Math.signum(_manipulator.getSpeed()) != 1));
-    new Trigger(_serializer::getBackBeam).onTrue(runOnce(() -> _currentPiece = Piece.NONE).onlyIf(() -> _currentPiece == Piece.CORAL));
+    new Trigger(_serializer::getBackBeam)
+        .onTrue(rumbleControllers(1, 1).onlyIf(() -> Math.signum(_manipulator.getSpeed()) != 1));
+    new Trigger(_serializer::getBackBeam)
+        .onTrue(
+            runOnce(() -> _currentPiece = Piece.NONE).onlyIf(() -> _currentPiece == Piece.CORAL));
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
     // a coral was passoff'ed
