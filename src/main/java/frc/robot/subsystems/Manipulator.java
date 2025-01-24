@@ -89,7 +89,7 @@ public class Manipulator extends AdvancedSubsystem {
 
     _beamWithPiece.onFalse(
         Commands.runOnce(() -> currentPieceSetter.accept(Piece.NONE))
-            .onlyIf(() -> Math.signum(getSpeed()) != 1)); // any piece came only while outtaking
+            .onlyIf(() -> getFeedDirection() != 1)); // any piece came only while outtaking
 
     _switchPressed.onTrue(
         Commands.runOnce(() -> currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
@@ -156,6 +156,11 @@ public class Manipulator extends AdvancedSubsystem {
   /** A trigger that is true when the beam is broken and current piece is none. */
   public Trigger getBeamNoPiece() {
     return _beamNoPiece;
+  }
+
+  /** The direction in which the feed motors are spinning. */
+  public double getFeedDirection() {
+    return Math.signum(getSpeed());
   }
 
   @Logged(name = "Speed")

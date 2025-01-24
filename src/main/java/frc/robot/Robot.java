@@ -135,7 +135,7 @@ public class Robot extends TimedRobot {
     _manipulator
         .getBeamNoPiece()
         .and(_wristevator::homeSwitch)
-        .and(() -> Math.signum(_manipulator.getSpeed()) == -1)
+        .and(() -> _manipulator.getFeedDirection() == -1)
         .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
     SmartDashboard.putData(
