@@ -13,6 +13,7 @@ import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
@@ -86,6 +87,9 @@ public class Wristevator extends AdvancedSubsystem {
 
   StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
   StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
+
+  StatusSignal<AngularVelocity> _elevatorMotorVelocityGetter = _leftMotor.getVelocity();
+  StatusSignal<AngularVelocity> _wristMotorVelocityGetter = _wristMotor.getVelocity();
 
   private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
@@ -230,9 +234,50 @@ public class Wristevator extends AdvancedSubsystem {
     return _homeSwitch.get();
   }
 
+  private Angle calculateElevatorMotorAngleErrors(Distance desiredHeight) {
+    Angle currentElevatorMotorAngle =
+        Radians.of(
+            _heightGetter.refresh().getValue().in(Rotations)
+                * WristevatorConstants.elevatorGearRatio);
+    Angle desiredElevatorMotorAngle =
+        Radians.of(
+            desiredHeight.in(Meters)
+                / WristevatorConstants.drumCircumference.in(Meters)
+                * WristevatorConstants.elevatorGearRatio);
+
+    return desiredElevatorMotorAngle.minus(currentElevatorMotorAngle);
+  }
+
+  private Angle calculateWristMotorAngleErrors(Angle desiredAngle) {
+    Angle currentWristMotorAngle = Radians.of(getAngle() * WristevatorConstants.wristGearRatio);
+    Angle desiredWristMotorAngle =
+        Radians.of(desiredAngle.in(Radians) * WristevatorConstants.wristGearRatio);
+
+    return desiredWristMotorAngle.minus(currentWristMotorAngle);
+  }
+
   /** Set the wristevator to a setpoint. */
   public Command setSetpoint(WristevatorSetpoint setpoint) {
-    return run(() -> {})
+    return run(() -> {
+          AngularVelocity maxElevatorMotorVelocity =
+              RadiansPerSecond.of(
+                  _elevatorMotorVelocityGetter.refresh().getValue().in(RadiansPerSecond));
+          AngularVelocity maxWristMotorVelocity =
+              RadiansPerSecond.of(
+                  _wristMotorVelocityGetter.refresh().getValue().in(RadiansPerSecond));
+
+          Angle elevatorMotorError = calculateElevatorMotorAngleErrors(setpoint._height);
+          Angle wristMotorError = calculateWristMotorAngleErrors(setpoint._angle);
+
+          Double elevatorTime = elevatorMotorError.div(maxElevatorMotorVelocity).magnitude();
+          Double wristTime = wristMotorError.div(maxWristMotorVelocity).magnitude();
+          Double maxTime = Math.max(elevatorTime, wristTime);
+
+          _leftMotor.setControl(
+              _elevatorVelocitySetter.withVelocity(elevatorMotorError.div(maxTime).magnitude()));
+          _wristMotor.setControl(
+              _wristVelocitySetter.withVelocity(elevatorMotorError.div(maxTime).magnitude()));
+        })
         .beforeStarting(() -> DogLog.log("Wristevator/Setpoint", setpoint.toString()))
         .withName("Set Setpoint: " + setpoint.toString());
   }
