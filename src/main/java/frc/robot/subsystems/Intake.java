@@ -60,7 +60,7 @@ public class Intake extends AdvancedSubsystem {
   private Notifier _simNotifier;
 
   public Intake() {
-    setDefaultCommand(set(IntakeConstants.actuatorStowed.in(Radians), 0).withName("BUTTHOLE"));
+    setDefaultCommand(set(IntakeConstants.actuatorStowed.in(Radians), 0));
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -179,5 +179,7 @@ public class Intake extends AdvancedSubsystem {
   public void close() {
     _actuatorMotor.close();
     _feedMotor.close();
+
+    _simNotifier.close();
   }
 }

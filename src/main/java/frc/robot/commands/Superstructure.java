@@ -53,7 +53,10 @@ public class Superstructure {
                 .set(
                     IntakeConstants.actuatorOut.in(Radians),
                     -IntakeConstants.feedSpeed.in(RadiansPerSecond))
-                .until(() -> MathUtil.isNear(0, intake.getAngle(), 0.3)),
+                .until(
+                    () ->
+                        MathUtil.isNear(
+                            IntakeConstants.actuatorOut.in(Radians), intake.getAngle(), 0.01)),
             serializer.setSpeed(0))
         .withName("Ground Outtake");
   }

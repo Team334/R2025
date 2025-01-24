@@ -122,13 +122,11 @@ public class Robot extends TimedRobot {
 
     // piece comes into the robot from ground intake
     new Trigger(_serializer::getBackBeam)
-        .and(() -> Math.signum(_manipulator.getSpeed()) != 1)
-        .onTrue(rumbleControllers(1, 1));
-
-    // inverse passoff
-    new Trigger(_serializer::getBackBeam)
-        .and(() -> getCurrentPiece() == Piece.CORAL)
-        .onTrue(runOnce(() -> _currentPiece = Piece.NONE));
+        .onTrue(
+            either(
+                runOnce(() -> _currentPiece = Piece.NONE),
+                rumbleControllers(1, 1),
+                () -> getCurrentPiece() == Piece.CORAL));
 
     // piece in manipulator changes
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
