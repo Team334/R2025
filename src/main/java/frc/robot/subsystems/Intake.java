@@ -10,13 +10,11 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -50,20 +48,21 @@ public class Intake extends AdvancedSubsystem {
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
   private SingleJointedArmSim _actuatorMotorSim;
-  private DCMotorSim _feedMotorSim;
 
   private double _lastSimTime;
 
   private Notifier _simNotifier;
 
   public Intake() {
-    setDefaultCommand(set(0.0, 0.0));
+    setDefaultCommand(set(IntakeConstants.actuatorStowed.in(Radians), 0));
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
     actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
     actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
+
+    actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
         IntakeConstants.actuatorVelocity.in(RadiansPerSecond);
@@ -80,19 +79,15 @@ public class Intake extends AdvancedSubsystem {
     if (Robot.isSimulation()) {
       _actuatorMotorSim =
           new SingleJointedArmSim(
-              LinearSystemId.createDCMotorSystem(
-                  IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond),
-                  IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared)),
               DCMotor.getKrakenX60(1),
               IntakeConstants.actuatorGearRatio,
-              1,
-              0,
-              Math.PI * 2,
-              true,
-              1);
-
-      _feedMotorSim =
-          new DCMotorSim(LinearSystemId.createDCMotorSystem(0.1, 0.01), DCMotor.getKrakenX60(1));
+              SingleJointedArmSim.estimateMOI(
+                  IntakeConstants.intakeLength.in(Meters), Units.lbsToKilograms(12)),
+              IntakeConstants.intakeLength.in(Meters),
+              IntakeConstants.minAngle.in(Radians),
+              IntakeConstants.maxAngle.in(Radians),
+              false,
+              IntakeConstants.actuatorStowed.in(Radians));
 
       startSimThread();
     }
@@ -110,29 +105,21 @@ public class Intake extends AdvancedSubsystem {
               final double batteryVoltage = RobotController.getBatteryVoltage();
 
               var actuatorMotorSimState = _actuatorMotor.getSimState();
-              var feedMotorSimState = _feedMotor.getSimState();
 
               actuatorMotorSimState.setSupplyVoltage(batteryVoltage);
-              feedMotorSimState.setSupplyVoltage(batteryVoltage);
 
               _actuatorMotorSim.setInputVoltage(
                   actuatorMotorSimState.getMotorVoltageMeasure().in(Volts));
-              _feedMotorSim.setInputVoltage(feedMotorSimState.getMotorVoltageMeasure().in(Volts));
 
               _actuatorMotorSim.update(deltaTime);
-              _feedMotorSim.update(deltaTime);
 
               actuatorMotorSimState.setRawRotorPosition(
                   Units.radiansToRotations(_actuatorMotorSim.getAngleRads())
                       * IntakeConstants.actuatorGearRatio);
-              feedMotorSimState.setRawRotorPosition(
-                  _feedMotorSim.getAngularPosition().times(IntakeConstants.feedGearRatio));
 
               actuatorMotorSimState.setRotorVelocity(
                   Units.radiansToRotations(_actuatorMotorSim.getVelocityRadPerSec())
                       * IntakeConstants.actuatorGearRatio);
-              feedMotorSimState.setRotorVelocity(
-                  _feedMotorSim.getAngularVelocity().times(IntakeConstants.feedGearRatio));
 
               _lastSimTime = currentTime;
             });
