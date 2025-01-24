@@ -107,27 +107,26 @@ public class Wristevator extends AdvancedSubsystem {
 
       _elevatorSim =
           new ElevatorSim(
-            DCMotor.getKrakenX60(2),
-            WristevatorConstants.elevatorGearRatio,
-            Units.lbsToKilograms(9.398),
-            WristevatorConstants.drumRadius.in(Meters),
-            0,
-            WristevatorConstants.maxElevatorHeight.in(Meters),
-            false,
-            0
-          );
+              DCMotor.getKrakenX60(2),
+              WristevatorConstants.elevatorGearRatio,
+              Units.lbsToKilograms(9.398),
+              WristevatorConstants.drumRadius.in(Meters),
+              0,
+              WristevatorConstants.maxElevatorHeight.in(Meters),
+              false,
+              0);
 
       _wristSim =
           new SingleJointedArmSim(
-            DCMotor.getKrakenX60(1),
-            WristevatorConstants.wristGearRatio,
-            SingleJointedArmSim.estimateMOI(WristevatorConstants.manipulatorLength.in(Meters), Units.lbsToKilograms(8.155)),
-            WristevatorConstants.manipulatorLength.in(Meters),
-            WristevatorConstants.minWristAngle.in(Radians),
-            WristevatorConstants.maxWristAngle.in(Radians),
-            false,
-            0
-          );
+              DCMotor.getKrakenX60(1),
+              WristevatorConstants.wristGearRatio,
+              SingleJointedArmSim.estimateMOI(
+                  WristevatorConstants.manipulatorLength.in(Meters), Units.lbsToKilograms(8.155)),
+              WristevatorConstants.manipulatorLength.in(Meters),
+              WristevatorConstants.minWristAngle.in(Radians),
+              WristevatorConstants.maxWristAngle.in(Radians),
+              false,
+              0);
 
       startSimThread();
     }
@@ -192,7 +191,8 @@ public class Wristevator extends AdvancedSubsystem {
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRawRotorPosition(
-                  Units.radiansToRotations(_wristSim.getAngleRads() * WristevatorConstants.wristGearRatio));
+                  Units.radiansToRotations(
+                      _wristSim.getAngleRads() * WristevatorConstants.wristGearRatio));
 
               // raw rotor velocities
               leftMotorSimState.setRotorVelocity(
@@ -204,7 +204,8 @@ public class Wristevator extends AdvancedSubsystem {
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRotorVelocity(
-                  Units.radiansToRotations(_wristSim.getVelocityRadPerSec() * WristevatorConstants.wristGearRatio));
+                  Units.radiansToRotations(
+                      _wristSim.getVelocityRadPerSec() * WristevatorConstants.wristGearRatio));
 
               _lastSimTime = currentTime;
             });
@@ -238,7 +239,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   /**
    * Control the elevator and wrist speeds individually.
-   * 
+   *
    * @param elevatorSpeed The elevator drum speed in radians per second.
    * @param wristSpeed The wrist speed in radians per second.
    */
