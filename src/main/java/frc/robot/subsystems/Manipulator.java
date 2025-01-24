@@ -82,7 +82,8 @@ public class Manipulator extends AdvancedSubsystem {
             () -> currentPieceSetter.accept(Piece.CORAL))); // coral pick up not from passoff
 
     _beamWithPiece.onFalse(
-        Commands.runOnce(() -> currentPieceSetter.accept(Piece.NONE))); // any piece came out
+        Commands.runOnce(() -> currentPieceSetter.accept(Piece.NONE))
+            .onlyIf(() -> Math.signum(getSpeed()) == -1)); // any piece came only while outtaking
 
     _switchPressed.onTrue(
         Commands.runOnce(() -> currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
