@@ -35,7 +35,7 @@ public class Serializer extends AdvancedSubsystem {
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
   public Serializer() {
-    setDefaultCommand(setSpeed(0));
+    setDefaultCommand(idle());
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
@@ -60,12 +60,12 @@ public class Serializer extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  /** Set the speed of the front feed wheels in rad/s. */
-  public Command setSpeed(double speed) {
-    return run(() -> {
+  // Set the speed of the front feed wheels in rad/s.
+  private Command setSpeed(double speed) {
+    return run(
+        () -> {
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(speed));
-        })
-        .withName("Set Speed");
+        });
   }
 
   @Logged(name = "Front Beam")
@@ -76,6 +76,30 @@ public class Serializer extends AdvancedSubsystem {
   @Logged(name = "Back Beam")
   public boolean getBackBeam() {
     return !_backBeam.get();
+  }
+
+  public Command idle() {
+    return setSpeed(0).withName("Idle");
+  }
+
+  /** Intakes a coral until the front beam is broken. */
+  public Command intake() {
+    return setSpeed(0).until(this::getFrontBeam).withName("Intake");
+  }
+
+  /** Outtakes a coral to the intake. */
+  public Command outtake() {
+    return setSpeed(0).withName("Outtake");
+  }
+
+  /** Passoffs a coral to the manipulator. */
+  public Command passoff() {
+    return setSpeed(0).withName("Passoff");
+  }
+
+  /** Inverse passoff from the manipulator. */
+  public Command inversePassoff() {
+    return setSpeed(0).until(this::getBackBeam).withName("Inverse Passoff");
   }
 
   @Override

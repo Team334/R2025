@@ -70,7 +70,7 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanEntry _limitSwitchSimValue;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
-    setDefaultCommand(setSpeed(0));
+    setDefaultCommand(idle());
 
     _currentPieceSetter = currentPieceSetter;
 
@@ -162,10 +162,10 @@ public class Manipulator extends AdvancedSubsystem {
 
   // set the speed of the back feed wheels in rad/s
   private Command setSpeed(double speed) {
-    return run(() -> {
+    return run(
+        () -> {
           _leftMotor.setControl(_feedVelocitySetter.withVelocity(speed));
-        })
-        .withName("Set Speed");
+        });
   }
 
   /** Sets the current piece when the beam changes from true to false. */
@@ -186,6 +186,11 @@ public class Manipulator extends AdvancedSubsystem {
             _currentPieceSetter.accept(piece);
           }
         });
+  }
+
+  /** Idle the manipulator. */
+  public Command idle() {
+    return setSpeed(0).withName("Idle");
   }
 
   /** Hold a coral in place. */
