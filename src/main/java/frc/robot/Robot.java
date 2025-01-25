@@ -30,7 +30,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -120,23 +119,10 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
-    // piece comes into the robot from ground intake
-    new Trigger(_serializer::getBackBeam)
-        .onTrue(
-            either(
-                runOnce(() -> _currentPiece = Piece.NONE),
-                rumbleControllers(1, 1),
-                () -> getCurrentPiece() == Piece.CORAL));
-
-    // piece in manipulator changes
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
-
-    // a coral was passoff'ed
-    _manipulator
-        .getBeamNoPiece()
-        .and(_wristevator::homeSwitch)
-        .and(() -> _manipulator.getFeedDirection() == -1)
-        .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
+    new Trigger(_serializer::getBackBeam)
+        .and(() -> getCurrentPiece() == Piece.NONE)
+        .onTrue(rumbleControllers(1, 1));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -239,13 +225,11 @@ public class Robot extends TimedRobot {
 
     _operatorController
         .rightBumper()
-        .and(() -> _wristevator.homeSwitch())
-        .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
-
-    _operatorController
-        .rightBumper()
-        .and(() -> !_wristevator.homeSwitch())
-        .whileTrue(Superstructure.groundIntake(_intake, _serializer));
+        .whileTrue(
+            either(
+                Superstructure.passoff(_intake, _serializer, _manipulator),
+                Superstructure.groundIntake(_intake, _serializer),
+                _wristevator::homeSwitch));
 
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
 
@@ -254,12 +238,10 @@ public class Robot extends TimedRobot {
         .whileTrue(
             either(
                 Superstructure.inversePassoff(_serializer, _manipulator),
-                _manipulator.setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond)),
+                _manipulator.intake(),
                 _wristevator::homeSwitch));
 
-    _operatorController
-        .leftTrigger()
-        .whileTrue(_manipulator.setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond)));
+    _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */

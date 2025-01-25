@@ -53,6 +53,6 @@ public class Superstructure {
 
   /** Intake from intake -> serializer. */
   public static Command groundIntake(Intake intake, Serializer serializer) {
-    return parallel(intake.intake(), serializer.intake()).withName("Ground Intake");
+    return deadline(serializer.intake(), intake.intake()).withName("Ground Intake");
   }
 }
