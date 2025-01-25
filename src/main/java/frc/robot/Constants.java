@@ -108,7 +108,11 @@ public final class Constants {
 
   public static class WristevatorConstants {
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
+    public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(7);
+
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(70.19675892636535);
+    public static final AngularAcceleration maxElevatorAcceleration =
+        RadiansPerSecondPerSecond.of(35);
 
     public static final int homeSwitch = 0;
 

@@ -6,6 +6,7 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
+import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import dev.doglog.DogLog;
@@ -94,6 +95,9 @@ public class Wristevator extends AdvancedSubsystem {
   private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
+  private MotionMagicVoltage _elevatorPositionSetter = new MotionMagicVoltage(0);
+  private MotionMagicVoltage _wristPositionSetter = new MotionMagicVoltage(0);
+
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   private DIOSim _homeSwitchSim;
@@ -144,14 +148,28 @@ public class Wristevator extends AdvancedSubsystem {
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
+    leftMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
+        WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond);
+    leftMotorConfigs.MotionMagic.MotionMagicAcceleration =
+        WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond);
+
     wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond);
     wristMotorConfigs.Slot0.kA = WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared);
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
+    wristMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
+        WristevatorConstants.maxWristSpeed.in(RadiansPerSecond);
+    wristMotorConfigs.MotionMagic.MotionMagicAcceleration =
+        WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond);
+
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(
+        () -> _leftMotor.setPosition(WristevatorSetpoint.HOME.getHeight().in(Meters)), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+    CTREUtil.attempt(
+        () -> _wristMotor.setPosition(WristevatorSetpoint.HOME.getAngle()), _wristMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -234,49 +252,35 @@ public class Wristevator extends AdvancedSubsystem {
     return _homeSwitch.get();
   }
 
-  private Angle calculateElevatorMotorAngleErrors(Distance desiredHeight) {
-    Angle currentElevatorMotorAngle =
-        Radians.of(
-            _heightGetter.refresh().getValue().in(Rotations)
-                * WristevatorConstants.elevatorGearRatio);
-    Angle desiredElevatorMotorAngle =
-        Radians.of(
-            desiredHeight.in(Meters)
-                / WristevatorConstants.drumCircumference.in(Meters)
-                * WristevatorConstants.elevatorGearRatio);
+  private double calculateElevatorTime(Distance desiredHeight) {
+    double error = Math.abs(getHeight() - desiredHeight.in(Meters));
+    double elevatorTime =
+        error
+            / (WristevatorConstants.maxElevatorSpeed.in(RotationsPerSecond)
+                * WristevatorConstants.drumCircumference.in(Meters));
 
-    return desiredElevatorMotorAngle.minus(currentElevatorMotorAngle);
+    return elevatorTime;
   }
 
-  private Angle calculateWristMotorAngleErrors(Angle desiredAngle) {
-    Angle currentWristMotorAngle = Radians.of(getAngle() * WristevatorConstants.wristGearRatio);
-    Angle desiredWristMotorAngle =
-        Radians.of(desiredAngle.in(Radians) * WristevatorConstants.wristGearRatio);
+  private double calculateWristTime(Angle desiredAngle) {
+    double error = Math.abs(getAngle() - desiredAngle.in(Radians));
+    double wristTime = error / (WristevatorConstants.maxWristSpeed.in(RadiansPerSecond));
 
-    return desiredWristMotorAngle.minus(currentWristMotorAngle);
+    return wristTime;
   }
 
   /** Set the wristevator to a setpoint. */
   public Command setSetpoint(WristevatorSetpoint setpoint) {
     return run(() -> {
-          AngularVelocity maxElevatorMotorVelocity =
-              RadiansPerSecond.of(
-                  _elevatorMotorVelocityGetter.refresh().getValue().in(RadiansPerSecond));
-          AngularVelocity maxWristMotorVelocity =
-              RadiansPerSecond.of(
-                  _wristMotorVelocityGetter.refresh().getValue().in(RadiansPerSecond));
-
-          Angle elevatorMotorError = calculateElevatorMotorAngleErrors(setpoint._height);
-          Angle wristMotorError = calculateWristMotorAngleErrors(setpoint._angle);
-
-          Double elevatorTime = elevatorMotorError.div(maxElevatorMotorVelocity).magnitude();
-          Double wristTime = wristMotorError.div(maxWristMotorVelocity).magnitude();
-          Double maxTime = Math.max(elevatorTime, wristTime);
+          double maxTime =
+              Math.max(
+                  calculateElevatorTime(setpoint.getHeight()),
+                  calculateWristTime(setpoint.getAngle()));
 
           _leftMotor.setControl(
-              _elevatorVelocitySetter.withVelocity(elevatorMotorError.div(maxTime).magnitude()));
+              _elevatorPositionSetter.withPosition(setpoint.getHeight().in(Meters)));
           _wristMotor.setControl(
-              _wristVelocitySetter.withVelocity(elevatorMotorError.div(maxTime).magnitude()));
+              _wristPositionSetter.withPosition(setpoint.getAngle().in(Radians)));
         })
         .beforeStarting(() -> DogLog.log("Wristevator/Setpoint", setpoint.toString()))
         .withName("Set Setpoint: " + setpoint.toString());
