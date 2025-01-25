@@ -41,10 +41,10 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
-import frc.robot.subsystems.Swerve.DesiredLocation;
-import frc.robot.subsystems.Swerve.SideOffset;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Swerve.DesiredLocation;
+import frc.robot.subsystems.Swerve.SideOffset;
 import frc.robot.subsystems.Wristevator;
 
 /**
@@ -140,8 +140,11 @@ public class Robot extends TimedRobot {
         .and(() -> _manipulator.getFeedDirection() == -1)
         .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
-
-    new Trigger(_driverController.leftTrigger().or(_driverController.rightTrigger()).onFalse(runOnce(() -> _swerve.setOffset(SideOffset.NONE))));
+    new Trigger(
+        _driverController
+            .leftTrigger()
+            .or(_driverController.rightTrigger())
+            .onFalse(runOnce(() -> _swerve.setOffset(SideOffset.NONE))));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -218,7 +221,6 @@ public class Robot extends TimedRobot {
 
     _driverController.leftTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.LEFT)));
     _driverController.rightTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.RIGHT)));
-
 
     // _driverController
     //     .b()

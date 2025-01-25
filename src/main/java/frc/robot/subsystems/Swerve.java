@@ -50,7 +50,6 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
@@ -145,12 +144,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     Pose2d _pose;
 
-    private DesiredLocation (Pose2d pose){
+    private DesiredLocation(Pose2d pose) {
       _pose = pose;
     }
 
     public Pose2d getPose() {
-      return _pose;    }
+      return _pose;
+    }
   }
 
   public static enum SideOffset {
@@ -160,7 +160,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     private final Transform2d _offset;
 
-    private SideOffset(Transform2d offset){
+    private SideOffset(Transform2d offset) {
       _offset = offset;
     }
 
@@ -380,7 +380,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   /** What offset the desried location should use */
   public void setOffset(SideOffset offset) {
-     _sideOffset = offset;
+    _sideOffset = offset;
   }
 
   /**
