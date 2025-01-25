@@ -24,10 +24,13 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -47,6 +50,7 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
@@ -133,6 +137,39 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private double _lastSimTime = 0;
   private Notifier _simNotifier;
+
+  public static enum DesiredLocation {
+    HUMAN(new Pose2d(0, 0, Rotation2d.kZero)),
+    PROCESSOR(new Pose2d(0, 0, Rotation2d.kZero)),
+    REEF(new Pose2d(0, 0, Rotation2d.kZero));
+
+    Pose2d _pose;
+
+    private DesiredLocation (Pose2d pose){
+      _pose = pose;
+    }
+
+    public Pose2d getPose() {
+      return _pose;    }
+  }
+
+  public static enum SideOffset {
+    NONE(new Transform2d(Translation2d.kZero, Rotation2d.kZero)),
+    LEFT(new Transform2d(5, 3, Rotation2d.kZero)),
+    RIGHT(new Transform2d(3, 5, Rotation2d.kZero));
+
+    private final Transform2d _offset;
+
+    private SideOffset(Transform2d offset){
+      _offset = offset;
+    }
+
+    public Transform2d getOffset() {
+      return _offset;
+    }
+  }
+
+  private SideOffset _sideOffset = SideOffset.NONE;
 
   @Logged(name = "Driver Chassis Speeds")
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
@@ -341,6 +378,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         });
   }
 
+  /** What offset the desried location should use */
+  public void setOffset(SideOffset offset) {
+     _sideOffset = offset;
+  }
+
   /**
    * Creates a new Command that drives the chassis.
    *
@@ -430,7 +472,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /** Drives the robot in a straight line to some given goal pose. */
   public Command driveTo(Pose2d goalPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose);
+          Pose2d offsetGoalPose = goalPose.plus(_sideOffset.getOffset());
+          ChassisSpeeds speeds = _poseController.calculate(getPose(), offsetGoalPose);
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
@@ -438,7 +481,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             () ->
                 _poseController.reset(
                     getPose(),
-                    goalPose,
+                    goalPose.plus(_sideOffset.getOffset()),
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
         .withName("Drive To");
