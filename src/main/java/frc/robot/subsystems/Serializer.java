@@ -12,12 +12,15 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.lib.Tuning;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
+import frc.robot.subsystems.Manipulator.Piece;
+import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {
   private final DigitalInput _frontBeam;
@@ -34,8 +37,12 @@ public class Serializer extends AdvancedSubsystem {
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
-  public Serializer() {
+  private final Consumer<Piece> _currentPieceSetter;
+
+  public Serializer(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
+
+    _currentPieceSetter = currentPieceSetter;
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
@@ -99,7 +106,10 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Inverse passoff from the manipulator. */
   public Command inversePassoff() {
-    return setSpeed(0).until(this::getBackBeam).withName("Inverse Passoff");
+    return setSpeed(0)
+        .until(this::getBackBeam)
+        .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.NONE)))
+        .withName("Inverse Passoff");
   }
 
   @Override

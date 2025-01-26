@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
@@ -65,7 +66,7 @@ public class Robot extends TimedRobot {
   private final Intake _intake = new Intake();
 
   @Logged(name = "Serializer")
-  private final Serializer _serializer = new Serializer();
+  private final Serializer _serializer = new Serializer((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Manipulator")
   private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
@@ -120,9 +121,6 @@ public class Robot extends TimedRobot {
     configureOperatorBindings();
 
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
-    new Trigger(_serializer::getBackBeam)
-        .and(() -> getCurrentPiece() == Piece.NONE)
-        .onTrue(rumbleControllers(1, 1));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -228,7 +226,8 @@ public class Robot extends TimedRobot {
         .whileTrue(
             either(
                 Superstructure.passoff(_intake, _serializer, _manipulator),
-                Superstructure.groundIntake(_intake, _serializer),
+                Superstructure.groundIntake(_intake, _serializer)
+                    .andThen(new ScheduleCommand(rumbleControllers(1, 1))),
                 _wristevator::homeSwitch));
 
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
