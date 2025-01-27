@@ -75,6 +75,15 @@ public class Serializer extends AdvancedSubsystem {
         });
   }
 
+  /**
+   * Whether a coral is at all inside the serializer.
+   *
+   * @return front beam broken OR back beam broken
+   */
+  public boolean hasCoral() {
+    return getFrontBeam() || getBackBeam();
+  }
+
   @Logged(name = "Front Beam")
   public boolean getFrontBeam() {
     return !_frontBeam.get();

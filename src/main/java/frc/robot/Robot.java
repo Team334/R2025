@@ -197,6 +197,7 @@ public class Robot extends TimedRobot {
   }
 
   private void configureOperatorBindings() {
+    // wristevator setpoint control
     _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
     _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
     _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
@@ -221,25 +222,34 @@ public class Robot extends TimedRobot {
 
     _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
 
+    // ground intake / passoff
     _operatorController
         .rightBumper()
-        .whileTrue(
-            either(
-                Superstructure.passoff(_intake, _serializer, _manipulator),
-                Superstructure.groundIntake(_intake, _serializer)
-                    .andThen(new ScheduleCommand(rumbleControllers(1, 1))),
-                _wristevator::homeSwitch));
+        .and(_wristevator::homeSwitch)
+        .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
 
+    _operatorController
+        .rightBumper()
+        .and(() -> !_wristevator.homeSwitch())
+        .whileTrue(
+            Superstructure.groundIntake(_intake, _serializer)
+                .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
+
+    // ground outtake
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+
+    // intake / inverse passoff
+    _operatorController
+        .rightTrigger()
+        .and(_wristevator::homeSwitch)
+        .whileTrue(Superstructure.inversePassoff(_serializer, _manipulator));
 
     _operatorController
         .rightTrigger()
-        .whileTrue(
-            either(
-                Superstructure.inversePassoff(_serializer, _manipulator),
-                _manipulator.intake(),
-                _wristevator::homeSwitch));
+        .and(() -> !_wristevator.homeSwitch())
+        .whileTrue(_manipulator.intake());
 
+    // outtake
     _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
   }
 
