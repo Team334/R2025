@@ -24,8 +24,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -58,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
 
 @Logged(strategy = Strategy.OPT_IN)
@@ -154,19 +153,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   }
 
   public static enum SideOffset {
-    NONE(new Transform2d(Translation2d.kZero, Rotation2d.kZero)),
-    LEFT(new Transform2d(5, 3, Rotation2d.kZero)),
-    RIGHT(new Transform2d(3, 5, Rotation2d.kZero));
-
-    private final Transform2d _offset;
-
-    private SideOffset(Transform2d offset) {
-      _offset = offset;
-    }
-
-    public Transform2d getOffset() {
-      return _offset;
-    }
+    NONE,
+    LEFT,
+    RIGHT
   }
 
   private SideOffset _sideOffset = SideOffset.NONE;
@@ -383,6 +372,42 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     _sideOffset = offset;
   }
 
+  /** Return the current side reef offset */
+  public Pose2d getReefOffset() {
+    Pose2d offset = new Pose2d();
+
+    // The value in the hashmap should be the apriltag that we are currently moving towards
+    Rotation2d rotation = FieldConstants.aprilTagAlignment.get(18);
+
+    switch (_sideOffset) {
+      case NONE:
+        offset =
+            new Pose2d(
+                FieldConstants.reefAlignCenter.rotateAround(FieldConstants.reefCenter, rotation),
+                rotation);
+        break;
+
+      case LEFT:
+        offset =
+            new Pose2d(
+                FieldConstants.reefAlignLeft.rotateAround(FieldConstants.reefCenter, rotation),
+                rotation);
+        break;
+
+      case RIGHT:
+        offset =
+            new Pose2d(
+                FieldConstants.reefAlignRight.rotateAround(FieldConstants.reefCenter, rotation),
+                rotation);
+        break;
+
+      default:
+        break;
+    }
+
+    return offset;
+  }
+
   /**
    * Creates a new Command that drives the chassis.
    *
@@ -470,10 +495,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   }
 
   /** Drives the robot in a straight line to some given goal pose. */
-  public Command driveTo(Pose2d goalPose) {
+  public Command driveToPose(Supplier<Pose2d> goalPose) {
     return run(() -> {
-          Pose2d offsetGoalPose = goalPose.plus(_sideOffset.getOffset());
-          ChassisSpeeds speeds = _poseController.calculate(getPose(), offsetGoalPose);
+          ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose.get());
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
@@ -481,7 +505,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             () ->
                 _poseController.reset(
                     getPose(),
-                    goalPose.plus(_sideOffset.getOffset()),
+                    goalPose.get(),
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
         .withName("Drive To");
