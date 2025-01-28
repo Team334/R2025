@@ -266,7 +266,7 @@ public class Wristevator extends AdvancedSubsystem {
     double error = Math.abs(getAngle() - desiredAngle.in(Radians));
     double wristTime = error / (WristevatorConstants.maxWristSpeed.in(RadiansPerSecond));
 
-    return wristTime; 
+    return wristTime;
   }
 
   /** Set the wristevator to a setpoint. */
