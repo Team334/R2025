@@ -12,6 +12,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
 import frc.lib.FaultLogger;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
@@ -26,6 +27,7 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 /** Handles pose estimation coming from a single PhotonVision camera. */
 @Logged(strategy = Strategy.OPT_IN)
@@ -58,6 +60,9 @@ public class VisionPoseEstimator implements AutoCloseable {
   /** Maximum allowed distance for multitag estimates. */
   @Logged(name = "Multi-Tag Max Distance")
   public final double multiTagMaxDistance;
+
+  @Logged(name = "Camera Mount Angle")
+  public final double cameraAngle;
 
   /**
    * Whether this estimator is ignoring the vision heading estimate (if this is true the vision
@@ -94,7 +99,10 @@ public class VisionPoseEstimator implements AutoCloseable {
       double singleTagMaxDistance,
 
       /** Maximum allowed distance for multitag estimates. */
-      double multiTagMaxDistance) {}
+      double multiTagMaxDistance,
+
+      /** The mounting camera angle. */
+      double cameraAngle) {}
 
   /** Represents a single vision pose estimate. */
   public record VisionPoseEstimate(
@@ -174,6 +182,7 @@ public class VisionPoseEstimator implements AutoCloseable {
         camConstants.multiTagMaxDistance,
         camConstants.ambiguityThreshold,
         camConstants.cameraStdDevsFactor,
+        camConstants.cameraAngle,
         ntInst,
         fieldLayout);
   }
@@ -186,6 +195,7 @@ public class VisionPoseEstimator implements AutoCloseable {
       double multiTagMaxDistance,
       double ambiguityThreshold,
       double cameraStdDevsFactor,
+      double cameraAngle,
       NetworkTableInstance ntInst,
       AprilTagFieldLayout fieldLayout) {
     this.camName = camName;
@@ -194,6 +204,7 @@ public class VisionPoseEstimator implements AutoCloseable {
     this.cameraStdDevsFactor = cameraStdDevsFactor;
     this.singleTagMaxDistance = singleTagMaxDistance;
     this.multiTagMaxDistance = multiTagMaxDistance;
+    this.cameraAngle = cameraAngle;
 
     _camera = new PhotonCamera(ntInst, camName);
 
@@ -249,16 +260,43 @@ public class VisionPoseEstimator implements AutoCloseable {
     Pose3d estimatedPose = estimate.estimatedPose;
     double timestamp = estimate.timestampSeconds;
     double ambiguity = -1;
-    int tagAmount = estimate.targetsUsed.size();
+    List<PhotonTrackedTarget> targets = estimate.targetsUsed;
+    int tagAmount = targets.size();
     int[] detectedTags = new int[tagAmount];
     double avgTagDistance = 0;
     double[] stdDevs = new double[] {-1, -1, -1};
     boolean isValid = false;
+    boolean isInAuton = DriverStation.isAutonomous();
 
+    // If there is 1 tag and the Robot is in autonomous then use the trignometric method
+    if (tagAmount == 1 && isInAuton) {
+      // https://www.chiefdelphi.com/uploads/default/optimized/3X/5/e/5e5c5d9e4297e8e6623a5b438004ed23f4a660c0_2_775x463.jpeg
+      // Inspired by
+      // https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2025-build-thread/477314/84
+      var target = targets.get(0);
+      // Get the transform of the target relative to the camera
+      // (https://www.chiefdelphi.com/t/interpreting-photonvision-results/419048)
+      int tagId = target.getFiducialId();
+      Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
+      // Get Z distance from the robot camera to the tag
+      double knownHeightDiff = tagPose.getZ() - robotToCam.getZ();
+      // Get the adjacent side of the triangle in https://ibb.co/0jDvcsBK (diagram may be
+      // inaccuarate - reviewers may delete this comment)
+      double distanceFromCameraToTag = knownHeightDiff / Math.tan(cameraAngle);
+
+      // Transform the tagPose by distanceFromRobotToTag in order to give an estimation of where the
+      // robot is
+      estimatedPose =
+          new Pose3d(
+              estimatedPose.getTranslation().getX() - distanceFromCameraToTag,
+              estimatedPose.getTranslation().getY(),
+              distanceFromCameraToTag,
+              estimatedPose.getRotation());
+    }
     // ---- DISAMBIGUATE (if single-tag) ----
     // disambiguate poses using gyro measurement (only necessary for a single tag)
-    if (tagAmount == 1) {
-      var target = estimate.targetsUsed.get(0);
+    else if (tagAmount == 1) {
+      var target = targets.get(0);
       int tagId = target.getFiducialId();
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
 
@@ -282,7 +320,7 @@ public class VisionPoseEstimator implements AutoCloseable {
     // ---- FILTER ----
     // get tag distance
     for (int i = 0; i < tagAmount; i++) {
-      int tagId = estimate.targetsUsed.get(i).getFiducialId();
+      int tagId = targets.get(i).getFiducialId();
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
       detectedTags[i] = tagId;
       avgTagDistance += tagPose.getTranslation().getDistance(estimatedPose.getTranslation());
