@@ -60,7 +60,7 @@ public class Intake extends AdvancedSubsystem {
   private Notifier _simNotifier;
 
   public Intake() {
-    setDefaultCommand(set(IntakeConstants.actuatorStowed.in(Radians), 0));
+    setDefaultCommand(stow());
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -147,18 +147,33 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  /**
-   * Set the actuator angle and feed speed.
-   *
-   * @param actuatorAngle Actuator angle in rad.
-   * @param feedSpeed Feed wheel speed in rad/s.
-   */
-  public Command set(double actuatorAngle, double feedSpeed) {
-    return run(() -> {
+  // set the actuator angle and feed speed.
+  private Command set(double actuatorAngle, double feedSpeed) {
+    return run(
+        () -> {
           _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(actuatorAngle));
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(feedSpeed));
-        })
-        .withName("Set");
+        });
+  }
+
+  /** Stow the intake into the robot. */
+  public Command stow() {
+    return set(IntakeConstants.actuatorStowed.in(Radians), 0).withName("Stow");
+  }
+
+  /** Intake a coral off of the ground. */
+  public Command intake() {
+    return set(
+            IntakeConstants.actuatorOut.in(Radians), IntakeConstants.feedSpeed.in(RadiansPerSecond))
+        .withName("Intake");
+  }
+
+  /** Outtake onto the ground. */
+  public Command outtake() {
+    return set(
+            IntakeConstants.actuatorOut.in(Radians),
+            -IntakeConstants.feedSpeed.in(RadiansPerSecond))
+        .withName("Outtake");
   }
 
   @Override
