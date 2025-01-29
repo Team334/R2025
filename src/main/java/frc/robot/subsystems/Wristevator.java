@@ -10,10 +10,10 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
@@ -32,41 +32,11 @@ import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
+import frc.robot.Constants.WristevatorConstants.WristevatorSetpoint;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
-  /** A setpoint for the wristevator. */
-  public static enum WristevatorSetpoint {
-    HOME(Radians.of(0), Meters.of(0)),
-    HUMAN(Radians.of(0), Meters.of(0)),
-    PROCESSOR(Radians.of(0), Meters.of(0)),
-
-    L1(Radians.of(0), Meters.of(0)),
-    L2(Radians.of(0), Meters.of(0)),
-    L3(Radians.of(0), Meters.of(0)),
-    L4(Radians.of(0), Meters.of(0)),
-
-    LOWER_ALGAE(Radians.of(0), Meters.of(0)),
-    UPPER_ALGAE(Radians.of(0), Meters.of(0));
-
-    private final Angle _angle;
-    private final Distance _height;
-
-    private WristevatorSetpoint(Angle angle, Distance height) {
-      _angle = angle;
-      _height = height;
-    }
-
-    public Angle getAngle() {
-      return _angle;
-    }
-
-    public Distance getHeight() {
-      return _height;
-    }
-  }
-
   private final Mechanism2d _mech = new Mechanism2d(1.35, 2);
   private final MechanismRoot2d _root = _mech.getRoot("elevator mount", 1, 0.1);
 
@@ -241,9 +211,15 @@ public class Wristevator extends AdvancedSubsystem {
         && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
   }
 
-  /** Finds the next setpoint given the previous setpoint and the goal. */
-  private WristevatorSetpoint nextSetpoint(WristevatorSetpoint goal) {
-    return WristevatorSetpoint.HOME;
+  /** Updates the next setpoint variable given the previous setpoint variable and the goal. */
+  private void updateNextSetpoint(WristevatorSetpoint goal) {
+    if (WristevatorConstants.setpointMap.containsKey(Pair.of(_prevSetpoint, goal))) {
+      _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_prevSetpoint, goal));
+      return;
+    }
+    ;
+
+    _nextSetpoint = goal;
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
@@ -252,12 +228,12 @@ public class Wristevator extends AdvancedSubsystem {
           // once the next setpoint is reached, re-find the next one
           if (atSetpoint(_nextSetpoint)) {
             _prevSetpoint = _nextSetpoint;
-            _nextSetpoint = nextSetpoint(goal);
+            updateNextSetpoint(goal);
           }
 
           // travel to next setpoint here with correct motion profiling
         })
-        .beforeStarting(() -> _nextSetpoint = nextSetpoint(goal))
+        .beforeStarting(() -> updateNextSetpoint(goal))
         .until(() -> _prevSetpoint == goal) // prev = next = goal
         .withName("Set Goal");
   }

@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
@@ -24,6 +25,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import frc.robot.generated.TunerConstants;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
+import java.util.HashMap;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -119,6 +121,46 @@ public final class Constants {
   }
 
   public static class WristevatorConstants {
+    /** Represents a setpoint for the wristevator. */
+    public static enum WristevatorSetpoint {
+      HOME(Radians.of(0), Meters.of(0)),
+      HUMAN(Radians.of(0), Meters.of(0)),
+      PROCESSOR(Radians.of(0), Meters.of(0)),
+
+      L1(Radians.of(0), Meters.of(0)),
+      L2(Radians.of(0), Meters.of(0)),
+      L3(Radians.of(0), Meters.of(0)),
+      L4(Radians.of(0), Meters.of(0)),
+
+      LOWER_ALGAE(Radians.of(0), Meters.of(0)),
+      UPPER_ALGAE(Radians.of(0), Meters.of(0));
+
+      private final Angle _angle;
+      private final Distance _height;
+
+      private WristevatorSetpoint(Angle angle, Distance height) {
+        _angle = angle;
+        _height = height;
+      }
+
+      public Angle getAngle() {
+        return _angle;
+      }
+
+      public Distance getHeight() {
+        return _height;
+      }
+    }
+
+    public static final HashMap<Pair<WristevatorSetpoint, WristevatorSetpoint>, WristevatorSetpoint>
+        setpointMap = new HashMap<>();
+
+    static {
+      // TODO: actually find values from py script and put them here
+      setpointMap.put(
+          Pair.of(WristevatorSetpoint.HOME, WristevatorSetpoint.HUMAN), WristevatorSetpoint.L1);
+    }
+
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(70.19675892636535);
 
