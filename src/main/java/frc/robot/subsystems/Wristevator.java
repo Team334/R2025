@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.WristevatorConstants.WristevatorSetpoint.HOME;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -62,8 +63,14 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
-  private WristevatorSetpoint _prevSetpoint;
-  private WristevatorSetpoint _nextSetpoint;
+  @Logged(name = "Previous Setpoint")
+  private WristevatorSetpoint _prevSetpoint = HOME;
+
+  @Logged(name = "Next Setpoint")
+  private WristevatorSetpoint _nextSetpoint = HOME;
+
+  @Logged(name = "Is Manual")
+  private boolean _isManual = false;
 
   private DIOSim _homeSwitchSim;
 
@@ -211,15 +218,29 @@ public class Wristevator extends AdvancedSubsystem {
         && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
   }
 
-  /** Updates the next setpoint variable given the previous setpoint variable and the goal. */
-  private void updateNextSetpoint(WristevatorSetpoint goal) {
+  /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
+  private void findNextSetpoint(WristevatorSetpoint goal) {
+    if (_isManual) {
+      // TODO
+      return;
+    }
+
     if (WristevatorConstants.setpointMap.containsKey(Pair.of(_prevSetpoint, goal))) {
       _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_prevSetpoint, goal));
       return;
     }
-    ;
 
     _nextSetpoint = goal;
+  }
+
+  /** Whether the wristevator is open for manual control or not. */
+  public boolean isManual() {
+    return _isManual;
+  }
+
+  /** Indicate switch to manual control. */
+  public Command switchToManual() {
+    return runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
@@ -228,13 +249,21 @@ public class Wristevator extends AdvancedSubsystem {
           // once the next setpoint is reached, re-find the next one
           if (atSetpoint(_nextSetpoint)) {
             _prevSetpoint = _nextSetpoint;
-            updateNextSetpoint(goal);
+            findNextSetpoint(goal);
           }
 
           // travel to next setpoint here with correct motion profiling
         })
-        .beforeStarting(() -> updateNextSetpoint(goal))
+        .beforeStarting(
+            () -> {
+              findNextSetpoint(goal);
+              _isManual = false;
+            })
         .until(() -> _prevSetpoint == goal) // prev = next = goal
+        .onlyIf(
+            () ->
+                _prevSetpoint
+                    == _nextSetpoint) // only move if the wristevator is at a vertex (not traveling)
         .withName("Set Goal");
   }
 

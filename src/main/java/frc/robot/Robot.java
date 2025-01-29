@@ -33,6 +33,7 @@ import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
 import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
@@ -172,6 +173,18 @@ public class Robot extends TimedRobot {
                 .negate()
                 .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
+
+    new Trigger(_wristevator::isManual)
+        .whileTrue(
+            _wristevator.setSpeeds(
+                InputStream.of(_operatorController::getRightY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
+                InputStream.of(_operatorController::getLeftY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
 
   private void configureDriverBindings() {
@@ -209,6 +222,8 @@ public class Robot extends TimedRobot {
                 () -> getCurrentPiece() == Piece.CORAL));
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
+
+    _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
     _operatorController
