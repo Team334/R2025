@@ -8,8 +8,8 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
-import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
@@ -92,6 +92,9 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
+  private WristevatorSetpoint _prevSetpoint;
+  private WristevatorSetpoint _nextSetpoint;
+
   private DIOSim _homeSwitchSim;
 
   private ElevatorSim _elevatorSim;
@@ -102,6 +105,32 @@ public class Wristevator extends AdvancedSubsystem {
   private Notifier _simNotifier;
 
   public Wristevator() {
+    var leftMotorConfigs = new TalonFXConfiguration();
+    var rightMotorConfigs = new TalonFXConfiguration();
+    var wristMotorConfigs = new TalonFXConfiguration();
+
+    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(VoltsPerRadianPerSecond);
+    leftMotorConfigs.Slot0.kA = WristevatorConstants.elevatorkA.in(VoltsPerRadianPerSecondSquared);
+
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+
+    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond);
+    wristMotorConfigs.Slot0.kA = WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared);
+
+    wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
+    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+
+    FaultLogger.register(_leftMotor);
+    FaultLogger.register(_rightMotor);
+    FaultLogger.register(_wristMotor);
+
+    _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
+
+    setDefaultCommand(setSpeeds(() -> 0, () -> 0));
+
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
 
@@ -130,30 +159,6 @@ public class Wristevator extends AdvancedSubsystem {
 
       startSimThread();
     }
-
-    var leftMotorConfigs = new TalonFXConfiguration();
-    var rightMotorConfigs = new TalonFXConfiguration();
-    var wristMotorConfigs = new TalonFXConfiguration();
-
-    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(VoltsPerRadianPerSecond);
-    leftMotorConfigs.Slot0.kA = WristevatorConstants.elevatorkA.in(VoltsPerRadianPerSecondSquared);
-
-    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
-
-    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond);
-    wristMotorConfigs.Slot0.kA = WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared);
-
-    wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
-
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
-    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
-
-    FaultLogger.register(_leftMotor);
-    FaultLogger.register(_rightMotor);
-    FaultLogger.register(_wristMotor);
-
-    _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
   }
 
   private void startSimThread() {
@@ -230,11 +235,31 @@ public class Wristevator extends AdvancedSubsystem {
     return _homeSwitch.get();
   }
 
-  /** Set the wristevator to a setpoint. */
-  public Command setSetpoint(WristevatorSetpoint setpoint) {
-    return run(() -> {})
-        .beforeStarting(() -> DogLog.log("Wristevator/Setpoint", setpoint.toString()))
-        .withName("Set Setpoint: " + setpoint.toString());
+  // whether the wristevator is near a setpoint
+  private boolean atSetpoint(WristevatorSetpoint setpoint) {
+    return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.01)
+        && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
+  }
+
+  /** Finds the next setpoint given the previous setpoint and the goal. */
+  private WristevatorSetpoint nextSetpoint(WristevatorSetpoint goal) {
+    return WristevatorSetpoint.HOME;
+  }
+
+  /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
+  public Command setGoal(WristevatorSetpoint goal) {
+    return run(() -> {
+          // once the next setpoint is reached, re-find the next one
+          if (atSetpoint(_nextSetpoint)) {
+            _prevSetpoint = _nextSetpoint;
+            _nextSetpoint = nextSetpoint(goal);
+          }
+
+          // travel to next setpoint here with correct motion profiling
+        })
+        .beforeStarting(() -> _nextSetpoint = nextSetpoint(goal))
+        .until(() -> _prevSetpoint == goal) // prev = next = goal
+        .withName("Set Goal");
   }
 
   /**
