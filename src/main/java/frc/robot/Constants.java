@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -196,6 +197,8 @@ public final class Constants {
 
     static {
       // TODO: actually find values and put them here
+      lowerAngleLimit.put(0.0, Units.degreesToRadians(-1));
+      upperAngleLimit.put(0.0, Units.degreesToRadians(1));
     }
 
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
