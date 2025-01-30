@@ -34,6 +34,7 @@ import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
+import frc.robot.Constants.WristevatorConstants.Intermediate;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
@@ -216,15 +217,37 @@ public class Wristevator extends AdvancedSubsystem {
         && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
   }
 
+  // distance between current position and supplied setpoint
+  private double distance(Setpoint b) {
+    var x1 = getHeight();
+    var x2 = b.getHeight().in(Meters);
+
+    var y1 = getAngle();
+    var y2 = b.getAngle().in(Radians);
+
+    return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+  }
+
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
   private void findNextSetpoint(Setpoint goal) {
     if (_isManual) {
-      // TODO
+      Intermediate closest = Intermediate.INFINITY;
+
+      // find the closest intermediate vertex
+      for (Intermediate intermediate : Intermediate.values()) {
+        if (distance(intermediate) < distance(closest)) {
+          closest = intermediate;
+        }
+      }
+
+      _nextSetpoint = closest;
+
       return;
     }
 
     if (WristevatorConstants.setpointMap.containsKey(Pair.of(_prevSetpoint, goal))) {
       _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_prevSetpoint, goal));
+
       return;
     }
 
