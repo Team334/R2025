@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
@@ -63,10 +64,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
-  @Logged(name = "Previous Setpoint")
   private Setpoint _prevSetpoint = HOME;
-
-  @Logged(name = "Next Setpoint")
   private Setpoint _nextSetpoint = HOME;
 
   @Logged(name = "Is Manual")
@@ -284,6 +282,9 @@ public class Wristevator extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+
+    DogLog.log("Wristevator/Previous Setpoint", _prevSetpoint.toString());
+    DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());
   }
 
   @Override
