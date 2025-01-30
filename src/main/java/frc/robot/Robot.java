@@ -7,7 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
-import static frc.robot.Constants.WristevatorConstants.WristevatorSetpoint.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;

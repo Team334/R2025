@@ -122,7 +122,16 @@ public final class Constants {
 
   public static class WristevatorConstants {
     /** Represents a setpoint for the wristevator. */
-    public static enum WristevatorSetpoint {
+    public static interface Setpoint {
+      /** The angle of the wrist. */
+      public Angle getAngle();
+
+      /** The height of the elevator. */
+      public Distance getHeight();
+    }
+
+    /** Wristevator presets. */
+    public static enum Preset implements Setpoint {
       HOME(Radians.of(0), Meters.of(0)),
       HUMAN(Radians.of(0), Meters.of(0)),
       PROCESSOR(Radians.of(0), Meters.of(0)),
@@ -138,27 +147,50 @@ public final class Constants {
       private final Angle _angle;
       private final Distance _height;
 
-      private WristevatorSetpoint(Angle angle, Distance height) {
+      private Preset(Angle angle, Distance height) {
         _angle = angle;
         _height = height;
       }
 
+      @Override
       public Angle getAngle() {
         return _angle;
       }
 
+      @Override
       public Distance getHeight() {
         return _height;
       }
     }
 
-    public static final HashMap<Pair<WristevatorSetpoint, WristevatorSetpoint>, WristevatorSetpoint>
-        setpointMap = new HashMap<>();
+    /** Wristevator intermediate setpoints. */
+    public static enum Intermediate implements Setpoint {
+      ;
+
+      private final Angle _angle;
+      private final Distance _height;
+
+      private Intermediate(Angle angle, Distance height) {
+        _angle = angle;
+        _height = height;
+      }
+
+      @Override
+      public Angle getAngle() {
+        return _angle;
+      }
+
+      @Override
+      public Distance getHeight() {
+        return _height;
+      }
+    }
+
+    public static final HashMap<Pair<Preset, Preset>, Preset> setpointMap = new HashMap<>();
 
     static {
       // TODO: actually find values from py script and put them here
-      setpointMap.put(
-          Pair.of(WristevatorSetpoint.HOME, WristevatorSetpoint.HUMAN), WristevatorSetpoint.L1);
+      setpointMap.put(Pair.of(Preset.HOME, Preset.HUMAN), Preset.L1);
     }
 
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);

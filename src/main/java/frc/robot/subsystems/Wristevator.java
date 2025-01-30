@@ -1,7 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.WristevatorConstants.WristevatorSetpoint.HOME;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -33,7 +33,7 @@ import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
-import frc.robot.Constants.WristevatorConstants.WristevatorSetpoint;
+import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
 
@@ -64,10 +64,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
   @Logged(name = "Previous Setpoint")
-  private WristevatorSetpoint _prevSetpoint = HOME;
+  private Setpoint _prevSetpoint = HOME;
 
   @Logged(name = "Next Setpoint")
-  private WristevatorSetpoint _nextSetpoint = HOME;
+  private Setpoint _nextSetpoint = HOME;
 
   @Logged(name = "Is Manual")
   private boolean _isManual = false;
@@ -213,13 +213,13 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   // whether the wristevator is near a setpoint
-  private boolean atSetpoint(WristevatorSetpoint setpoint) {
+  private boolean atSetpoint(Setpoint setpoint) {
     return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.01)
         && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
-  private void findNextSetpoint(WristevatorSetpoint goal) {
+  private void findNextSetpoint(Setpoint goal) {
     if (_isManual) {
       // TODO
       return;
@@ -244,7 +244,7 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
-  public Command setGoal(WristevatorSetpoint goal) {
+  public Command setGoal(Setpoint goal) {
     return run(() -> {
           // once the next setpoint is reached, re-find the next one
           if (atSetpoint(_nextSetpoint)) {
