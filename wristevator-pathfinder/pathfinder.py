@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import csv
 import math
 
-with open('wristevator-script/configuration_space.csv', 'r') as file:
+with open('wristevator-pathfinder/configuration_space.csv', 'r') as file:
     reader = csv.reader(file)
     
     verticies = {}
@@ -42,6 +42,7 @@ pair = input("Verticex pair to pathfind, enter as v1,v2: ").split(',')
 v1, v2 = tuple(pair)
 
 path = nx.shortest_path(G, source=v1, target=v2)
+
 length = sum([
     data['weight'] for v1, v2, data in G.edges(data=True)
     if v1 in path and v2 in path
