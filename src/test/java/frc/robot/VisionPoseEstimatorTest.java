@@ -72,7 +72,8 @@ public class VisionPoseEstimatorTest {
             0.2,
             0.0001,
             3,
-            7);
+            7,
+            10);
 
     _testCam = VisionPoseEstimator.buildFromConstants(testCam, getNtInst(), _fieldLayout);
 
