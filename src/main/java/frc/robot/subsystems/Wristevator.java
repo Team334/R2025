@@ -16,6 +16,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
@@ -217,6 +218,30 @@ public class Wristevator extends AdvancedSubsystem {
         && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
   }
 
+  // whether to stop upper / lower motion
+  private Pair<Boolean, Boolean> shouldStopMotion(
+      AngularVelocity elevatorSpeed, AngularVelocity wristSpeed) {
+    var heightVel =
+        elevatorSpeed.in(RotationsPerSecond) * WristevatorConstants.drumCircumference.in(Meters);
+    var angleVel = wristSpeed.in(RadiansPerSecond);
+
+    var nextHeight = getHeight() + heightVel * Robot.kDefaultPeriod;
+    var nextAngle = getAngle() + angleVel * Robot.kDefaultPeriod;
+
+    boolean stopLower = false;
+    boolean stopUpper = false;
+
+    if (nextAngle <= WristevatorConstants.lowerAngleLimit.get(nextHeight)) {
+      stopLower = true;
+    }
+
+    if (nextAngle >= WristevatorConstants.upperAngleLimit.get(nextHeight)) {
+      stopUpper = true;
+    }
+
+    return Pair.of(stopLower, stopUpper);
+  }
+
   // distance between current position and supplied setpoint
   private double distance(Setpoint b) {
     var x1 = getHeight();
@@ -305,6 +330,17 @@ public class Wristevator extends AdvancedSubsystem {
   @Override
   public void periodic() {
     super.periodic();
+
+    var enableLimits =
+        shouldStopMotion(
+            _elevatorVelocitySetter.getVelocityMeasure(),
+            _wristVelocitySetter.getVelocityMeasure());
+
+    _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+    _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+
+    _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
+    _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
 
     DogLog.log("Wristevator/Previous Setpoint", _prevSetpoint.toString());
     DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());

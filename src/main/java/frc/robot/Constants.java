@@ -12,6 +12,7 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -186,11 +187,15 @@ public final class Constants {
       }
     }
 
+    public static final InterpolatingDoubleTreeMap lowerAngleLimit =
+        new InterpolatingDoubleTreeMap();
+    public static final InterpolatingDoubleTreeMap upperAngleLimit =
+        new InterpolatingDoubleTreeMap();
+
     public static final HashMap<Pair<Preset, Preset>, Preset> setpointMap = new HashMap<>();
 
     static {
-      // TODO: actually find values from py script and put them here
-      setpointMap.put(Pair.of(Preset.HOME, Preset.HUMAN), Preset.L1);
+      // TODO: actually find values and put them here
     }
 
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
