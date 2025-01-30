@@ -58,11 +58,14 @@ public class Wristevator extends AdvancedSubsystem {
   private final TalonFX _wristMotor =
       new TalonFX(WristevatorConstants.wristMotorId, Constants.canivore);
 
-  StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
-  StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
+  private final StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
+  private final StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
 
-  private VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
-  private VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
+  private final StatusSignal<AngularVelocity> _elevatorVelocityGetter = _leftMotor.getVelocity();
+  private final StatusSignal<AngularVelocity> _wristVelocityGetter = _wristMotor.getVelocity();
+
+  private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
+  private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
@@ -333,8 +336,8 @@ public class Wristevator extends AdvancedSubsystem {
 
     var enableLimits =
         shouldStopMotion(
-            _elevatorVelocitySetter.getVelocityMeasure(),
-            _wristVelocitySetter.getVelocityMeasure());
+            _elevatorVelocityGetter.refresh().getValue(),
+            _wristVelocityGetter.refresh().getValue());
 
     _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
     _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
