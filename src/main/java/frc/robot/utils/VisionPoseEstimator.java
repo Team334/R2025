@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import frc.lib.FaultLogger;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
@@ -269,7 +270,7 @@ public class VisionPoseEstimator implements AutoCloseable {
     boolean isInAuton = DriverStation.isAutonomous();
 
     // If there is 1 tag and the Robot is in autonomous then use the trignometric method
-    if (tagAmount == 1 && isInAuton) {
+    if (tagAmount == 1 && (isInAuton || RobotBase.isSimulation())) {
       // https://www.chiefdelphi.com/uploads/default/optimized/3X/5/e/5e5c5d9e4297e8e6623a5b438004ed23f4a660c0_2_775x463.jpeg
       // Inspired by
       // https://www.chiefdelphi.com/t/frc-6328-mechanical-advantage-2025-build-thread/477314/84
@@ -283,15 +284,17 @@ public class VisionPoseEstimator implements AutoCloseable {
       // Get the adjacent side of the triangle in https://ibb.co/0jDvcsBK (diagram may be
       // inaccuarate - reviewers may delete this comment)
       double distanceFromCameraToTag = knownHeightDiff / Math.tan(cameraAngle);
-
       // Transform the tagPose by distanceFromRobotToTag in order to give an estimation of where the
       // robot is
       estimatedPose =
           new Pose3d(
-              estimatedPose.getTranslation().getX() - distanceFromCameraToTag,
+              estimatedPose.getTranslation().getX(),
               estimatedPose.getTranslation().getY(),
               distanceFromCameraToTag,
               estimatedPose.getRotation());
+      isValid = true;
+      return new VisionPoseEstimate(
+                estimatedPose, timestamp, ambiguity, detectedTags, avgTagDistance, stdDevs, isValid);
     }
     // ---- DISAMBIGUATE (if single-tag) ----
     // disambiguate poses using gyro measurement (only necessary for a single tag)
@@ -364,7 +367,6 @@ public class VisionPoseEstimator implements AutoCloseable {
       stdDevs[1] = yStdDevs;
       stdDevs[2] = thetaStdDevs;
     }
-
     return new VisionPoseEstimate(
         estimatedPose, timestamp, ambiguity, detectedTags, avgTagDistance, stdDevs, isValid);
   }
