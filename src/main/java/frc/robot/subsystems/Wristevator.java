@@ -109,7 +109,7 @@ public class Wristevator extends AdvancedSubsystem {
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
-    setDefaultCommand(setSpeeds(() -> 0, () -> 0));
+    setDefaultCommand(idle());
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
@@ -199,6 +199,17 @@ public class Wristevator extends AdvancedSubsystem {
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
+  @Logged(name = "Elevator Velocity")
+  public double getElevatorVelocity() {
+    return _elevatorVelocityGetter.refresh().getValue().in(RotationsPerSecond)
+        * WristevatorConstants.drumCircumference.in(Meters);
+  }
+
+  @Logged(name = "Wrist Velocity")
+  public double getWristVelocity() {
+    return _wristVelocityGetter.refresh().getValue().in(RadiansPerSecond);
+  }
+
   @Logged(name = "Height")
   public double getHeight() {
     return _heightGetter.refresh().getValue().in(Rotations)
@@ -215,6 +226,10 @@ public class Wristevator extends AdvancedSubsystem {
     return _homeSwitch.get();
   }
 
+  private Command idle() {
+    return setSpeeds(() -> 0, () -> 0).withName("Idle");
+  }
+
   // whether the wristevator is near a setpoint
   private boolean atSetpoint(Setpoint setpoint) {
     return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.01)
@@ -222,14 +237,10 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   // whether to stop upper / lower motion
-  private Pair<Boolean, Boolean> shouldStopMotion(
-      AngularVelocity elevatorSpeed, AngularVelocity wristSpeed) {
-    var heightVel =
-        elevatorSpeed.in(RotationsPerSecond) * WristevatorConstants.drumCircumference.in(Meters);
-    var angleVel = wristSpeed.in(RadiansPerSecond);
+  private Pair<Boolean, Boolean> shouldStopMotion(double elevatorSpeed, double wristSpeed) {
 
-    var nextHeight = getHeight() + heightVel * Robot.kDefaultPeriod;
-    var nextAngle = getAngle() + angleVel * Robot.kDefaultPeriod;
+    var nextHeight = getHeight() + elevatorSpeed * Robot.kDefaultPeriod;
+    var nextAngle = getAngle() + wristSpeed * Robot.kDefaultPeriod;
 
     boolean stopLower = false;
     boolean stopUpper = false;
@@ -258,7 +269,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
   private void findNextSetpoint(Setpoint goal) {
-    if (_isManual) {
+    // if we just came from manual or are in between verticies, go to an intermediate
+    if (_isManual || _prevSetpoint != _nextSetpoint) {
       Intermediate closest = Intermediate.INFINITY;
 
       // find the closest intermediate vertex
@@ -304,15 +316,17 @@ public class Wristevator extends AdvancedSubsystem {
           // travel to next setpoint here with correct motion profiling
         })
         .beforeStarting(
-            () -> {
-              findNextSetpoint(goal);
-              _isManual = false;
-            })
+            idle()
+                .until(
+                    () ->
+                        MathUtil.isNear(0, getElevatorVelocity(), 0.01)
+                            && MathUtil.isNear(0, getWristVelocity(), 0.01))
+                .andThen(
+                    () -> {
+                      findNextSetpoint(goal);
+                      _isManual = false;
+                    }))
         .until(() -> _prevSetpoint == goal) // prev = next = goal
-        .onlyIf(
-            () ->
-                _prevSetpoint
-                    == _nextSetpoint) // only move if the wristevator is at a vertex (not traveling)
         .withName("Set Goal");
   }
 
@@ -334,10 +348,7 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    var enableLimits =
-        shouldStopMotion(
-            _elevatorVelocityGetter.refresh().getValue(),
-            _wristVelocityGetter.refresh().getValue());
+    var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
 
     _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
     _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
