@@ -135,16 +135,16 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(0), Radians.of(0)),
-      HUMAN(Radians.of(0.1), Radians.of(2)),
-      PROCESSOR(Radians.of(0), Radians.of(0)),
+      HUMAN(Radians.of(1), Radians.of(20)),
+      PROCESSOR(Radians.of(-1), Radians.of(30)),
 
-      L1(Radians.of(2), Radians.of(5)),
-      L2(Radians.of(2), Radians.of(50)),
-      L3(Radians.of(0), Radians.of(0)),
-      L4(Radians.of(0), Radians.of(0)),
+      L1(Radians.of(-0.5), Radians.of(5)),
+      L2(Radians.of(-0.7), Radians.of(20)),
+      L3(Radians.of(-0.7), Radians.of(40)),
+      L4(Radians.of(-1), Radians.of(100)),
 
-      LOWER_ALGAE(Radians.of(0), Radians.of(0)),
-      UPPER_ALGAE(Radians.of(0), Radians.of(0));
+      LOWER_ALGAE(Radians.of(-1), Radians.of(50)),
+      UPPER_ALGAE(Radians.of(-1), Radians.of(60));
 
       private final Angle _angle;
       private final Angle _height;
@@ -167,7 +167,8 @@ public final class Constants {
 
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
-      INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE));
+      INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
+      I1(Radians.of(0), Radians.of(50));
 
       private final Angle _angle;
       private final Angle _height;
@@ -234,7 +235,7 @@ public final class Constants {
     // ka is the voltage necessary to accel the drum 1 rad/s^2 (lower since there are 2 motors, the
     // torque is doubled at a voltage)
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
-        VoltsPerRadianPerSecond.ofNative(0.170948063465262);
+        VoltsPerRadianPerSecond.ofNative(1.3);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
         VoltsPerRadianPerSecondSquared.ofNative(0);
 
@@ -242,7 +243,7 @@ public final class Constants {
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
-        VoltsPerRadianPerSecond.ofNative(0.8547403173263101);
+        VoltsPerRadianPerSecond.ofNative(5);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
         VoltsPerRadianPerSecondSquared.ofNative(0);
   }

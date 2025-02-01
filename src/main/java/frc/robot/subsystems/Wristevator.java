@@ -81,25 +81,13 @@ public class Wristevator extends AdvancedSubsystem {
           WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
           WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
 
-  private State _elevatorMaxState = new State(
-    0,
-    0
-  );
+  private State _elevatorMaxState = new State(0, 0);
 
-  private State _wristMaxState = new State(
-    0,
-    0
-  );
+  private State _wristMaxState = new State(0, 0);
 
-  private final State _elevatorMaxGoal = new State(
-    0,
-    0
-  );
+  private final State _elevatorMaxGoal = new State(0, 0);
 
-  private final State _wristMaxGoal = new State(
-    0,
-    0
-  );
+  private final State _wristMaxGoal = new State(0, 0);
 
   private final Constraints _wristMaxConstraints =
       new Constraints(
@@ -306,8 +294,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Whether the wristevator is near a setpoint. */
   private boolean atSetpoint(Setpoint setpoint) {
-    return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.01)
-        && MathUtil.isNear(setpoint.getHeight().in(Radians), getHeight(), 0.01);
+    return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.15)
+        && MathUtil.isNear(setpoint.getHeight().in(Radians), getHeight(), 3);
   }
 
   /** Whether to stop lower / upper motion. */
@@ -341,11 +329,9 @@ public class Wristevator extends AdvancedSubsystem {
     _elevatorMaxGoal.position = setpoint.getHeight().in(Radians);
     _wristMaxGoal.position = setpoint.getAngle().in(Radians);
 
-    _elevatorMaxProfile.calculate(
-        0, _elevatorMaxState, _elevatorMaxGoal);
+    _elevatorMaxProfile.calculate(0, _elevatorMaxState, _elevatorMaxGoal);
 
-    _wristMaxProfile.calculate(
-        0, _wristMaxState, _wristMaxGoal);
+    _wristMaxProfile.calculate(0, _wristMaxState, _wristMaxGoal);
 
     double elevatorTime = _elevatorMaxProfile.totalTime();
     double wristTime = _wristMaxProfile.totalTime();
@@ -371,10 +357,6 @@ public class Wristevator extends AdvancedSubsystem {
             ? _elevatorMaxConstraints.maxAcceleration
             : _wristMaxConstraints.maxAcceleration;
 
-    if (slowerProfile == _elevatorMaxProfile) {
-      System.out.println("GOOD");
-    }
-
     // find the acceleration and cruise times of the slower profile
     double slowerAccelTime = slowerVel / slowerAccel;
     double slowerCruiseTime = slowerProfile.totalTime() - 2 * slowerAccelTime;
@@ -398,22 +380,17 @@ public class Wristevator extends AdvancedSubsystem {
             ? new Constraints(adjustedVel, adjustedAccel)
             : _elevatorMaxConstraints;
 
-    // System.out.println(elevatorConstraints.equals(_elevatorMaxConstraints));
-
     var wristContraints =
         fasterProfile.equals(_wristMaxProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
             : _wristMaxConstraints;
 
     // re-assign profile constraints to motors
-    _heightSetter.Velocity = elevatorConstraints.maxVelocity;
-    _heightSetter.Acceleration = elevatorConstraints.maxAcceleration;
+    _heightSetter.Velocity = Units.radiansToRotations(elevatorConstraints.maxVelocity);
+    _heightSetter.Acceleration = Units.radiansToRotations(elevatorConstraints.maxAcceleration);
 
-    System.out.println(_heightSetter.Velocity);
-    System.out.println(_heightSetter.Acceleration);
-
-    _angleSetter.Velocity = wristContraints.maxVelocity;
-    _angleSetter.Acceleration = wristContraints.maxAcceleration;
+    _angleSetter.Velocity = Units.radiansToRotations(wristContraints.maxVelocity);
+    _angleSetter.Acceleration = Units.radiansToRotations(wristContraints.maxAcceleration);
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
@@ -457,17 +434,16 @@ public class Wristevator extends AdvancedSubsystem {
   public Command setGoal(Setpoint goal) {
     return run(() -> {
           // once the next setpoint is reached, re-find the next one
-          // if (atSetpoint(_nextSetpoint)) {
-          //   _prevSetpoint = _nextSetpoint;
+          if (atSetpoint(_nextSetpoint)) {
+            _prevSetpoint = _nextSetpoint;
 
-          //   findNextSetpoint(goal);
-          //   findProfileConstraints(_nextSetpoint);
-          // }
+            findNextSetpoint(goal);
+            findProfileConstraints(_nextSetpoint);
+          }
 
           // travel to next setpoint
-          // System.out.println(_nextSetpoint.getHeight().in(Radians));
-          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight().in(Radians)));
-          // _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
+          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
+          _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
         })
         .beforeStarting(
             idle()
@@ -512,13 +488,24 @@ public class Wristevator extends AdvancedSubsystem {
     // _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
     // _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
 
-    DogLog.log("Wristevator/Desired Elevator Speed", _leftMotor.getClosedLoopReferenceSlope().getValueAsDouble());
-    DogLog.log("Wristevator/Desired Wrist Speed", _wristMotor.getClosedLoopReferenceSlope().getValueAsDouble());
+    _elevatorMaxState =
+        _elevatorMaxProfile.calculate(Robot.kDefaultPeriod, _elevatorMaxState, _elevatorMaxGoal);
+    _wristMaxState =
+        _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxState, _wristMaxGoal);
 
-    System.out.println(_leftMotor.getClosedLoopReference().getValue());
+    DogLog.log(
+        "Wristevator/Desired Elevator Speed",
+        Units.rotationsToRadians(_leftMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
+    DogLog.log(
+        "Wristevator/Desired Wrist Speed",
+        Units.rotationsToRadians(_wristMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
 
-    _elevatorMaxState = _elevatorMaxProfile.calculate(Robot.kDefaultPeriod, _elevatorMaxState, _elevatorMaxGoal);
-    _wristMaxState = _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxState, _wristMaxGoal);
+    DogLog.log(
+        "Wristevator/Desired Elevator Height",
+        Units.rotationsToRadians(_leftMotor.getClosedLoopReference().getValueAsDouble()));
+    DogLog.log(
+        "Wristevator/Desired Wrist Angle",
+        Units.rotationsToRadians(_wristMotor.getClosedLoopReference().getValueAsDouble()));
 
     DogLog.log("Wristevator/Non-Adjusted Desired Elevator Speed", _elevatorMaxState.velocity);
     DogLog.log("Wristevator/Non-Adjusted Desired Wrist Speed", _wristMaxState.velocity);
@@ -533,7 +520,8 @@ public class Wristevator extends AdvancedSubsystem {
   public void simulationPeriodic() {
     _homeSwitchSim.setValue(getHeight() == 0);
 
-    _elevator.setLength(Units.radiansToRotations(getHeight()) * WristevatorConstants.drumCircumference.in(Meters));
+    _elevator.setLength(
+        Units.radiansToRotations(getHeight()) * WristevatorConstants.drumCircumference.in(Meters));
     _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
 
     SmartDashboard.putData("Wristevator Visualizer", _mech);
