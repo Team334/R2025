@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -427,7 +428,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Indicate switch to manual control. */
   public Command switchToManual() {
-    return runOnce(() -> _isManual = true).withName("Switch To Manual");
+    return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
@@ -458,7 +459,7 @@ public class Wristevator extends AdvancedSubsystem {
 
                       _isManual = false;
                     }))
-        .until(() -> _prevSetpoint == goal) // prev = next = goal
+        .until(() -> atSetpoint(goal))
         .withName("Set Goal");
   }
 

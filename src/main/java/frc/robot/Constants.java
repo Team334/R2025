@@ -141,7 +141,7 @@ public final class Constants {
       L1(Radians.of(-0.5), Radians.of(5)),
       L2(Radians.of(-0.7), Radians.of(20)),
       L3(Radians.of(-0.7), Radians.of(40)),
-      L4(Radians.of(-1), Radians.of(100)),
+      L4(Radians.of(-1), Radians.of(90)),
 
       LOWER_ALGAE(Radians.of(-1), Radians.of(50)),
       UPPER_ALGAE(Radians.of(-1), Radians.of(60));

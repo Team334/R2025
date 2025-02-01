@@ -175,7 +175,7 @@ public class Robot extends TimedRobot {
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     new Trigger(_wristevator::isManual)
-        .whileTrue(
+        .onTrue(
             _wristevator.setSpeeds(
                 InputStream.of(_operatorController::getRightY)
                     .deadband(0.05, 1)
