@@ -14,6 +14,7 @@ import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
@@ -40,6 +41,7 @@ import frc.lib.FaultLogger;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Constants.WristevatorConstants.Intermediate;
+import frc.robot.Constants.WristevatorConstants.Preset;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
@@ -129,6 +131,26 @@ public class Wristevator extends AdvancedSubsystem {
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
     setDefaultCommand(idle());
+
+    Translation2d[] presets = new Translation2d[Preset.values().length];
+    Translation2d[] intermediates = new Translation2d[Intermediate.values().length];
+
+    for (int i = 0; i < Preset.values().length; i++) {
+      presets[i] =
+          new Translation2d(
+              Preset.values()[i].getHeight().in(Radians),
+              Preset.values()[i].getAngle().in(Radians));
+    }
+
+    for (int i = 0; i < Intermediate.values().length; i++) {
+      intermediates[i] =
+          new Translation2d(
+              Intermediate.values()[i].getHeight().in(Radians),
+              Intermediate.values()[i].getAngle().in(Radians));
+    }
+
+    DogLog.log("Wristevator/Presets", presets);
+    DogLog.log("Wristevator/Intermediates", intermediates);
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
@@ -300,14 +322,26 @@ public class Wristevator extends AdvancedSubsystem {
     TrapezoidProfile slowerProfile =
         fasterProfile.equals(_elevatorMaxProfile) ? _wristMaxProfile : _elevatorMaxProfile;
 
+    if (slowerProfile == _elevatorMaxProfile) {
+      System.out.println("GOOD");
+    }
+
     double fasterDistance =
         fasterProfile.equals(_elevatorMaxProfile)
             ? setpoint.getHeight().in(Radians) - getHeight()
             : setpoint.getAngle().in(Radians) - getAngle();
 
+    // System.out.println(fasterDistance);
+
     // slower profile cruise velocity and acceleration
-    double slowerVel = slowerProfile.equals(_elevatorMaxProfile) ? 0 : 0;
-    double slowerAccel = slowerProfile.equals(_elevatorMaxProfile) ? 0 : 0;
+    double slowerVel =
+        slowerProfile.equals(_elevatorMaxProfile)
+            ? WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)
+            : WristevatorConstants.maxWristSpeed.in(RadiansPerSecond);
+    double slowerAccel =
+        slowerProfile.equals(_elevatorMaxProfile)
+            ? WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond)
+            : WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond);
 
     // find the acceleration and cruise times of the slower profile
     double slowerAccelTime = slowerVel / slowerAccel;
@@ -327,21 +361,36 @@ public class Wristevator extends AdvancedSubsystem {
             / (slowerAccel / slowerVel * Math.pow(slowerAccelTime, 2) + slowerCruiseTime);
     double adjustedAccel = adjustedVel / slowerAccelTime;
 
+    System.out.println(adjustedVel);
+    System.out.println(adjustedAccel);
+
     var elevatorConstraints =
         fasterProfile.equals(_elevatorMaxProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
-            : new Constraints(0, 0);
+            : new Constraints(
+                WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
+                WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
     var wristContraints =
         fasterProfile.equals(_wristMaxProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
-            : new Constraints(0, 0);
+            : new Constraints(
+                WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
+                WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond));
+
+    // System.out.println(elevatorConstraints.maxVelocity);
 
     // re-assign profile constraints to motors
     _heightSetter.Velocity = elevatorConstraints.maxVelocity;
     _heightSetter.Acceleration = elevatorConstraints.maxAcceleration;
 
-    _angleSetter.Velocity = wristContraints.maxVelocity;
-    _angleSetter.Acceleration = wristContraints.maxAcceleration;
+    _angleSetter.Velocity = adjustedVel;
+    _angleSetter.Acceleration = adjustedAccel;
+
+    // _heightSetter.Velocity = 70.19675892636535;
+    // _heightSetter.Acceleration = 20;
+
+    // _angleSetter.Velocity = 14;
+    // _angleSetter.Acceleration = 20;
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
@@ -393,8 +442,8 @@ public class Wristevator extends AdvancedSubsystem {
           }
 
           // travel to next setpoint
-          _heightSetter.withPosition(_nextSetpoint.getHeight().in(Radians));
-          _angleSetter.withPosition(_nextSetpoint.getAngle());
+          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight().in(Radians)));
+          _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
         })
         .beforeStarting(
             idle()
@@ -433,14 +482,16 @@ public class Wristevator extends AdvancedSubsystem {
 
     var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
 
-    _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
-    _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+    // _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+    // _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
 
-    _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
-    _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
+    // _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
+    // _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
 
     DogLog.log("Wristevator/Previous Setpoint", _prevSetpoint.toString());
     DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());
+
+    DogLog.log("Wristevator/Position", new Translation2d(getHeight(), getAngle()));
   }
 
   @Override

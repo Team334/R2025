@@ -135,10 +135,10 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(0), Radians.of(0)),
-      HUMAN(Radians.of(0), Radians.of(0)),
+      HUMAN(Radians.of(0.1), Radians.of(2)),
       PROCESSOR(Radians.of(0), Radians.of(0)),
 
-      L1(Radians.of(0), Radians.of(0)),
+      L1(Radians.of(2), Radians.of(2)),
       L2(Radians.of(0), Radians.of(0)),
       L3(Radians.of(0), Radians.of(0)),
       L4(Radians.of(0), Radians.of(0)),
@@ -204,9 +204,9 @@ public final class Constants {
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(70.19675892636535);
 
-    public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(1);
+    public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(20);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RadiansPerSecondPerSecond.of(1);
+        RadiansPerSecondPerSecond.of(90);
 
     public static final int homeSwitch = 0;
 
