@@ -268,7 +268,7 @@ public final class Constants {
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
-        VoltsPerRadianPerSecond.ofNative(0.018994229273918);
+        VoltsPerRadianPerSecond.ofNative(1);
     public static final double flywheelGearRatio = 1;
 
     public static final double holdAlgaeVoltage = 0; // need to find

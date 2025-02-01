@@ -7,6 +7,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -71,7 +72,7 @@ public class Serializer extends AdvancedSubsystem {
   private Command setSpeed(double speed) {
     return run(
         () -> {
-          _feedMotor.setControl(_feedVelocitySetter.withVelocity(speed));
+          _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
         });
   }
 

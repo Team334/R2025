@@ -13,6 +13,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -164,7 +165,7 @@ public class Manipulator extends AdvancedSubsystem {
   private Command setSpeed(double speed) {
     return run(
         () -> {
-          _leftMotor.setControl(_feedVelocitySetter.withVelocity(speed));
+          _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
         });
   }
 

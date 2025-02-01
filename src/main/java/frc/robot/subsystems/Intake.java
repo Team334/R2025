@@ -151,8 +151,10 @@ public class Intake extends AdvancedSubsystem {
   private Command set(double actuatorAngle, double feedSpeed) {
     return run(
         () -> {
-          _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(actuatorAngle));
-          _feedMotor.setControl(_feedVelocitySetter.withVelocity(feedSpeed));
+          _actuatorMotor.setControl(
+              _actuatorPositionSetter.withPosition(Units.radiansToRotations(actuatorAngle)));
+          _feedMotor.setControl(
+              _feedVelocitySetter.withVelocity(Units.radiansToRotations(feedSpeed)));
         });
   }
 
