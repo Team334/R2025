@@ -300,24 +300,28 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   /** Whether to stop lower / upper motion. */
-  // TODO: FIX
-  // private Pair<Boolean, Boolean> shouldStopMotion(double elevatorSpeed, double wristSpeed) {
-  //   var nextHeight = getHeight() + elevatorSpeed * Robot.kDefaultPeriod;
-  //   var nextAngle = getAngle() + wristSpeed * Robot.kDefaultPeriod;
+  private Pair<Boolean, Boolean> shouldStopMotion(double elevatorSpeed, double wristSpeed) {
+    var nextHeight = getHeight() + elevatorSpeed * Robot.kDefaultPeriod;
+    var nextAngle = getAngle() + wristSpeed * Robot.kDefaultPeriod;
 
-  //   boolean stopLower = false;
-  //   boolean stopUpper = false;
+    boolean stopLower = false;
+    boolean stopUpper = false;
 
-  //   if (nextAngle <= WristevatorConstants.lowerAngleLimit.get(nextHeight)) {
-  //     stopLower = true;
-  //   }
+    DogLog.log(
+        "Wristevator/Next Lower Angle Limit", WristevatorConstants.lowerAngleLimit.get(nextHeight));
+    DogLog.log(
+        "Wristevator/Next Upper Angle Limit", WristevatorConstants.upperAngleLimit.get(nextHeight));
 
-  //   if (nextAngle >= WristevatorConstants.upperAngleLimit.get(nextHeight)) {
-  //     stopUpper = true;
-  //   }
+    if (nextAngle <= WristevatorConstants.lowerAngleLimit.get(nextHeight)) {
+      stopLower = true;
+    }
 
-  //   return Pair.of(stopLower, stopUpper);
-  // }
+    if (nextAngle >= WristevatorConstants.upperAngleLimit.get(nextHeight)) {
+      stopUpper = true;
+    }
+
+    return Pair.of(stopLower, stopUpper);
+  }
 
   /** Find new constraints for the motion magic control requests. */
   private void findProfileConstraints(Setpoint setpoint) {
@@ -481,13 +485,13 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    // var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
+    var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
 
-    // _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
-    // _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+    _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
+    _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
 
-    // _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
-    // _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
+    _elevatorVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
+    _wristVelocitySetter.LimitForwardMotion = enableLimits.getSecond();
 
     _elevatorMaxState =
         _elevatorMaxProfile.calculate(Robot.kDefaultPeriod, _elevatorMaxState, _elevatorMaxGoal);

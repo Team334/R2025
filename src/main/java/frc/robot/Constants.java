@@ -200,6 +200,9 @@ public final class Constants {
       // TODO: actually find values and put them here
       lowerAngleLimit.put(0.0, Units.degreesToRadians(-1));
       upperAngleLimit.put(0.0, Units.degreesToRadians(1));
+
+      lowerAngleLimit.put(15.5, Units.degreesToRadians(-90));
+      upperAngleLimit.put(15.5, Units.degreesToRadians(90));
     }
 
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
