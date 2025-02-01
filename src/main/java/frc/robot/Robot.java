@@ -203,7 +203,7 @@ public class Robot extends TimedRobot {
     _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
     _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
 
-    _operatorController.a().onTrue(_wristevator.setGoal(L1));
+    _operatorController.a().onTrue(_wristevator.setGoal(L2));
 
     _operatorController
         .b()

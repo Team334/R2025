@@ -138,8 +138,8 @@ public final class Constants {
       HUMAN(Radians.of(0.1), Radians.of(2)),
       PROCESSOR(Radians.of(0), Radians.of(0)),
 
-      L1(Radians.of(2), Radians.of(2)),
-      L2(Radians.of(0), Radians.of(0)),
+      L1(Radians.of(2), Radians.of(5)),
+      L2(Radians.of(2), Radians.of(50)),
       L3(Radians.of(0), Radians.of(0)),
       L4(Radians.of(0), Radians.of(0)),
 
@@ -220,12 +220,12 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(1);
+    public static final Angle maxElevatorHeight = Radians.of(1000);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-Math.PI / 3);
-    public static final Angle maxWristAngle = Radians.of(Math.PI / 3);
+    public static final Angle minWristAngle = Radians.of(-10000);
+    public static final Angle maxWristAngle = Radians.of(10000);
 
     public static final double wristGearRatio = 45;
 
@@ -236,7 +236,7 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
         VoltsPerRadianPerSecond.ofNative(0.170948063465262);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
-        VoltsPerRadianPerSecondSquared.ofNative(0.01);
+        VoltsPerRadianPerSecondSquared.ofNative(0);
 
     // wrist feedforward for the pivot (after the gear ratio)
     // kv is the voltage necessary to spin the pivot 1 rad/s
@@ -244,7 +244,7 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
         VoltsPerRadianPerSecond.ofNative(0.8547403173263101);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
-        VoltsPerRadianPerSecondSquared.ofNative(0.01);
+        VoltsPerRadianPerSecondSquared.ofNative(0);
   }
 
   public static class SerializerConstants {
