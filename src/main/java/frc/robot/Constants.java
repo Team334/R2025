@@ -128,28 +128,28 @@ public final class Constants {
       /** The angle of the wrist. */
       public Angle getAngle();
 
-      /** The height of the elevator. */
-      public Distance getHeight();
+      /** The angle turned of the elevator drum. */
+      public Angle getHeight();
     }
 
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
-      HOME(Radians.of(0), Meters.of(0)),
-      HUMAN(Radians.of(0), Meters.of(0)),
-      PROCESSOR(Radians.of(0), Meters.of(0)),
+      HOME(Radians.of(0), Radians.of(0)),
+      HUMAN(Radians.of(0), Radians.of(0)),
+      PROCESSOR(Radians.of(0), Radians.of(0)),
 
-      L1(Radians.of(0), Meters.of(0)),
-      L2(Radians.of(0), Meters.of(0)),
-      L3(Radians.of(0), Meters.of(0)),
-      L4(Radians.of(0), Meters.of(0)),
+      L1(Radians.of(0), Radians.of(0)),
+      L2(Radians.of(0), Radians.of(0)),
+      L3(Radians.of(0), Radians.of(0)),
+      L4(Radians.of(0), Radians.of(0)),
 
-      LOWER_ALGAE(Radians.of(0), Meters.of(0)),
-      UPPER_ALGAE(Radians.of(0), Meters.of(0));
+      LOWER_ALGAE(Radians.of(0), Radians.of(0)),
+      UPPER_ALGAE(Radians.of(0), Radians.of(0));
 
       private final Angle _angle;
-      private final Distance _height;
+      private final Angle _height;
 
-      private Preset(Angle angle, Distance height) {
+      private Preset(Angle angle, Angle height) {
         _angle = angle;
         _height = height;
       }
@@ -160,19 +160,19 @@ public final class Constants {
       }
 
       @Override
-      public Distance getHeight() {
+      public Angle getHeight() {
         return _height;
       }
     }
 
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
-      INFINITY(Radians.of(Integer.MAX_VALUE), Meters.of(Integer.MAX_VALUE));
+      INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE));
 
       private final Angle _angle;
-      private final Distance _height;
+      private final Angle _height;
 
-      private Intermediate(Angle angle, Distance height) {
+      private Intermediate(Angle angle, Angle height) {
         _angle = angle;
         _height = height;
       }
@@ -183,7 +183,7 @@ public final class Constants {
       }
 
       @Override
-      public Distance getHeight() {
+      public Angle getHeight() {
         return _height;
       }
     }
@@ -205,7 +205,8 @@ public final class Constants {
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(70.19675892636535);
 
     public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(1);
-    public static final AngularAcceleration maxElevatorAcceleration = RadiansPerSecondPerSecond.of(1);
+    public static final AngularAcceleration maxElevatorAcceleration =
+        RadiansPerSecondPerSecond.of(1);
 
     public static final int homeSwitch = 0;
 
@@ -218,8 +219,8 @@ public final class Constants {
     public static final Distance drumRadius = Inches.of(1.504 / 2);
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
-    public static final Distance minElevatorHeight = Meters.of(0);
-    public static final Distance maxElevatorHeight = Meters.of(1);
+    public static final Angle minElevatorHeight = Radians.of(0);
+    public static final Angle maxElevatorHeight = Radians.of(1);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 

@@ -74,15 +74,17 @@ public class Wristevator extends AdvancedSubsystem {
   private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
-  private final TrapezoidProfile _elevatorMaxProfile = new TrapezoidProfile(new Constraints(
-    WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
-    WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond)
-  ));
+  private final TrapezoidProfile _elevatorMaxProfile =
+      new TrapezoidProfile(
+          new Constraints(
+              WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
+              WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond)));
 
-  private final TrapezoidProfile _wristMaxProfile = new TrapezoidProfile(new Constraints(
-    WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
-    WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond)
-  ));
+  private final TrapezoidProfile _wristMaxProfile =
+      new TrapezoidProfile(
+          new Constraints(
+              WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
+              WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond)));
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
@@ -138,7 +140,8 @@ public class Wristevator extends AdvancedSubsystem {
               Units.lbsToKilograms(9.398),
               WristevatorConstants.drumRadius.in(Meters),
               0,
-              WristevatorConstants.maxElevatorHeight.in(Meters),
+              WristevatorConstants.maxElevatorHeight.in(Radians)
+                  * WristevatorConstants.drumCircumference.in(Meters),
               false,
               0);
 
@@ -218,8 +221,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Elevator Velocity")
   public double getElevatorVelocity() {
-    return _elevatorVelocityGetter.refresh().getValue().in(RotationsPerSecond)
-        * WristevatorConstants.drumCircumference.in(Meters);
+    return _elevatorVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
   @Logged(name = "Wrist Velocity")
@@ -229,8 +231,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Height")
   public double getHeight() {
-    return _heightGetter.refresh().getValue().in(Rotations)
-        * WristevatorConstants.drumCircumference.in(Meters);
+    return _heightGetter.refresh().getValue().in(Radians);
   }
 
   @Logged(name = "Angle")
@@ -250,7 +251,7 @@ public class Wristevator extends AdvancedSubsystem {
   // distance between current position and supplied setpoint
   private double distance(Setpoint b) {
     var x1 = getHeight();
-    var x2 = b.getHeight().in(Meters);
+    var x2 = b.getHeight().in(Radians);
 
     var y1 = getAngle();
     var y2 = b.getAngle().in(Radians);
@@ -261,7 +262,7 @@ public class Wristevator extends AdvancedSubsystem {
   /** Whether the wristevator is near a setpoint. */
   private boolean atSetpoint(Setpoint setpoint) {
     return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.01)
-        && MathUtil.isNear(setpoint.getHeight().in(Meters), getHeight(), 0.01);
+        && MathUtil.isNear(setpoint.getHeight().in(Radians), getHeight(), 0.01);
   }
 
   /** Whether to stop lower / upper motion. */
@@ -285,11 +286,9 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Find new constraints for the motion magic control requests. */
   private void findProfileConstraints(Setpoint setpoint) {
-    double heightRadians = Units.rotationsToRadians(getHeight() / WristevatorConstants.drumCircumference.in(Meters));
-    double setpointHeightRadians = Units.rotationsToRadians(setpoint.getHeight().in(Meters) / WristevatorConstants.drumCircumference.in(Meters))
-
     _elevatorMaxProfile.calculate(
-        0, new State(heightRadians, 0), new State(setpoint, 0));
+        0, new State(getHeight(), 0), new State(setpoint.getAngle().in(Radians), 0));
+
     _wristMaxProfile.calculate(
         0, new State(getAngle(), 0), new State(setpoint.getAngle().in(Radians), 0));
 
@@ -303,7 +302,7 @@ public class Wristevator extends AdvancedSubsystem {
 
     double fasterDistance =
         fasterProfile.equals(_elevatorMaxProfile)
-            ? setpoint.getHeight().in(Meters) - getHeight()
+            ? setpoint.getHeight().in(Radians) - getHeight()
             : setpoint.getAngle().in(Radians) - getAngle();
 
     // slower profile cruise velocity and acceleration
@@ -394,9 +393,7 @@ public class Wristevator extends AdvancedSubsystem {
           }
 
           // travel to next setpoint
-          _heightSetter.withPosition(
-              _nextSetpoint.getHeight().in(Meters)
-                  / WristevatorConstants.drumCircumference.in(Meters));
+          _heightSetter.withPosition(_nextSetpoint.getHeight().in(Radians));
           _angleSetter.withPosition(_nextSetpoint.getAngle());
         })
         .beforeStarting(
