@@ -7,7 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
-import static frc.robot.subsystems.Wristevator.WristevatorSetpoint.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -174,16 +174,17 @@ public class Robot extends TimedRobot {
                 .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
-    _wristevator.setDefaultCommand(
-        _wristevator.setSpeeds(
-            InputStream.of(_operatorController::getRightY)
-                .deadband(0.05, 1)
-                .negate()
-                .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
-            InputStream.of(_operatorController::getLeftY)
-                .deadband(0.05, 1)
-                .negate()
-                .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+    new Trigger(_wristevator::isManual)
+        .onTrue(
+            _wristevator.setSpeeds(
+                InputStream.of(_operatorController::getRightY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
+                InputStream.of(_operatorController::getLeftY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
 
   private void configureDriverBindings() {
@@ -198,29 +199,31 @@ public class Robot extends TimedRobot {
 
   private void configureOperatorBindings() {
     // wristevator setpoint control
-    _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
-    _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
-    _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
+    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
+    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
 
-    _operatorController.a().whileTrue(_wristevator.setSetpoint(L1));
+    _operatorController.a().onTrue(_wristevator.setGoal(L1));
 
     _operatorController
         .b()
-        .whileTrue(
+        .onTrue(
             either(
-                _wristevator.setSetpoint(L2),
-                _wristevator.setSetpoint(LOWER_ALGAE),
+                _wristevator.setGoal(L2),
+                _wristevator.setGoal(LOWER_ALGAE),
                 () -> getCurrentPiece() == Piece.CORAL));
 
     _operatorController
         .y()
-        .whileTrue(
+        .onTrue(
             either(
-                _wristevator.setSetpoint(L3),
-                _wristevator.setSetpoint(UPPER_ALGAE),
+                _wristevator.setGoal(L3),
+                _wristevator.setGoal(UPPER_ALGAE),
                 () -> getCurrentPiece() == Piece.CORAL));
 
-    _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
+    _operatorController.x().onTrue(_wristevator.setGoal(L4));
+
+    _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
     _operatorController

@@ -8,9 +8,12 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -24,6 +27,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import frc.robot.generated.TunerConstants;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
+import java.util.HashMap;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -119,8 +123,94 @@ public final class Constants {
   }
 
   public static class WristevatorConstants {
+    /** Represents a setpoint for the wristevator. */
+    public static interface Setpoint {
+      /** The angle of the wrist. */
+      public Angle getAngle();
+
+      /** The angle turned of the elevator drum. */
+      public Angle getHeight();
+    }
+
+    /** Wristevator presets. */
+    public static enum Preset implements Setpoint {
+      HOME(Radians.of(0), Radians.of(0)),
+      HUMAN(Radians.of(1), Radians.of(20)),
+      PROCESSOR(Radians.of(-1), Radians.of(30)),
+
+      L1(Radians.of(-0.5), Radians.of(5)),
+      L2(Radians.of(-0.7), Radians.of(20)),
+      L3(Radians.of(-0.7), Radians.of(40)),
+      L4(Radians.of(-1), Radians.of(90)),
+
+      LOWER_ALGAE(Radians.of(-1), Radians.of(50)),
+      UPPER_ALGAE(Radians.of(-1), Radians.of(60));
+
+      private final Angle _angle;
+      private final Angle _height;
+
+      private Preset(Angle angle, Angle height) {
+        _angle = angle;
+        _height = height;
+      }
+
+      @Override
+      public Angle getAngle() {
+        return _angle;
+      }
+
+      @Override
+      public Angle getHeight() {
+        return _height;
+      }
+    }
+
+    /** Wristevator intermediate setpoints. */
+    public static enum Intermediate implements Setpoint {
+      INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
+      I1(Radians.of(0), Radians.of(50));
+
+      private final Angle _angle;
+      private final Angle _height;
+
+      private Intermediate(Angle angle, Angle height) {
+        _angle = angle;
+        _height = height;
+      }
+
+      @Override
+      public Angle getAngle() {
+        return _angle;
+      }
+
+      @Override
+      public Angle getHeight() {
+        return _height;
+      }
+    }
+
+    public static final InterpolatingDoubleTreeMap lowerAngleLimit =
+        new InterpolatingDoubleTreeMap();
+    public static final InterpolatingDoubleTreeMap upperAngleLimit =
+        new InterpolatingDoubleTreeMap();
+
+    public static final HashMap<Pair<Preset, Preset>, Preset> setpointMap = new HashMap<>();
+
+    static {
+      // TODO: actually find values and put them here
+      lowerAngleLimit.put(0.0, Units.degreesToRadians(-1));
+      upperAngleLimit.put(0.0, Units.degreesToRadians(1));
+
+      lowerAngleLimit.put(15.5, Units.degreesToRadians(-90));
+      upperAngleLimit.put(15.5, Units.degreesToRadians(90));
+    }
+
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(70.19675892636535);
+
+    public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(20);
+    public static final AngularAcceleration maxElevatorAcceleration =
+        RadiansPerSecondPerSecond.of(90);
 
     public static final int homeSwitch = 0;
 
@@ -133,13 +223,13 @@ public final class Constants {
     public static final Distance drumRadius = Inches.of(1.504 / 2);
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
-    public static final Distance minElevatorHeight = Meters.of(0);
-    public static final Distance maxElevatorHeight = Meters.of(1);
+    public static final Angle minElevatorHeight = Radians.of(0);
+    public static final Angle maxElevatorHeight = Radians.of(100);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-Math.PI / 3);
-    public static final Angle maxWristAngle = Radians.of(Math.PI / 3);
+    public static final Angle minWristAngle = Radians.of(-Math.PI / 2);
+    public static final Angle maxWristAngle = Radians.of(Math.PI / 2);
 
     public static final double wristGearRatio = 45;
 
@@ -148,17 +238,17 @@ public final class Constants {
     // ka is the voltage necessary to accel the drum 1 rad/s^2 (lower since there are 2 motors, the
     // torque is doubled at a voltage)
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
-        VoltsPerRadianPerSecond.ofNative(0.170948063465262);
+        VoltsPerRadianPerSecond.ofNative(1.3);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
-        VoltsPerRadianPerSecondSquared.ofNative(0.01);
+        VoltsPerRadianPerSecondSquared.ofNative(0);
 
     // wrist feedforward for the pivot (after the gear ratio)
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
-        VoltsPerRadianPerSecond.ofNative(0.8547403173263101);
+        VoltsPerRadianPerSecond.ofNative(5);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
-        VoltsPerRadianPerSecondSquared.ofNative(0.01);
+        VoltsPerRadianPerSecondSquared.ofNative(0);
   }
 
   public static class SerializerConstants {
