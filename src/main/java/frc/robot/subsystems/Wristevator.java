@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
@@ -22,6 +23,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
@@ -36,6 +38,7 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -45,6 +48,7 @@ import frc.robot.Constants.WristevatorConstants.Intermediate;
 import frc.robot.Constants.WristevatorConstants.Preset;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
+import frc.robot.utils.SysId;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -76,6 +80,21 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
+
+  private final VoltageOut _elevatorVoltageSetter = new VoltageOut(0);
+  private final VoltageOut _wristVoltageSetter = new VoltageOut(0);
+
+  private final SysIdRoutine _elevatorRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
+
+  private final SysIdRoutine _wristRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
 
   private final Constraints _elevatorMaxConstraints =
       new Constraints(
@@ -163,6 +182,9 @@ public class Wristevator extends AdvancedSubsystem {
 
     DogLog.log("Wristevator/Presets", presets);
     DogLog.log("Wristevator/Intermediates", intermediates);
+
+    SysId.displayRoutine("Elevator", _elevatorRoutine);
+    SysId.displayRoutine("Wrist", _wristRoutine);
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
@@ -433,6 +455,14 @@ public class Wristevator extends AdvancedSubsystem {
   /** Indicate switch to manual control. */
   public Command switchToManual() {
     return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
+  }
+
+  private void setElevatorVoltage(double volts) {
+    _leftMotor.setControl(_elevatorVoltageSetter.withOutput(volts));
+  }
+
+  private void setWristVoltage(double volts) {
+    _leftMotor.setControl(_wristVoltageSetter.withOutput(volts));
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
