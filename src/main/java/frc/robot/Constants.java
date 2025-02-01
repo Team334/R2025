@@ -224,12 +224,12 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(1000);
+    public static final Angle maxElevatorHeight = Radians.of(100);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-10000);
-    public static final Angle maxWristAngle = Radians.of(10000);
+    public static final Angle minWristAngle = Radians.of(-Math.PI / 2);
+    public static final Angle maxWristAngle = Radians.of(Math.PI / 2);
 
     public static final double wristGearRatio = 45;
 

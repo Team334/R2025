@@ -475,8 +475,12 @@ public class Wristevator extends AdvancedSubsystem {
    */
   public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
     return run(() -> {
-          _leftMotor.setControl(_elevatorVelocitySetter.withVelocity(elevatorSpeed.getAsDouble()));
-          _wristMotor.setControl(_wristVelocitySetter.withVelocity(wristSpeed.getAsDouble()));
+          _leftMotor.setControl(
+              _elevatorVelocitySetter.withVelocity(
+                  Units.radiansToRotations(elevatorSpeed.getAsDouble())));
+          _wristMotor.setControl(
+              _wristVelocitySetter.withVelocity(
+                  Units.radiansToRotations(wristSpeed.getAsDouble())));
         })
         .withName("Set Speeds");
   }
@@ -485,7 +489,10 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
+    var enableLimits =
+        shouldStopMotion(
+            _elevatorVelocitySetter.getVelocityMeasure().in(RadiansPerSecond),
+            _wristVelocitySetter.getVelocityMeasure().in(RadiansPerSecond));
 
     _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
     _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
