@@ -76,17 +76,20 @@ public class Wristevator extends AdvancedSubsystem {
   private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
-  private final TrapezoidProfile _elevatorMaxProfile =
-      new TrapezoidProfile(
-          new Constraints(
-              WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
-              WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond)));
+  private final Constraints _elevatorMaxConstraints =
+      new Constraints(
+          WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
+          WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
 
-  private final TrapezoidProfile _wristMaxProfile =
-      new TrapezoidProfile(
-          new Constraints(
-              WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
-              WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond)));
+  private final Constraints _wristMaxConstraints =
+      new Constraints(
+          WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
+          WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond));
+
+  private final TrapezoidProfile _elevatorMaxProfile =
+      new TrapezoidProfile(_elevatorMaxConstraints);
+
+  private final TrapezoidProfile _wristMaxProfile = new TrapezoidProfile(_wristMaxConstraints);
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
@@ -288,23 +291,24 @@ public class Wristevator extends AdvancedSubsystem {
   }
 
   /** Whether to stop lower / upper motion. */
-  private Pair<Boolean, Boolean> shouldStopMotion(double elevatorSpeed, double wristSpeed) {
-    var nextHeight = getHeight() + elevatorSpeed * Robot.kDefaultPeriod;
-    var nextAngle = getAngle() + wristSpeed * Robot.kDefaultPeriod;
+  // TODO: FIX
+  // private Pair<Boolean, Boolean> shouldStopMotion(double elevatorSpeed, double wristSpeed) {
+  //   var nextHeight = getHeight() + elevatorSpeed * Robot.kDefaultPeriod;
+  //   var nextAngle = getAngle() + wristSpeed * Robot.kDefaultPeriod;
 
-    boolean stopLower = false;
-    boolean stopUpper = false;
+  //   boolean stopLower = false;
+  //   boolean stopUpper = false;
 
-    if (nextAngle <= WristevatorConstants.lowerAngleLimit.get(nextHeight)) {
-      stopLower = true;
-    }
+  //   if (nextAngle <= WristevatorConstants.lowerAngleLimit.get(nextHeight)) {
+  //     stopLower = true;
+  //   }
 
-    if (nextAngle >= WristevatorConstants.upperAngleLimit.get(nextHeight)) {
-      stopUpper = true;
-    }
+  //   if (nextAngle >= WristevatorConstants.upperAngleLimit.get(nextHeight)) {
+  //     stopUpper = true;
+  //   }
 
-    return Pair.of(stopLower, stopUpper);
-  }
+  //   return Pair.of(stopLower, stopUpper);
+  // }
 
   /** Find new constraints for the motion magic control requests. */
   private void findProfileConstraints(Setpoint setpoint) {
@@ -322,26 +326,21 @@ public class Wristevator extends AdvancedSubsystem {
     TrapezoidProfile slowerProfile =
         fasterProfile.equals(_elevatorMaxProfile) ? _wristMaxProfile : _elevatorMaxProfile;
 
-    if (slowerProfile == _elevatorMaxProfile) {
-      System.out.println("GOOD");
-    }
-
     double fasterDistance =
         fasterProfile.equals(_elevatorMaxProfile)
             ? setpoint.getHeight().in(Radians) - getHeight()
             : setpoint.getAngle().in(Radians) - getAngle();
 
-    // System.out.println(fasterDistance);
-
     // slower profile cruise velocity and acceleration
     double slowerVel =
         slowerProfile.equals(_elevatorMaxProfile)
-            ? WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)
-            : WristevatorConstants.maxWristSpeed.in(RadiansPerSecond);
+            ? _elevatorMaxConstraints.maxVelocity
+            : _wristMaxConstraints.maxVelocity;
+
     double slowerAccel =
         slowerProfile.equals(_elevatorMaxProfile)
-            ? WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond)
-            : WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond);
+            ? _elevatorMaxConstraints.maxAcceleration
+            : _wristMaxConstraints.maxAcceleration;
 
     // find the acceleration and cruise times of the slower profile
     double slowerAccelTime = slowerVel / slowerAccel;
@@ -361,36 +360,22 @@ public class Wristevator extends AdvancedSubsystem {
             / (slowerAccel / slowerVel * Math.pow(slowerAccelTime, 2) + slowerCruiseTime);
     double adjustedAccel = adjustedVel / slowerAccelTime;
 
-    System.out.println(adjustedVel);
-    System.out.println(adjustedAccel);
-
     var elevatorConstraints =
         fasterProfile.equals(_elevatorMaxProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
-            : new Constraints(
-                WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
-                WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
+            : _elevatorMaxConstraints;
+
     var wristContraints =
         fasterProfile.equals(_wristMaxProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
-            : new Constraints(
-                WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
-                WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond));
-
-    // System.out.println(elevatorConstraints.maxVelocity);
+            : _wristMaxConstraints;
 
     // re-assign profile constraints to motors
     _heightSetter.Velocity = elevatorConstraints.maxVelocity;
     _heightSetter.Acceleration = elevatorConstraints.maxAcceleration;
 
-    _angleSetter.Velocity = adjustedVel;
-    _angleSetter.Acceleration = adjustedAccel;
-
-    // _heightSetter.Velocity = 70.19675892636535;
-    // _heightSetter.Acceleration = 20;
-
-    // _angleSetter.Velocity = 14;
-    // _angleSetter.Acceleration = 20;
+    _angleSetter.Velocity = wristContraints.maxVelocity;
+    _angleSetter.Acceleration = wristContraints.maxAcceleration;
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
@@ -442,7 +427,7 @@ public class Wristevator extends AdvancedSubsystem {
           }
 
           // travel to next setpoint
-          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight().in(Radians)));
+          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
           _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
         })
         .beforeStarting(
@@ -480,7 +465,7 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
+    // var enableLimits = shouldStopMotion(getElevatorVelocity(), getWristVelocity());
 
     // _elevatorVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
     // _wristVelocitySetter.LimitReverseMotion = enableLimits.getFirst();
