@@ -523,7 +523,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             var stdDevs = e.stdDevs();
             addVisionMeasurement(
                 e.pose().toPose2d(),
-                e.timestamp(),
+                Utils.fpgaToCurrentTime(e.timestamp()),
                 VecBuilder.fill(stdDevs[0], stdDevs[1], stdDevs[2]));
           });
     }
