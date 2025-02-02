@@ -122,13 +122,15 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(VoltsPerRadianPerSecond);
-    leftMotorConfigs.Slot0.kA = WristevatorConstants.elevatorkA.in(VoltsPerRadianPerSecondSquared);
+    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kA =
+        WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
-    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(VoltsPerRadianPerSecond);
-    wristMotorConfigs.Slot0.kA = WristevatorConstants.wristkA.in(VoltsPerRadianPerSecondSquared);
+    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
+    wristMotorConfigs.Slot0.kA =
+        WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
@@ -295,8 +297,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Whether the wristevator is near a setpoint. */
   private boolean atSetpoint(Setpoint setpoint) {
-    return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.15)
-        && MathUtil.isNear(setpoint.getHeight().in(Radians), getHeight(), 3);
+    return MathUtil.isNear(setpoint.getAngle().in(Radians), getAngle(), 0.2)
+        && MathUtil.isNear(setpoint.getHeight().in(Radians), getHeight(), 6);
   }
 
   /** Whether to stop lower / upper motion. */
@@ -506,17 +508,17 @@ public class Wristevator extends AdvancedSubsystem {
         _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxState, _wristMaxGoal);
 
     DogLog.log(
-        "Wristevator/Desired Elevator Speed",
+        "Wristevator/Elevator Reference Slope",
         Units.rotationsToRadians(_leftMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
     DogLog.log(
-        "Wristevator/Desired Wrist Speed",
+        "Wristevator/Wrist Reference Slope",
         Units.rotationsToRadians(_wristMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
 
     DogLog.log(
-        "Wristevator/Desired Elevator Height",
+        "Wristevator/Elevator Reference",
         Units.rotationsToRadians(_leftMotor.getClosedLoopReference().getValueAsDouble()));
     DogLog.log(
-        "Wristevator/Desired Wrist Angle",
+        "Wristevator/Wrist Reference",
         Units.rotationsToRadians(_wristMotor.getClosedLoopReference().getValueAsDouble()));
 
     DogLog.log("Wristevator/Non-Adjusted Desired Elevator Speed", _elevatorMaxState.velocity);

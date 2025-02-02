@@ -65,15 +65,16 @@ public class Intake extends AdvancedSubsystem {
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
-    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
-    actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
+    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
+    actuatorMotorConfigs.Slot0.kA =
+        IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
-        IntakeConstants.actuatorVelocity.in(RadiansPerSecond);
+        IntakeConstants.actuatorVelocity.in(RotationsPerSecond);
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
-        IntakeConstants.actuatorAcceleration.in(RadiansPerSecondPerSecond);
+        IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 

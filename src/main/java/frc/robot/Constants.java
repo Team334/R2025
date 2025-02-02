@@ -238,7 +238,7 @@ public final class Constants {
     // ka is the voltage necessary to accel the drum 1 rad/s^2 (lower since there are 2 motors, the
     // torque is doubled at a voltage)
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
-        VoltsPerRadianPerSecond.ofNative(1.3);
+        VoltsPerRadianPerSecond.ofNative(0.18);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
         VoltsPerRadianPerSecondSquared.ofNative(0);
 
@@ -246,7 +246,7 @@ public final class Constants {
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
-        VoltsPerRadianPerSecond.ofNative(5);
+        VoltsPerRadianPerSecond.ofNative(0.8);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
         VoltsPerRadianPerSecondSquared.ofNative(0);
   }

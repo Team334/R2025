@@ -81,7 +81,7 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(VoltsPerRadianPerSecond);
+    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
