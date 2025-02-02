@@ -468,6 +468,7 @@ public class Wristevator extends AdvancedSubsystem {
                       _isManual = false;
                     }))
         .until(() -> atSetpoint(goal))
+        .andThen(() -> _prevSetpoint = _nextSetpoint) // ensure this
         .withName("Set Goal");
   }
 
