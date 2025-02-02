@@ -153,14 +153,14 @@ public class Wristevator extends AdvancedSubsystem {
       presets[i] =
           new Translation2d(
               Preset.values()[i].getHeight().in(Radians),
-              Preset.values()[i].getAngle().in(Radians));
+              Preset.values()[i].getAngle().in(Radians) + WristevatorConstants.minWristAngle.abs(Radians));
     }
 
     for (int i = 0; i < Intermediate.values().length; i++) {
       intermediates[i] =
           new Translation2d(
               Intermediate.values()[i].getHeight().in(Radians),
-              Intermediate.values()[i].getAngle().in(Radians));
+              Intermediate.values()[i].getAngle().in(Radians) + WristevatorConstants.minWristAngle.abs(Radians));
     }
 
     DogLog.log("Wristevator/Presets", presets);
@@ -527,7 +527,7 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Previous Setpoint", _prevSetpoint.toString());
     DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());
 
-    DogLog.log("Wristevator/Position", new Translation2d(getHeight(), getAngle()));
+    DogLog.log("Wristevator/Position", new Translation2d(getHeight(), getAngle() + WristevatorConstants.minWristAngle.abs(Radians)));
   }
 
   @Override
