@@ -265,12 +265,12 @@ public class Wristevator extends AdvancedSubsystem {
     return _wristVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  @Logged(name = "Height")
+  @Logged(name = "Elevator Height")
   public double getHeight() {
     return _heightGetter.refresh().getValue().in(Radians);
   }
 
-  @Logged(name = "Angle")
+  @Logged(name = "Elevator Angle")
   public double getAngle() {
     return _angleGetter.refresh().getValue().in(Radians);
   }
