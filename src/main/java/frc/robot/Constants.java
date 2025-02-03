@@ -12,8 +12,6 @@ import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -191,20 +189,10 @@ public final class Constants {
       }
     }
 
-    public static final InterpolatingDoubleTreeMap lowerAngleLimit =
-        new InterpolatingDoubleTreeMap();
-    public static final InterpolatingDoubleTreeMap upperAngleLimit =
-        new InterpolatingDoubleTreeMap();
-
     public static final HashMap<Pair<Preset, Preset>, Preset> setpointMap = new HashMap<>();
 
     static {
-      // TODO: actually find values and put them here
-      lowerAngleLimit.put(0.0, Units.degreesToRadians(-1));
-      upperAngleLimit.put(0.0, Units.degreesToRadians(1));
-
-      lowerAngleLimit.put(15.5, Units.degreesToRadians(-90));
-      upperAngleLimit.put(15.5, Units.degreesToRadians(90));
+      // TODO: actually find setpoint map and put it here
     }
 
     public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(14.039351785273068);
