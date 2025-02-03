@@ -102,7 +102,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
 
-  private Setpoint _prevSetpoint = HOME;
   private Setpoint _nextSetpoint = HOME;
 
   @Logged(name = "Is Manual")
@@ -381,7 +380,7 @@ public class Wristevator extends AdvancedSubsystem {
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
   private void findNextSetpoint(Setpoint goal) {
     // if we just came from manual or are in between verticies, go to an intermediate
-    if (_isManual || _prevSetpoint != _nextSetpoint) {
+    if (_isManual || !atSetpoint(_nextSetpoint)) {
       Intermediate closest = Intermediate.INFINITY;
 
       // find the closest intermediate vertex
@@ -396,8 +395,8 @@ public class Wristevator extends AdvancedSubsystem {
       return;
     }
 
-    if (WristevatorConstants.setpointMap.containsKey(Pair.of(_prevSetpoint, goal))) {
-      _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_prevSetpoint, goal));
+    if (WristevatorConstants.setpointMap.containsKey(Pair.of(_nextSetpoint, goal))) {
+      _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_nextSetpoint, goal));
 
       return;
     }
@@ -420,8 +419,6 @@ public class Wristevator extends AdvancedSubsystem {
     return run(() -> {
           // once the next setpoint is reached, re-find the next one
           if (atSetpoint(_nextSetpoint)) {
-            _prevSetpoint = _nextSetpoint;
-
             findNextSetpoint(goal);
             findProfileConstraints(_nextSetpoint);
           }
@@ -444,7 +441,6 @@ public class Wristevator extends AdvancedSubsystem {
                       _isManual = false;
                     }))
         .until(() -> atSetpoint(goal))
-        .andThen(() -> _prevSetpoint = _nextSetpoint) // ensure this
         .withName("Set Goal");
   }
 
@@ -492,7 +488,6 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Non-Adjusted Desired Elevator Speed", _elevatorMaxState.velocity);
     DogLog.log("Wristevator/Non-Adjusted Desired Wrist Speed", _wristMaxState.velocity);
 
-    DogLog.log("Wristevator/Previous Setpoint", _prevSetpoint.toString());
     DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());
 
     DogLog.log(
