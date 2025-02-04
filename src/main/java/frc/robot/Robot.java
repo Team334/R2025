@@ -43,7 +43,6 @@ import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Swerve.DesiredLocation;
 import frc.robot.subsystems.Swerve.SideOffset;
 import frc.robot.subsystems.Wristevator;
 
@@ -215,9 +214,11 @@ public class Robot extends TimedRobot {
     _driverController.x().onTrue(_swerve.toggleFieldOriented());
     _driverController.y().onTrue(_swerve.resetHeading());
 
-    _driverController.povUp().whileTrue(_swerve.driveTo(DesiredLocation.REEF.getPose()));
-    _driverController.povLeft().whileTrue(_swerve.driveTo(DesiredLocation.HUMAN.getPose()));
-    _driverController.povRight().whileTrue(_swerve.driveTo(DesiredLocation.PROCESSOR.getPose()));
+    _driverController.povUp().whileTrue(_swerve.driveToPose(_swerve::getReefOffset));
+    // _driverController.povLeft().whileTrue(_swerve.driveToPose(() ->
+    // DesiredLocation.HUMAN.getPose().plus(_swerve.getOffset())));
+    // _driverController.povRight().whileTrue(_swerve.driveToPose(() ->
+    // DesiredLocation.PROCESSOR.getPose().plus(_swerve.getOffset())));
 
     _driverController.leftTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.LEFT)));
     _driverController.rightTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.RIGHT)));

@@ -30,7 +30,7 @@ public class SwerveTest {
     // TODO: ts don't work
     var goal = new Pose2d(0.5, 0, Rotation2d.fromDegrees(5));
 
-    runToCompletion(_swerve.driveTo(goal));
+    runToCompletion(_swerve.driveToPose(() -> goal));
 
     assertEquals(goal.getX(), _swerve.getPose().getX(), 0.2);
     assertEquals(goal.getY(), _swerve.getPose().getY(), 0.2);
