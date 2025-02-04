@@ -39,6 +39,7 @@ import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.LED_Lights;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
@@ -141,6 +142,8 @@ public class Robot extends TimedRobot {
     autonomous().whileTrue(_autoChooser.selectedCommandScheduler());
 
     addPeriodic(FaultLogger::update, 1);
+
+    LED_Lights led = new LED_Lights();
   }
 
   // set logging to be file only or not
