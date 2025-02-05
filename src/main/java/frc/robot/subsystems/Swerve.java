@@ -5,7 +5,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
@@ -33,7 +33,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
@@ -475,7 +474,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
-        .andThen(new DeferredCommand(() -> driveTo(_alignGoal.getPose(side)), Set.of(this)))
+        .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))
         .withName("Align To");
   }
 

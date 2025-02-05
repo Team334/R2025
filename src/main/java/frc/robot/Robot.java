@@ -211,7 +211,8 @@ public class Robot extends TimedRobot {
         .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT));
 
     button
-        .and(_driverController.leftTrigger().and(_driverController.rightTrigger()).negate())
+        .and(
+            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
         .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER));
 
     button
