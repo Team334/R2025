@@ -71,7 +71,7 @@ public class AlignPoses {
         new Pose2d(
             _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
   }
-  
+
   /** Offsets the poses by a given x */
   public AlignPoses offset(double x) { // can overload for y value if needed
     return new AlignPoses(
