@@ -24,6 +24,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -56,6 +57,7 @@ import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -457,13 +459,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             () -> {
               Pose2d pose = getPose();
 
+              Optional<Alliance> alliance = DriverStation.getAlliance();
+              var reefCenter =
+                  alliance.get() == Alliance.Red
+                      ? FieldConstants.reefCenter.plus(
+                          new Translation2d(FieldConstants.reefDistance.in(Meters), 0))
+                      : FieldConstants.reefCenter;
+
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;
 
+                var goal =
+                    alliance.get() == Alliance.Red
+                        ? alignGoal.offset(FieldConstants.reefDistance.in(Meters))
+                        : alignGoal;
+
                 for (int i = 0; i < 6; i++) {
-                  var rotated =
-                      alignGoal.rotateAround(
-                          FieldConstants.reefCenter, Rotation2d.fromDegrees(60).times(i));
+                  var rotated = goal.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
 
                   if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
                     _alignGoal = rotated;

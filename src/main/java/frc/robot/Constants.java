@@ -54,6 +54,8 @@ public final class Constants {
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
 
+    public static final Distance reefDistance = Meters.of(8.57);
+
     public static final AlignPoses reef =
         new AlignPoses(
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
