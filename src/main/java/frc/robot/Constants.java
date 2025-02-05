@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -25,8 +26,8 @@ import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import frc.robot.generated.TunerConstants;
+import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
-import java.util.HashMap;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -52,25 +53,12 @@ public final class Constants {
 
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
-    public static final Translation2d reefAlignCenter =
-        new Translation2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters));
-    public static final Translation2d reefAlignLeft =
-        new Translation2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters));
-    public static final Translation2d reefAlignRight =
-        new Translation2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters));
 
-    // Use these rotations to find the goal postion and rotations
-    public static final HashMap<Integer, Rotation2d> aprilTagAlignment =
-        new HashMap<>() {
-          {
-            put(17, new Rotation2d(Degrees.of(60)));
-            put(18, Rotation2d.kZero);
-            put(19, new Rotation2d(Degrees.of(300)));
-            put(20, new Rotation2d(Degrees.of(240)));
-            put(21, Rotation2d.k180deg);
-            put(22, new Rotation2d(Degrees.of(120)));
-          }
-        };
+    public static final AlignPoses reef =
+        new AlignPoses(
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero));
   }
 
   public static class VisionConstants {

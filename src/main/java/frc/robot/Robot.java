@@ -30,6 +30,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
@@ -43,8 +44,9 @@ import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
-import frc.robot.subsystems.Swerve.SideOffset;
 import frc.robot.subsystems.Wristevator;
+import frc.robot.utils.AlignPoses;
+import frc.robot.utils.AlignPoses.AlignSide;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -139,12 +141,6 @@ public class Robot extends TimedRobot {
         .and(() -> _manipulator.getFeedDirection() == -1)
         .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
-    new Trigger(
-        _driverController
-            .leftTrigger()
-            .or(_driverController.rightTrigger())
-            .onFalse(runOnce(() -> _swerve.setOffset(SideOffset.NONE))));
-
     SmartDashboard.putData(
         "Robot Self Check",
         sequence(
@@ -209,23 +205,26 @@ public class Robot extends TimedRobot {
                 .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
 
+  private void alignmentTriggers(Trigger button, AlignPoses poses) {
+    button
+        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
+        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT));
+
+    button
+        .and(_driverController.leftTrigger().and(_driverController.rightTrigger()).negate())
+        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER));
+
+    button
+        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
+        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT));
+  }
+
   private void configureDriverBindings() {
     _driverController.a().whileTrue(_swerve.brake());
     _driverController.x().onTrue(_swerve.toggleFieldOriented());
     _driverController.y().onTrue(_swerve.resetHeading());
 
-    _driverController.povUp().whileTrue(_swerve.driveToPose(_swerve::getReefOffset));
-    // _driverController.povLeft().whileTrue(_swerve.driveToPose(() ->
-    // DesiredLocation.HUMAN.getPose().plus(_swerve.getOffset())));
-    // _driverController.povRight().whileTrue(_swerve.driveToPose(() ->
-    // DesiredLocation.PROCESSOR.getPose().plus(_swerve.getOffset())));
-
-    _driverController.leftTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.LEFT)));
-    _driverController.rightTrigger().whileTrue(run(() -> _swerve.setOffset(SideOffset.RIGHT)));
-
-    // _driverController
-    //     .b()
-    //     .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+    alignmentTriggers(_driverController.povDown(), FieldConstants.reef);
   }
 
   private void configureOperatorBindings() {

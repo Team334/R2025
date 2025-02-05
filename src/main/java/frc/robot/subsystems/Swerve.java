@@ -28,12 +28,12 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
@@ -48,6 +48,8 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.utils.AlignPoses;
+import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
@@ -56,7 +58,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
 
 @Logged(strategy = Strategy.OPT_IN)
@@ -152,14 +153,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     }
   }
 
-  public static enum SideOffset {
-    NONE,
-    LEFT,
-    RIGHT
-  }
-
-  private SideOffset _sideOffset = SideOffset.NONE;
-
   @Logged(name = "Driver Chassis Speeds")
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
 
@@ -171,6 +164,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
+
+  private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -367,47 +362,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         });
   }
 
-  /** What offset the desried location should use */
-  public void setOffset(SideOffset offset) {
-    _sideOffset = offset;
-  }
-
-  /** Return the current side reef offset */
-  public Pose2d getReefOffset() {
-    Pose2d offset = new Pose2d();
-
-    // The value in the hashmap should be the apriltag that we are currently moving towards
-    Rotation2d rotation = FieldConstants.aprilTagAlignment.get(18);
-
-    switch (_sideOffset) {
-      case NONE:
-        offset =
-            new Pose2d(
-                FieldConstants.reefAlignCenter.rotateAround(FieldConstants.reefCenter, rotation),
-                rotation);
-        break;
-
-      case LEFT:
-        offset =
-            new Pose2d(
-                FieldConstants.reefAlignLeft.rotateAround(FieldConstants.reefCenter, rotation),
-                rotation);
-        break;
-
-      case RIGHT:
-        offset =
-            new Pose2d(
-                FieldConstants.reefAlignRight.rotateAround(FieldConstants.reefCenter, rotation),
-                rotation);
-        break;
-
-      default:
-        break;
-    }
-
-    return offset;
-  }
-
   /**
    * Creates a new Command that drives the chassis.
    *
@@ -494,10 +448,41 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
+  /**
+   * Aligns to a {@link AlignPoses} to the correct side.
+   *
+   * @return Drive to the correct pose.
+   */
+  public Command alignTo(AlignPoses alignGoal, AlignSide side) {
+    return runOnce(
+            () -> {
+              Pose2d pose = getPose();
+
+              if (alignGoal == FieldConstants.reef) {
+                double minDistance = Double.MAX_VALUE;
+
+                for (int i = 0; i < 6; i++) {
+                  var rotated =
+                      alignGoal.rotateAround(
+                          FieldConstants.reefCenter, Rotation2d.fromDegrees(60).times(i));
+
+                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = rotated;
+                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  }
+                }
+              }
+
+              DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
+            })
+        .andThen(new DeferredCommand(() -> driveTo(_alignGoal.getPose(side)), Set.of(this)))
+        .withName("Align To");
+  }
+
   /** Drives the robot in a straight line to some given goal pose. */
-  public Command driveToPose(Supplier<Pose2d> goalPose) {
+  public Command driveTo(Pose2d goalPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose.get());
+          ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose);
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
@@ -505,7 +490,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             () ->
                 _poseController.reset(
                     getPose(),
-                    goalPose.get(),
+                    goalPose,
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
         .withName("Drive To");

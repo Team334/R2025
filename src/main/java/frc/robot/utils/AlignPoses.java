@@ -5,12 +5,20 @@
 package frc.robot.utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 
 /** Poses for alignment. */
 public class AlignPoses {
   private final Pose2d _left;
   private final Pose2d _center;
   private final Pose2d _right;
+
+  public static enum AlignSide {
+    LEFT,
+    CENTER,
+    RIGHT
+  }
 
   public Pose2d getLeft() {
     return _left;
@@ -34,5 +42,32 @@ public class AlignPoses {
   /** Setup align pose for center */
   public AlignPoses(Pose2d center) {
     this(center, center, center);
+  }
+
+  /** Get pose depending on side. */
+  public Pose2d getPose(AlignSide side) {
+    switch (side) {
+      case LEFT:
+        return getLeft();
+
+      case CENTER:
+        return getCenter();
+
+      case RIGHT:
+        return getRight();
+
+      default:
+        return Pose2d.kZero;
+    }
+  }
+
+  /** Rotates all the poses around a point. */
+  public AlignPoses rotateAround(Translation2d point, Rotation2d rot) {
+    return new AlignPoses(
+        new Pose2d(_left.getTranslation().rotateAround(point, rot), _left.getRotation().plus(rot)),
+        new Pose2d(
+            _center.getTranslation().rotateAround(point, rot), _center.getRotation().plus(rot)),
+        new Pose2d(
+            _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
   }
 }
