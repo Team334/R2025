@@ -75,6 +75,8 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
+  LED_Lights led = new LED_Lights();
+
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
 
@@ -142,8 +144,6 @@ public class Robot extends TimedRobot {
     autonomous().whileTrue(_autoChooser.selectedCommandScheduler());
 
     addPeriodic(FaultLogger::update, 1);
-
-    LED_Lights led = new LED_Lights();
   }
 
   // set logging to be file only or not

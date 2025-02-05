@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
+import edu.wpi.first.wpilibj.util.Color;
 import frc.robot.generated.TunerConstants;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
@@ -262,5 +263,9 @@ public final class Constants {
     public static final double flywheelGearRatio = 1;
 
     public static final double holdAlgaeVoltage = 0; // need to find
+  }
+
+  public static class LEDConstants {
+    public static final Color errorColor = Color.kViolet;
   }
 }
