@@ -132,8 +132,6 @@ public class Wristevator extends AdvancedSubsystem {
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
-    findProfileConstraints(HOME);
-
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
@@ -141,6 +139,8 @@ public class Wristevator extends AdvancedSubsystem {
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
     FaultLogger.register(_wristMotor);
+
+    findProfileConstraints(HOME);
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
@@ -272,7 +272,7 @@ public class Wristevator extends AdvancedSubsystem {
     return _heightGetter.refresh().getValue().in(Radians);
   }
 
-  @Logged(name = "Elevator Angle")
+  @Logged(name = "Wrist Angle")
   public double getAngle() {
     return _angleGetter.refresh().getValue().in(Radians);
   }
@@ -299,8 +299,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Whether the wristevator finished its most recent profiles. */
   private boolean finishedProfiles(Setpoint setpoint) {
-    System.out.println(_elevatorProfile.timeLeftUntil(setpoint.getHeight().in(Rotations)));
-
     return _elevatorProfile.timeLeftUntil(setpoint.getHeight().in(Radians)) == 0.001
         && _wristProfile.timeLeftUntil(setpoint.getAngle().in(Radians)) == 0.001;
   }
@@ -366,6 +364,9 @@ public class Wristevator extends AdvancedSubsystem {
             / (slowerAccel / slowerVel * Math.pow(slowerAccelTime, 2) + slowerCruiseTime);
     double adjustedAccel = adjustedVel / slowerAccelTime;
 
+    adjustedVel = Math.abs(adjustedVel);
+    adjustedAccel = Math.abs(adjustedAccel);
+
     var elevatorConstraints =
         fasterProfile.equals(_elevatorProfile)
             ? new Constraints(adjustedVel, adjustedAccel)
@@ -421,34 +422,6 @@ public class Wristevator extends AdvancedSubsystem {
     return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
-  public Command dumbTest() {
-    return run(() -> {
-          _elevatorSetpoint =
-              _elevatorProfile.calculate(Robot.kDefaultPeriod, _elevatorSetpoint, _elevatorGoal);
-          _wristSetpoint =
-              _wristProfile.calculate(Robot.kDefaultPeriod, _wristSetpoint, _wristGoal);
-
-          DogLog.log("Wristevator/Elevator Profile", _elevatorSetpoint.velocity);
-          DogLog.log("Wristevator/Wrist Profile", _wristSetpoint.velocity);
-
-          // travel to next setpoint
-          _leftMotor.setControl(
-              _heightSetter
-                  .withPosition(Units.radiansToRotations(_elevatorSetpoint.position))
-                  .withVelocity(Units.radiansToRotations(_elevatorSetpoint.velocity)));
-
-          _wristMotor.setControl(
-              _angleSetter
-                  .withPosition(Units.radiansToRotations(_wristSetpoint.position))
-                  .withVelocity(Units.radiansToRotations(_wristSetpoint.velocity)));
-        })
-        .beforeStarting(
-            () -> {
-              // findNextSetpoint(L4);
-              findProfileConstraints(L4);
-            });
-  }
-
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
     return run(() -> {
@@ -462,6 +435,8 @@ public class Wristevator extends AdvancedSubsystem {
               _elevatorProfile.calculate(Robot.kDefaultPeriod, _elevatorSetpoint, _elevatorGoal);
           _wristSetpoint =
               _wristProfile.calculate(Robot.kDefaultPeriod, _wristSetpoint, _wristGoal);
+
+          System.out.println(_elevatorProfile.timeLeftUntil(_elevatorGoal.position));
 
           DogLog.log("Wristevator/Elevator Profile", _elevatorSetpoint.velocity);
           DogLog.log("Wristevator/Wrist Profile", _wristSetpoint.velocity);
@@ -490,7 +465,7 @@ public class Wristevator extends AdvancedSubsystem {
 
                       _isManual = false;
                     }))
-        // .until(() -> finishedProfiles(goal))
+        .until(() -> finishedProfiles(goal))
         .withName("Set Goal");
   }
 
