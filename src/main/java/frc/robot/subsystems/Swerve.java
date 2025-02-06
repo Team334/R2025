@@ -484,6 +484,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 }
               }
 
+              if (alignGoal == FieldConstants.human) {
+                double minDistance = Double.MAX_VALUE;
+
+                for (int i = 0; i < 2; i++) {
+                  var rotated =
+                      alignGoal.rotateAround(
+                          FieldConstants.humanCenter, Rotation2d.fromDegrees(180).times(i));
+
+                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = rotated;
+                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  }
+                }
+              }
+
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
         .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))

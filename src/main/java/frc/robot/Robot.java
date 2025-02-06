@@ -225,7 +225,8 @@ public class Robot extends TimedRobot {
     _driverController.x().onTrue(_swerve.toggleFieldOriented());
     _driverController.y().onTrue(_swerve.resetHeading());
 
-    alignmentTriggers(_driverController.povDown(), FieldConstants.reef);
+    alignmentTriggers(_driverController.povUp(), FieldConstants.reef);
+    alignmentTriggers(_driverController.povLeft(), FieldConstants.human);
   }
 
   private void configureOperatorBindings() {

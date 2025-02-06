@@ -56,11 +56,29 @@ public final class Constants {
 
     public static final Distance reefDistance = Meters.of(8.57);
 
+    public static final Translation2d humanCenter =
+        new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));
+
     public static final AlignPoses reef =
         new AlignPoses(
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero));
+
+    public static final AlignPoses human =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(23.14).in(Meters),
+                Inches.of(264.66).in(Meters),
+                new Rotation2d(Degrees.of(126))),
+            new Pose2d(
+                Inches.of(41.17).in(Meters),
+                Inches.of(282.69).in(Meters),
+                new Rotation2d(Degrees.of(126))),
+            new Pose2d(
+                Inches.of(64.61).in(Meters),
+                Inches.of(294.86).in(Meters),
+                new Rotation2d(Degrees.of(126))));
   }
 
   public static class VisionConstants {
