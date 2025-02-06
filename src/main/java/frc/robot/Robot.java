@@ -222,11 +222,11 @@ public class Robot extends TimedRobot {
 
   private void configureDriverBindings() {
     _driverController.a().whileTrue(_swerve.brake());
-    _driverController.x().onTrue(_swerve.toggleFieldOriented());
-    _driverController.y().onTrue(_swerve.resetHeading());
+    _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
+    _driverController.povDown().onTrue(_swerve.resetHeading());
 
-    alignmentTriggers(_driverController.povUp(), FieldConstants.reef);
-    alignmentTriggers(_driverController.povLeft(), FieldConstants.human);
+    alignmentTriggers(_driverController.x(), FieldConstants.reef);
+    alignmentTriggers(_driverController.y(), FieldConstants.human);
   }
 
   private void configureOperatorBindings() {

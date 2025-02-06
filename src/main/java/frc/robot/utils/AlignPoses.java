@@ -6,7 +6,6 @@ package frc.robot.utils;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 /** Poses for alignment. */
@@ -70,13 +69,5 @@ public class AlignPoses {
             _center.getTranslation().rotateAround(point, rot), _center.getRotation().plus(rot)),
         new Pose2d(
             _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
-  }
-
-  /** Offsets the poses by a given x */
-  public AlignPoses offset(double x) { // can overload for y value if needed
-    return new AlignPoses(
-        _left.plus(new Transform2d(x, 0, Rotation2d.kZero)),
-        _center.plus(new Transform2d(x, 0, Rotation2d.kZero)),
-        _right.plus(new Transform2d(x, 0, Rotation2d.kZero)));
   }
 }

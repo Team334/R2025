@@ -54,7 +54,8 @@ public final class Constants {
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
 
-    public static final Distance reefDistance = Meters.of(8.57);
+    public static final Translation2d fieldCenter =
+        new Translation2d(fieldLayout.getFieldLength() / 2, fieldLayout.getFieldWidth() / 2);
 
     public static final Translation2d humanCenter =
         new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));

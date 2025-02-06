@@ -24,7 +24,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -458,21 +457,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return runOnce(
             () -> {
               Pose2d pose = getPose();
-
               Optional<Alliance> alliance = DriverStation.getAlliance();
-              var reefCenter =
-                  alliance.get() == Alliance.Red
-                      ? FieldConstants.reefCenter.plus(
-                          new Translation2d(FieldConstants.reefDistance.in(Meters), 0))
-                      : FieldConstants.reefCenter;
 
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;
 
                 var goal =
                     alliance.get() == Alliance.Red
-                        ? alignGoal.offset(FieldConstants.reefDistance.in(Meters))
+                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
                         : alignGoal;
+
+                var reefCenter =
+                    alliance.get() == Alliance.Red
+                        ? FieldConstants.reefCenter.rotateAround(
+                            FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : FieldConstants.reefCenter;
 
                 for (int i = 0; i < 6; i++) {
                   var rotated = goal.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
