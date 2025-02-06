@@ -80,8 +80,8 @@ public class Wristevator extends AdvancedSubsystem {
   // elevator profiling
   private final Constraints _elevatorMaxConstraints =
       new Constraints(
-          WristevatorConstants.maxElevatorSpeed.in(RotationsPerSecond),
-          WristevatorConstants.maxElevatorAcceleration.in(RotationsPerSecondPerSecond));
+          WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
+          WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
 
   private TrapezoidProfile _elevatorProfile = new TrapezoidProfile(_elevatorMaxConstraints);
 
@@ -91,8 +91,8 @@ public class Wristevator extends AdvancedSubsystem {
   // wrist profiling
   private final Constraints _wristMaxConstraints =
       new Constraints(
-          WristevatorConstants.maxWristSpeed.in(RotationsPerSecond),
-          WristevatorConstants.maxWristAcceleration.in(RotationsPerSecondPerSecond));
+          WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
+          WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond));
 
   private TrapezoidProfile _wristProfile = new TrapezoidProfile(_wristMaxConstraints);
 
@@ -301,22 +301,22 @@ public class Wristevator extends AdvancedSubsystem {
   private boolean finishedProfiles(Setpoint setpoint) {
     System.out.println(_elevatorProfile.timeLeftUntil(setpoint.getHeight().in(Rotations)));
 
-    return _elevatorProfile.timeLeftUntil(setpoint.getHeight().in(Rotations)) == 0.001
-        && _wristProfile.timeLeftUntil(setpoint.getAngle().in(Rotations)) == 0.001;
+    return _elevatorProfile.timeLeftUntil(setpoint.getHeight().in(Radians)) == 0.001
+        && _wristProfile.timeLeftUntil(setpoint.getAngle().in(Radians)) == 0.001;
   }
 
   /** Find new constraints for the motion magic control requests. */
   private void findProfileConstraints(Setpoint setpoint) {
-    _elevatorSetpoint.position = Units.radiansToRotations(getHeight());
+    _elevatorSetpoint.position = getHeight();
     _elevatorSetpoint.velocity = 0;
 
-    _wristSetpoint.position = Units.radiansToRotations(getAngle());
+    _wristSetpoint.position = getAngle();
     _wristSetpoint.velocity = 0;
 
-    _elevatorGoal.position = setpoint.getHeight().in(Rotations);
+    _elevatorGoal.position = setpoint.getHeight().in(Radians);
     _elevatorGoal.velocity = 0;
 
-    _wristGoal.position = setpoint.getAngle().in(Rotations);
+    _wristGoal.position = setpoint.getAngle().in(Radians);
     _wristGoal.velocity = 0;
 
     _elevatorProfile = new TrapezoidProfile(_elevatorMaxConstraints);
@@ -334,8 +334,8 @@ public class Wristevator extends AdvancedSubsystem {
 
     double fasterDistance =
         fasterProfile.equals(_elevatorProfile)
-            ? setpoint.getHeight().in(Rotations) - Units.radiansToRotations(getHeight())
-            : setpoint.getAngle().in(Rotations) - Units.radiansToRotations(getAngle());
+            ? setpoint.getHeight().in(Radians) - getHeight()
+            : setpoint.getAngle().in(Radians) - getAngle();
 
     // slower profile cruise velocity and acceleration
     double slowerVel =
@@ -421,6 +421,34 @@ public class Wristevator extends AdvancedSubsystem {
     return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
+  public Command dumbTest() {
+    return run(() -> {
+          _elevatorSetpoint =
+              _elevatorProfile.calculate(Robot.kDefaultPeriod, _elevatorSetpoint, _elevatorGoal);
+          _wristSetpoint =
+              _wristProfile.calculate(Robot.kDefaultPeriod, _wristSetpoint, _wristGoal);
+
+          DogLog.log("Wristevator/Elevator Profile", _elevatorSetpoint.velocity);
+          DogLog.log("Wristevator/Wrist Profile", _wristSetpoint.velocity);
+
+          // travel to next setpoint
+          _leftMotor.setControl(
+              _heightSetter
+                  .withPosition(Units.radiansToRotations(_elevatorSetpoint.position))
+                  .withVelocity(Units.radiansToRotations(_elevatorSetpoint.velocity)));
+
+          _wristMotor.setControl(
+              _angleSetter
+                  .withPosition(Units.radiansToRotations(_wristSetpoint.position))
+                  .withVelocity(Units.radiansToRotations(_wristSetpoint.velocity)));
+        })
+        .beforeStarting(
+            () -> {
+              // findNextSetpoint(L4);
+              findProfileConstraints(L4);
+            });
+  }
+
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
     return run(() -> {
@@ -435,21 +463,19 @@ public class Wristevator extends AdvancedSubsystem {
           _wristSetpoint =
               _wristProfile.calculate(Robot.kDefaultPeriod, _wristSetpoint, _wristGoal);
 
-          DogLog.log(
-              "Wristevator/Elevator Profile", Units.rotationsToRadians(_elevatorSetpoint.velocity));
-          DogLog.log(
-              "Wristevator/Wrist Profile", Units.rotationsToRadians(_wristSetpoint.velocity));
+          DogLog.log("Wristevator/Elevator Profile", _elevatorSetpoint.velocity);
+          DogLog.log("Wristevator/Wrist Profile", _wristSetpoint.velocity);
 
           // travel to next setpoint
           _leftMotor.setControl(
               _heightSetter
-                  .withPosition(_elevatorSetpoint.position)
-                  .withVelocity(_elevatorSetpoint.velocity));
+                  .withPosition(Units.radiansToRotations(_elevatorSetpoint.position))
+                  .withVelocity(Units.radiansToRotations(_elevatorSetpoint.velocity)));
 
           _wristMotor.setControl(
               _angleSetter
-                  .withPosition(_wristSetpoint.position)
-                  .withVelocity(_wristSetpoint.velocity));
+                  .withPosition(Units.radiansToRotations(_wristSetpoint.position))
+                  .withVelocity(Units.radiansToRotations(_wristSetpoint.velocity)));
         })
         .beforeStarting(
             idle()
@@ -464,7 +490,7 @@ public class Wristevator extends AdvancedSubsystem {
 
                       _isManual = false;
                     }))
-        .until(() -> finishedProfiles(goal))
+        // .until(() -> finishedProfiles(goal))
         .withName("Set Goal");
   }
 
