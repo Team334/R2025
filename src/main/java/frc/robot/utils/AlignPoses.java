@@ -70,4 +70,12 @@ public class AlignPoses {
         new Pose2d(
             _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
   }
+
+  /** Offset the points by a transformation */
+  public AlignPoses offset(double x, double y) {
+    return new AlignPoses(
+        new Pose2d(_left.getX() + x, _left.getY() + y, _left.getRotation()),
+        new Pose2d(_center.getX() + x, _center.getY() + y, _center.getRotation()),
+        new Pose2d(_right.getX() + x, _right.getY() + y, _right.getRotation()));
+  }
 }

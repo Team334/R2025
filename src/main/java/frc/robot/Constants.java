@@ -80,6 +80,11 @@ public final class Constants {
                 Inches.of(64.61).in(Meters),
                 Inches.of(294.86).in(Meters),
                 new Rotation2d(Degrees.of(126))));
+
+    public static final AlignPoses processor =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(233.7).in(Meters), Inches.of(16.2).in(Meters), Rotation2d.kCW_90deg));
   }
 
   public static class VisionConstants {
