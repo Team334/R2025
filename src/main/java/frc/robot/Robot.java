@@ -228,6 +228,7 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.x(), FieldConstants.reef);
     alignmentTriggers(_driverController.y(), FieldConstants.human);
     alignmentTriggers(_driverController.b(), FieldConstants.processor);
+    alignmentTriggers(_driverController.start(), FieldConstants.cage);
   }
 
   private void configureOperatorBindings() {

@@ -513,6 +513,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                         : alignGoal;
               }
 
+              if (alignGoal == FieldConstants.cage) {
+                _alignGoal =
+                    alliance.get() == Alliance.Red
+                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : alignGoal;
+              }
+
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
         .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))

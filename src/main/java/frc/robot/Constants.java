@@ -85,6 +85,15 @@ public final class Constants {
         new AlignPoses(
             new Pose2d(
                 Inches.of(233.7).in(Meters), Inches.of(16.2).in(Meters), Rotation2d.kCW_90deg));
+
+    public static final AlignPoses cage =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(285.84).in(Meters), Rotation2d.kCCW_90deg),
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(241.89).in(Meters), Rotation2d.kCCW_90deg),
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(200.16).in(Meters), Rotation2d.kCCW_90deg));
   }
 
   public static class VisionConstants {
