@@ -329,21 +329,20 @@ public class Wristevator extends AdvancedSubsystem {
     TrapezoidProfile slowerProfile =
         fasterProfile.equals(_elevatorMaxProfile) ? _wristMaxProfile : _elevatorMaxProfile;
 
-    double fasterDistance =
-        fasterProfile.equals(_elevatorMaxProfile)
-            ? setpoint.getHeight().in(Radians) - getHeight()
-            : setpoint.getAngle().in(Radians) - getAngle();
-
-    // slower profile cruise velocity and acceleration
-    double slowerVel =
-        slowerProfile.equals(_elevatorMaxProfile)
-            ? _elevatorMaxConstraints.maxVelocity
-            : _wristMaxConstraints.maxVelocity;
-
-    double slowerAccel =
-        slowerProfile.equals(_elevatorMaxProfile)
-            ? _elevatorMaxConstraints.maxAcceleration
-            : _wristMaxConstraints.maxAcceleration;
+    double fasterDistance = 0;
+    double slowerVel = 0;
+    double slowerAccel = 0;
+    
+    if (fasterProfile == _elevatorMaxProfile) {
+      fasterDistance = setpoint.getHeight().in(Radians) - getHeight();
+      slowerVel = _wristMaxConstraints.maxVelocity;
+      slowerAccel = _wristMaxConstraints.maxAcceleration;
+    }
+    else {
+      fasterDistance = setpoint.getAngle().in(Radians) - getAngle();
+      slowerVel = _elevatorMaxConstraints.maxVelocity;
+      slowerAccel = _elevatorMaxConstraints.maxAcceleration;
+    }
 
     // find the acceleration and cruise times of the slower profile
     double slowerAccelTime = slowerVel / slowerAccel;
