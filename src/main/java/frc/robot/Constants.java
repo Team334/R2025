@@ -166,9 +166,9 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(0), Radians.of(50));
-      // I2(Radians.of(-1), Radians.of(30)),
-      // I3(Radians.of(1), Radians.of(50));
+      I1(Radians.of(-2), Radians.of(100)),
+      I2(Radians.of(-2), Radians.of(100)),
+      I3(Radians.of(1), Radians.of(50));
 
       private final Angle _angle;
       private final Angle _height;
