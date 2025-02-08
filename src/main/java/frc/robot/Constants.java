@@ -5,6 +5,8 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.*;
+// import static frc.robot.Constants.WristevatorConstants.Preset.*;
+// import static frc.robot.Constants.WristevatorConstants.Intermediate.*;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
@@ -166,9 +168,7 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(-2), Radians.of(100)),
-      I2(Radians.of(-2), Radians.of(100)),
-      I3(Radians.of(1), Radians.of(50));
+      I1(Radians.of(0), Radians.of(50));
 
       private final Angle _angle;
       private final Angle _height;
@@ -189,7 +189,7 @@ public final class Constants {
       }
     }
 
-    public static final HashMap<Pair<Preset, Preset>, Preset> setpointMap = new HashMap<>();
+    public static final HashMap<Pair<Setpoint, Setpoint>, Setpoint> setpointMap = new HashMap<>();
 
     static {
       // TODO: actually find setpoint map and put it here

@@ -70,8 +70,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final StatusSignal<Angle> _heightGetter = _leftMotor.getPosition();
   private final StatusSignal<Angle> _angleGetter = _wristMotor.getPosition();
 
-  private final DynamicMotionMagicVoltage _heightSetter = new DynamicMotionMagicVoltage(0, 0, 0, 0);
-  private final DynamicMotionMagicVoltage _angleSetter = new DynamicMotionMagicVoltage(0, 0, 0, 0);
+  private final DynamicMotionMagicVoltage _heightSetter =
+      new DynamicMotionMagicVoltage(HOME.getHeight().in(Rotations), 0, 0, 0);
+  private final DynamicMotionMagicVoltage _angleSetter =
+      new DynamicMotionMagicVoltage(HOME.getAngle().in(Rotations), 0, 0, 0);
 
   private final StatusSignal<MotionMagicIsRunningValue> _isMotionMagic =
       _leftMotor.getMotionMagicIsRunning();
@@ -308,6 +310,8 @@ public class Wristevator extends AdvancedSubsystem {
     return run(() -> {
           _leftMotor.setControl(_heightSetter);
           _wristMotor.setControl(_angleSetter);
+
+          refreshProfileReferences();
         })
         .withName("Hold In Place");
   }
@@ -323,13 +327,20 @@ public class Wristevator extends AdvancedSubsystem {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
   }
 
+  // refresh the references of the talonfx profiles
+  private void refreshProfileReferences() {
+    if (_isMotionMagic.getValue() == MotionMagicIsRunningValue.Disabled) return;
+
+    BaseStatusSignal.refreshAll(
+        _elevatorReference, _elevatorReferenceSlope, _wristReference, _wristReferenceSlope);
+  }
+
   /** Whether the wristevator profiles finished at the specified goal. */
   private boolean finishedProfiles(Setpoint setpoint) {
     // only need to check one profile since they run the same amount of time
     return MathUtil.isNear(
             setpoint.getHeight().in(Rotations), _elevatorReference.getValueAsDouble(), 0.001)
-        && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
-        && _isMotionMagic.getValue() == MotionMagicIsRunningValue.Enabled;
+        && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001);
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
@@ -458,6 +469,8 @@ public class Wristevator extends AdvancedSubsystem {
           // move towards the next setpoint
           _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
           _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
+
+          refreshProfileReferences();
         })
         .beforeStarting(
             setSpeeds(() -> 0, () -> 0)
@@ -498,12 +511,7 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    BaseStatusSignal.refreshAll(
-        _isMotionMagic,
-        _elevatorReference,
-        _elevatorReferenceSlope,
-        _wristReference,
-        _wristReferenceSlope);
+    _isMotionMagic.refresh();
 
     DogLog.log(
         "Wristevator/Is Motion Magic",
