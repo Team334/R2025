@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -10,6 +11,7 @@ import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.MotionMagicIsRunningValue;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
@@ -25,7 +27,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.simulation.ElevatorSim;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
@@ -72,12 +73,24 @@ public class Wristevator extends AdvancedSubsystem {
   private final DynamicMotionMagicVoltage _heightSetter = new DynamicMotionMagicVoltage(0, 0, 0, 0);
   private final DynamicMotionMagicVoltage _angleSetter = new DynamicMotionMagicVoltage(0, 0, 0, 0);
 
+  private final StatusSignal<MotionMagicIsRunningValue> _isMotionMagic =
+      _leftMotor.getMotionMagicIsRunning();
+
+  private final StatusSignal<Double> _elevatorReference = _leftMotor.getClosedLoopReference();
+  private final StatusSignal<Double> _elevatorReferenceSlope =
+      _leftMotor.getClosedLoopReferenceSlope();
+
+  private final StatusSignal<Double> _wristReference = _wristMotor.getClosedLoopReference();
+  private final StatusSignal<Double> _wristReferenceSlope =
+      _wristMotor.getClosedLoopReferenceSlope();
+
   private final StatusSignal<AngularVelocity> _elevatorVelocityGetter = _leftMotor.getVelocity();
   private final StatusSignal<AngularVelocity> _wristVelocityGetter = _wristMotor.getVelocity();
 
   private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
   private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
 
+  // elevator profile
   private final Constraints _elevatorMaxConstraints =
       new Constraints(
           WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
@@ -86,6 +99,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final State _elevatorMaxGoal = new State();
   private State _elevatorMaxSetpoint = new State();
 
+  private final TrapezoidProfile _elevatorMaxProfile =
+      new TrapezoidProfile(_elevatorMaxConstraints);
+
+  // wrist profile
   private final Constraints _wristMaxConstraints =
       new Constraints(
           WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
@@ -93,9 +110,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final State _wristMaxGoal = new State();
   private State _wristMaxSetpoint = new State();
-
-  private final TrapezoidProfile _elevatorMaxProfile =
-      new TrapezoidProfile(_elevatorMaxConstraints);
 
   private final TrapezoidProfile _wristMaxProfile = new TrapezoidProfile(_wristMaxConstraints);
 
@@ -105,9 +119,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Is Manual")
   private boolean _isManual = false;
-
-  private final Timer _profileTimer = new Timer();
-  private double _profileTime = 0;
 
   private DIOSim _homeSwitchSim;
 
@@ -145,7 +156,7 @@ public class Wristevator extends AdvancedSubsystem {
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
-    setDefaultCommand(idle());
+    setDefaultCommand(holdInPlace());
 
     Translation2d[] presets = new Translation2d[Preset.values().length];
     Translation2d[] intermediates = new Translation2d[Intermediate.values().length];
@@ -283,8 +294,22 @@ public class Wristevator extends AdvancedSubsystem {
     return _homeSwitch.get();
   }
 
-  private Command idle() {
-    return setSpeeds(() -> 0, () -> 0).withName("Idle");
+  /** Whether the wristevator is open for manual control or not. */
+  public boolean isManual() {
+    return _isManual;
+  }
+
+  /** Indicate switch to manual control. */
+  public Command switchToManual() {
+    return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
+  }
+
+  private Command holdInPlace() {
+    return run(() -> {
+          _leftMotor.setControl(_heightSetter);
+          _wristMotor.setControl(_angleSetter);
+        })
+        .withName("Hold In Place");
   }
 
   // distance between current position and supplied setpoint
@@ -298,10 +323,41 @@ public class Wristevator extends AdvancedSubsystem {
     return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
   }
 
-  /** Whether the wristevator is near a setpoint. */
-  private boolean atSetpoint(Setpoint setpoint) {
-    System.out.println(_profileTimer.get());
-    return _profileTimer.hasElapsed(_profileTime) && _nextSetpoint == setpoint;
+  /** Whether the wristevator profiles finished at the specified goal. */
+  private boolean finishedProfiles(Setpoint setpoint) {
+    // only need to check one profile since they run the same amount of time
+    return MathUtil.isNear(
+            setpoint.getHeight().in(Rotations), _elevatorReference.getValueAsDouble(), 0.001)
+        && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
+        && _isMotionMagic.getValue() == MotionMagicIsRunningValue.Enabled;
+  }
+
+  /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
+  private void findNextSetpoint(Setpoint goal) {
+    // if we just came from manual
+    // or if we haven't finished the previous profiles
+    if (_isManual || !finishedProfiles(_nextSetpoint)) {
+      Intermediate closest = Intermediate.INFINITY;
+
+      // find the closest intermediate vertex
+      for (Intermediate intermediate : Intermediate.values()) {
+        if (distance(intermediate) < distance(closest)) {
+          closest = intermediate;
+        }
+      }
+
+      _nextSetpoint = closest;
+
+      return;
+    }
+
+    if (WristevatorConstants.setpointMap.containsKey(Pair.of(_nextSetpoint, goal))) {
+      _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_nextSetpoint, goal));
+
+      return;
+    }
+
+    _nextSetpoint = goal;
   }
 
   /** Find new constraints for the motion magic control requests. */
@@ -379,53 +435,13 @@ public class Wristevator extends AdvancedSubsystem {
 
     _angleSetter.Velocity = Units.radiansToRotations(wristContraints.maxVelocity);
     _angleSetter.Acceleration = Units.radiansToRotations(wristContraints.maxAcceleration);
-
-    _profileTime = slowerProfile.totalTime();
-    _profileTimer.restart();
-  }
-
-  /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
-  private void findNextSetpoint(Setpoint goal) {
-    // if we just came from manual or are in between verticies, go to an intermediate
-    if (_isManual || !atSetpoint(_nextSetpoint)) {
-      Intermediate closest = Intermediate.INFINITY;
-
-      // find the closest intermediate vertex
-      for (Intermediate intermediate : Intermediate.values()) {
-        if (distance(intermediate) < distance(closest)) {
-          closest = intermediate;
-        }
-      }
-
-      _nextSetpoint = closest;
-
-      return;
-    }
-
-    if (WristevatorConstants.setpointMap.containsKey(Pair.of(_nextSetpoint, goal))) {
-      _nextSetpoint = WristevatorConstants.setpointMap.get(Pair.of(_nextSetpoint, goal));
-
-      return;
-    }
-
-    _nextSetpoint = goal;
-  }
-
-  /** Whether the wristevator is open for manual control or not. */
-  public boolean isManual() {
-    return _isManual;
-  }
-
-  /** Indicate switch to manual control. */
-  public Command switchToManual() {
-    return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
     return run(() -> {
           // once the next setpoint is reached, re-find the next one
-          if (atSetpoint(_nextSetpoint)) {
+          if (finishedProfiles(_nextSetpoint)) {
             findNextSetpoint(goal);
             findProfileConstraints(_nextSetpoint);
           }
@@ -441,12 +457,12 @@ public class Wristevator extends AdvancedSubsystem {
           _wristMaxSetpoint =
               _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxSetpoint, _wristMaxGoal);
 
-          // travel to next setpoint
+          // move towards the next setpoint
           _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
           _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
         })
         .beforeStarting(
-            idle()
+            setSpeeds(() -> 0, () -> 0)
                 .until(
                     () ->
                         MathUtil.isNear(0, getElevatorVelocity(), 0.01)
@@ -458,7 +474,7 @@ public class Wristevator extends AdvancedSubsystem {
 
                       _isManual = false;
                     }))
-        .until(() -> atSetpoint(goal))
+        .until(() -> finishedProfiles(goal))
         .withName("Set Goal");
   }
 
@@ -484,18 +500,28 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
+    BaseStatusSignal.refreshAll(
+        _isMotionMagic,
+        _elevatorReference,
+        _elevatorReferenceSlope,
+        _wristReference,
+        _wristReferenceSlope);
+
     DogLog.log(
-        "Wristevator/Elevator Reference Slope",
-        Units.rotationsToRadians(_leftMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
-    DogLog.log(
-        "Wristevator/Wrist Reference Slope",
-        Units.rotationsToRadians(_wristMotor.getClosedLoopReferenceSlope().getValueAsDouble()));
+        "Wristevator/Is Motion Magic",
+        _isMotionMagic.getValue() == MotionMagicIsRunningValue.Enabled);
     DogLog.log(
         "Wristevator/Elevator Reference",
-        Units.rotationsToRadians(_leftMotor.getClosedLoopReference().getValueAsDouble()));
+        Units.rotationsToRadians(_elevatorReference.getValueAsDouble()));
     DogLog.log(
         "Wristevator/Wrist Reference",
-        Units.rotationsToRadians(_wristMotor.getClosedLoopReference().getValueAsDouble()));
+        Units.rotationsToRadians(_wristReference.getValueAsDouble()));
+    DogLog.log(
+        "Wristevator/Elevator Reference Slope",
+        Units.rotationsToRadians(_elevatorReferenceSlope.getValueAsDouble()));
+    DogLog.log(
+        "Wristevator/Wrist Reference Slope",
+        Units.rotationsToRadians(_wristReferenceSlope.getValueAsDouble()));
 
     DogLog.log("Wristevator/Next Setpoint", _nextSetpoint.toString());
 

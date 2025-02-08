@@ -22,3 +22,6 @@ Noise is innaccurate measurements that occur from time to time from a sensor or 
 
 ### Ambiguity
 When detecting pose using an AprilTag (4 corners), it is often possible to get two pose solutions from solvePnP, each with their own re-projection errors. If the re-projection errors are very close or equal, it is hard to tell which pose solution is the correct one, making the problem ambigious. In this case, the correct pose can be chosen by comparing the two to a different robot sensor, the gyro for example, and determining which one is correct. In terms of filtering, measurements with high ambiguity are typically correlated with high noise (a tag seen at a large distance would cause both ambiguity and corner noise), so those get rejected. At lower ambiguities, the measurement with better re-projection error may not necessarily be the correct measurement. Corner noise may cause for one innaccurate low re-projection error pose along with a more accurate higher re-projection error pose, so the correct one for lower ambiguities should also be determined using the gyro.
+
+## Wristevator Corner Cases
+
