@@ -300,8 +300,8 @@ public final class Constants {
     public static final int leftMotorId = 14;
     public static final int rightMotorId = 15;
 
-    public static final int beamPort = 3;
-    public static final int switchPort = 4;
+    public static final int coralBeam = 3;
+    public static final int algaeBeam = 4;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
 
