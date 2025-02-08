@@ -75,8 +75,8 @@ public class Wristevator extends AdvancedSubsystem {
   private final DynamicMotionMagicVoltage _angleSetter =
       new DynamicMotionMagicVoltage(HOME.getAngle().in(Rotations), 0, 0, 0);
 
-  private final StatusSignal<MotionMagicIsRunningValue> _isMotionMagic =
-      _leftMotor.getMotionMagicIsRunning();
+  @Logged(name = "Is Motion Magic")
+  private boolean _isMotionMagic = false;
 
   private final StatusSignal<Double> _elevatorReference = _leftMotor.getClosedLoopReference();
   private final StatusSignal<Double> _elevatorReferenceSlope =
@@ -329,7 +329,12 @@ public class Wristevator extends AdvancedSubsystem {
 
   // refresh the references of the talonfx profiles
   private void refreshProfileReferences() {
-    if (_isMotionMagic.getValue() == MotionMagicIsRunningValue.Disabled) return;
+    _isMotionMagic =
+        _leftMotor.getMotionMagicIsRunning().getValue() == MotionMagicIsRunningValue.Enabled
+            && _wristMotor.getMotionMagicIsRunning().getValue()
+                == MotionMagicIsRunningValue.Enabled;
+
+    if (!_isMotionMagic) return;
 
     BaseStatusSignal.refreshAll(
         _elevatorReference, _elevatorReferenceSlope, _wristReference, _wristReferenceSlope);
@@ -458,7 +463,7 @@ public class Wristevator extends AdvancedSubsystem {
 
           refreshProfileReferences();
 
-          if (_isManual) _isManual = false;
+          if (_isMotionMagic) _isManual = false;
 
           // once the next setpoint is reached, re-find the next one
           if (finishedProfiles(_nextSetpoint)) {
@@ -514,11 +519,11 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    _isMotionMagic.refresh();
+    _isMotionMagic =
+        _leftMotor.getMotionMagicIsRunning().getValue() == MotionMagicIsRunningValue.Enabled
+            && _wristMotor.getMotionMagicIsRunning().getValue()
+                == MotionMagicIsRunningValue.Enabled;
 
-    DogLog.log(
-        "Wristevator/Is Motion Magic",
-        _isMotionMagic.getValue() == MotionMagicIsRunningValue.Enabled);
     DogLog.log(
         "Wristevator/Elevator Reference",
         Units.rotationsToRadians(_elevatorReference.getValueAsDouble()));
