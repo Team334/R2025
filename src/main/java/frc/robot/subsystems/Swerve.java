@@ -443,13 +443,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               Pose2d pose = getPose();
               Optional<Alliance> alliance = DriverStation.getAlliance();
 
+              AlignPoses rotated =
+                  alliance.get() == Alliance.Red
+                      ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                      : alignGoal;
+
+              _alignGoal = rotated;
+
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;
-
-                var goal =
-                    alliance.get() == Alliance.Red
-                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                        : alignGoal;
 
                 var reefCenter =
                     alliance.get() == Alliance.Red
@@ -458,11 +460,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                         : FieldConstants.reefCenter;
 
                 for (int i = 0; i < 6; i++) {
-                  var rotated = goal.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
+                  var goal = rotated.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
 
-                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
-                    _alignGoal = rotated;
-                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = goal;
+                    minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
                   }
                 }
               }
@@ -471,37 +473,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 double minDistance = Double.MAX_VALUE;
 
                 for (int i = 0; i < 2; i++) {
-                  AlignPoses rotated = alignGoal.offset(0, -6.26 * i);
+                  AlignPoses offset = alignGoal.offset(0, -6.26 * i);
 
-                  rotated =
+                  offset =
                       alliance.get() == Alliance.Red
-                          ? rotated.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                          : rotated;
+                          ? offset.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                          : offset;
 
-                  rotated =
-                      rotated.rotateAround(
-                          rotated.getCenter().getTranslation(),
+                  offset =
+                      offset.rotateAround(
+                          offset.getCenter().getTranslation(),
                           Rotation2d.fromDegrees(106).times(i));
 
-                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
-                    _alignGoal = rotated;
-                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  if (pose.minus(offset.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = offset;
+                    minDistance = pose.minus(offset.getCenter()).getTranslation().getNorm();
                   }
                 }
-              }
-
-              if (alignGoal == FieldConstants.processor) {
-                _alignGoal =
-                    alliance.get() == Alliance.Red
-                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                        : alignGoal;
-              }
-
-              if (alignGoal == FieldConstants.cage) {
-                _alignGoal =
-                    alliance.get() == Alliance.Red
-                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                        : alignGoal;
               }
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
