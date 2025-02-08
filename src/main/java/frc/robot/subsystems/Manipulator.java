@@ -13,14 +13,17 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.AdvancedSubsystem;
@@ -36,11 +39,14 @@ public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
   private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
 
-  private final Trigger _beamBroken = new Trigger(this::getBeam);
-  private final Trigger _switchPressed = new Trigger(this::getSwitch);
+  private final BooleanEvent _beamOnFalse =
+      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getBeam)
+          .falling();
+  private final BooleanEvent _switchOnTrue =
+      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getSwitch)
+          .rising();
 
-  private final Trigger _beamWithPiece = _beamBroken.and(() -> getCurrentPiece() != Piece.NONE);
-  private final Trigger _beamNoPiece = _beamBroken.and(() -> getCurrentPiece() == Piece.NONE);
+  private final Consumer<Piece> _currentPieceSetter;
 
   private final TalonFX _leftMotor =
       new TalonFX(ManipulatorConstants.leftMotorId, Constants.canivore);
@@ -65,7 +71,9 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanEntry _limitSwitchSimValue;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
-    setDefaultCommand(setSpeed(0));
+    setDefaultCommand(idle());
+
+    _currentPieceSetter = currentPieceSetter;
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
@@ -73,7 +81,7 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(VoltsPerRadianPerSecond);
+    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
@@ -82,17 +90,6 @@ public class Manipulator extends AdvancedSubsystem {
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
-
-    _beamNoPiece.onFalse(
-        Commands.runOnce(
-            () -> currentPieceSetter.accept(Piece.CORAL))); // coral pick up not from passoff
-
-    _beamWithPiece.onFalse(
-        Commands.runOnce(() -> currentPieceSetter.accept(Piece.NONE))
-            .onlyIf(() -> getFeedDirection() != 1)); // any piece came only while outtaking
-
-    _switchPressed.onTrue(
-        Commands.runOnce(() -> currentPieceSetter.accept(Piece.ALGAE))); // algae picked up
 
     if (Robot.isSimulation()) {
       _beamSim = new DIOSim(_beam);
@@ -118,7 +115,7 @@ public class Manipulator extends AdvancedSubsystem {
     NONE
   }
 
-  public void startSimThread() {
+  private void startSimThread() {
     _lastSimTime = Utils.getCurrentTimeSeconds();
 
     _simNotifier =
@@ -148,26 +145,6 @@ public class Manipulator extends AdvancedSubsystem {
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
-  /** A trigger that is true when the beam is broken and current piece is not none. */
-  public Trigger getBeamWithPiece() {
-    return _beamWithPiece;
-  }
-
-  /** A trigger that is true when the beam is broken and current piece is none. */
-  public Trigger getBeamNoPiece() {
-    return _beamNoPiece;
-  }
-
-  /** The direction in which the feed motors are spinning. */
-  public double getFeedDirection() {
-    return Math.signum(getSpeed());
-  }
-
-  @Logged(name = "Speed")
-  public double getSpeed() {
-    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
-  }
-
   @Logged(name = "Beam")
   public boolean getBeam() {
     return !_beam.get();
@@ -179,12 +156,42 @@ public class Manipulator extends AdvancedSubsystem {
     return _limitSwitch.get();
   }
 
-  /** Set the speed of the back feed wheels in rad/s. */
-  public Command setSpeed(double speed) {
-    return run(() -> {
-          _leftMotor.setControl(_feedVelocitySetter.withVelocity(speed));
-        })
-        .withName("Set Speed");
+  @Logged(name = "Speed")
+  public double getSpeed() {
+    return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
+  }
+
+  // set the speed of the back feed wheels in rad/s
+  private Command setSpeed(double speed) {
+    return run(
+        () -> {
+          _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
+        });
+  }
+
+  /** Sets the current piece when the beam changes from true to false. */
+  private Command watchBeam(Piece piece) {
+    return Commands.run(
+        () -> {
+          if (_beamOnFalse.getAsBoolean()) {
+            _currentPieceSetter.accept(piece);
+          }
+        });
+  }
+
+  /** Sets the current piece when the limit switch changes from false to true. */
+  private Command watchSwitch(Piece piece) {
+    return Commands.run(
+        () -> {
+          if (_switchOnTrue.getAsBoolean()) {
+            _currentPieceSetter.accept(piece);
+          }
+        });
+  }
+
+  /** Idle the manipulator. */
+  public Command idle() {
+    return setSpeed(0).withName("Idle");
   }
 
   /** Hold a coral in place. */
@@ -192,6 +199,7 @@ public class Manipulator extends AdvancedSubsystem {
     return run(() -> {
           _leftMotor.setControl(_feedVoltageSetter.withOutput(0));
         })
+        .alongWith(watchBeam(Piece.NONE))
         .withName("Hold Coral");
   }
 
@@ -201,7 +209,35 @@ public class Manipulator extends AdvancedSubsystem {
           _leftMotor.setControl(
               _feedVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
         })
+        .alongWith(watchBeam(Piece.NONE))
         .withName("Hold Algae");
+  }
+
+  /** General intake. */
+  public Command intake() {
+    return setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+        .alongWith(watchBeam(Piece.CORAL), watchSwitch(Piece.ALGAE))
+        .withName("Intake");
+  }
+
+  /** General outtake. */
+  public Command outtake() {
+    return setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+        .alongWith(watchBeam(Piece.NONE))
+        .withName("Outtake");
+  }
+
+  /** Passoff from the serializer. */
+  public Command passoff() {
+    return setSpeed(0)
+        .until(this::getBeam)
+        .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)))
+        .withName("Passoff");
+  }
+
+  /** Inverse passoff into the serializer. */
+  public Command inversePassoff() {
+    return setSpeed(0).withName("Inverse Passoff");
   }
 
   @Override

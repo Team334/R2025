@@ -35,13 +35,7 @@ public class Intake extends AdvancedSubsystem {
   private final MechanismRoot2d _root = _mech.getRoot("pivot", 0.5, 0.1);
 
   private final MechanismLigament2d _intake =
-      _root.append(
-          new MechanismLigament2d(
-              "intake",
-              0.5,
-              IntakeConstants.actuatorStowed.in(Degrees),
-              3,
-              new Color8Bit(Color.kBlue)));
+      _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
 
   private final TalonFX _actuatorMotor =
       new TalonFX(IntakeConstants.actuatorMotorId, Constants.canivore);
@@ -60,20 +54,21 @@ public class Intake extends AdvancedSubsystem {
   private Notifier _simNotifier;
 
   public Intake() {
-    setDefaultCommand(set(IntakeConstants.actuatorStowed.in(Radians), 0));
+    setDefaultCommand(stow());
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
-    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(VoltsPerRadianPerSecond);
-    actuatorMotorConfigs.Slot0.kA = IntakeConstants.actuatorkA.in(VoltsPerRadianPerSecondSquared);
+    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
+    actuatorMotorConfigs.Slot0.kA =
+        IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.MotionMagic.MotionMagicCruiseVelocity =
-        IntakeConstants.actuatorVelocity.in(RadiansPerSecond);
+        IntakeConstants.actuatorVelocity.in(RotationsPerSecond);
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
-        IntakeConstants.actuatorAcceleration.in(RadiansPerSecondPerSecond);
+        IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
@@ -96,7 +91,7 @@ public class Intake extends AdvancedSubsystem {
               IntakeConstants.minAngle.in(Radians),
               IntakeConstants.maxAngle.in(Radians),
               false,
-              IntakeConstants.actuatorStowed.in(Radians));
+              0);
 
       startSimThread();
     }
@@ -147,18 +142,35 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  /**
-   * Set the actuator angle and feed speed.
-   *
-   * @param actuatorAngle Actuator angle in rad.
-   * @param feedSpeed Feed wheel speed in rad/s.
-   */
-  public Command set(double actuatorAngle, double feedSpeed) {
-    return run(() -> {
-          _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(actuatorAngle));
-          _feedMotor.setControl(_feedVelocitySetter.withVelocity(feedSpeed));
-        })
-        .withName("Set");
+  // set the actuator angle and feed speed.
+  private Command set(double actuatorAngle, double feedSpeed) {
+    return run(
+        () -> {
+          _actuatorMotor.setControl(
+              _actuatorPositionSetter.withPosition(Units.radiansToRotations(actuatorAngle)));
+          _feedMotor.setControl(
+              _feedVelocitySetter.withVelocity(Units.radiansToRotations(feedSpeed)));
+        });
+  }
+
+  /** Stow the intake into the robot. */
+  public Command stow() {
+    return set(IntakeConstants.actuatorStowed.in(Radians), 0).withName("Stow");
+  }
+
+  /** Intake a coral off of the ground. */
+  public Command intake() {
+    return set(
+            IntakeConstants.actuatorOut.in(Radians), IntakeConstants.feedSpeed.in(RadiansPerSecond))
+        .withName("Intake");
+  }
+
+  /** Outtake onto the ground. */
+  public Command outtake() {
+    return set(
+            IntakeConstants.actuatorOut.in(Radians),
+            -IntakeConstants.feedSpeed.in(RadiansPerSecond))
+        .withName("Outtake");
   }
 
   @Override

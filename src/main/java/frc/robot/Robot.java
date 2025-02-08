@@ -7,7 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
-import static frc.robot.subsystems.Wristevator.WristevatorSetpoint.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
@@ -69,7 +70,7 @@ public class Robot extends TimedRobot {
   private final Intake _intake = new Intake();
 
   @Logged(name = "Serializer")
-  private final Serializer _serializer = new Serializer();
+  private final Serializer _serializer = new Serializer((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Manipulator")
   private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
@@ -123,23 +124,7 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
-    // piece comes into the robot from ground intake
-    new Trigger(_serializer::getBackBeam)
-        .onTrue(
-            either(
-                runOnce(() -> _currentPiece = Piece.NONE),
-                rumbleControllers(1, 1),
-                () -> getCurrentPiece() == Piece.CORAL));
-
-    // piece in manipulator changes
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
-
-    // a coral was passoff'ed
-    _manipulator
-        .getBeamNoPiece()
-        .and(_wristevator::homeSwitch)
-        .and(() -> _manipulator.getFeedDirection() == -1)
-        .onTrue(runOnce(() -> _currentPiece = Piece.CORAL));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -193,16 +178,17 @@ public class Robot extends TimedRobot {
                 .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
-    _wristevator.setDefaultCommand(
-        _wristevator.setSpeeds(
-            InputStream.of(_operatorController::getRightY)
-                .deadband(0.05, 1)
-                .negate()
-                .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
-            InputStream.of(_operatorController::getLeftY)
-                .deadband(0.05, 1)
-                .negate()
-                .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+    new Trigger(_wristevator::isManual)
+        .onTrue(
+            _wristevator.setSpeeds(
+                InputStream.of(_operatorController::getRightY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
+                InputStream.of(_operatorController::getLeftY)
+                    .deadband(0.05, 1)
+                    .negate()
+                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
 
   private void alignmentTriggers(Trigger button, AlignPoses poses) {
@@ -232,53 +218,62 @@ public class Robot extends TimedRobot {
   }
 
   private void configureOperatorBindings() {
-    _operatorController.back().whileTrue(_wristevator.setSetpoint(PROCESSOR));
-    _operatorController.start().whileTrue(_wristevator.setSetpoint(HUMAN));
-    _operatorController.rightStick().whileTrue(_wristevator.setSetpoint(HOME));
+    // wristevator setpoint control
+    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
+    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
 
-    _operatorController.a().whileTrue(_wristevator.setSetpoint(L1));
+    _operatorController.a().onTrue(_wristevator.setGoal(L1));
 
     _operatorController
         .b()
-        .whileTrue(
+        .onTrue(
             either(
-                _wristevator.setSetpoint(L2),
-                _wristevator.setSetpoint(LOWER_ALGAE),
+                _wristevator.setGoal(L2),
+                _wristevator.setGoal(LOWER_ALGAE),
                 () -> getCurrentPiece() == Piece.CORAL));
 
     _operatorController
         .y()
-        .whileTrue(
+        .onTrue(
             either(
-                _wristevator.setSetpoint(L3),
-                _wristevator.setSetpoint(UPPER_ALGAE),
+                _wristevator.setGoal(L3),
+                _wristevator.setGoal(UPPER_ALGAE),
                 () -> getCurrentPiece() == Piece.CORAL));
 
-    _operatorController.x().whileTrue(_wristevator.setSetpoint(L4));
+    _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
+    _operatorController.povDown().onTrue(_wristevator.switchToManual());
+
+    // ground intake / passoff
     _operatorController
         .rightBumper()
-        .and(() -> _wristevator.homeSwitch())
+        .and(_wristevator::homeSwitch)
         .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
 
     _operatorController
         .rightBumper()
         .and(() -> !_wristevator.homeSwitch())
-        .whileTrue(Superstructure.groundIntake(_intake, _serializer));
+        .whileTrue(
+            Superstructure.groundIntake(_intake, _serializer)
+                .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
+    // ground outtake
     _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+
+    // intake / inverse passoff
+    _operatorController
+        .rightTrigger()
+        .and(_wristevator::homeSwitch)
+        .whileTrue(Superstructure.inversePassoff(_serializer, _manipulator));
 
     _operatorController
         .rightTrigger()
-        .whileTrue(
-            either(
-                Superstructure.inversePassoff(_serializer, _manipulator),
-                _manipulator.setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond)),
-                _wristevator::homeSwitch));
+        .and(() -> !_wristevator.homeSwitch())
+        .whileTrue(_manipulator.intake());
 
-    _operatorController
-        .leftTrigger()
-        .whileTrue(_manipulator.setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond)));
+    // outtake
+    _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */
