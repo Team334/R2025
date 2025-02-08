@@ -137,22 +137,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private double _lastSimTime = 0;
   private Notifier _simNotifier;
 
-  public static enum DesiredLocation {
-    HUMAN(new Pose2d(0, 0, Rotation2d.kZero)),
-    PROCESSOR(new Pose2d(0, 0, Rotation2d.kZero)),
-    REEF(new Pose2d(0, 0, Rotation2d.kZero));
-
-    Pose2d _pose;
-
-    private DesiredLocation(Pose2d pose) {
-      _pose = pose;
-    }
-
-    public Pose2d getPose() {
-      return _pose;
-    }
-  }
-
   @Logged(name = "Driver Chassis Speeds")
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
 
