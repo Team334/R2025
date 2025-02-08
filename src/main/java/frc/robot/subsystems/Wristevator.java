@@ -335,19 +335,22 @@ public class Wristevator extends AdvancedSubsystem {
         _elevatorReference, _elevatorReferenceSlope, _wristReference, _wristReferenceSlope);
   }
 
-  /** Whether the wristevator profiles finished at the specified goal. */
+  /**
+   * Whether the wristevator profiles finished at the specified goal. This is always false when
+   * coming from manual control.
+   */
   private boolean finishedProfiles(Setpoint setpoint) {
     // only need to check one profile since they run the same amount of time
     return MathUtil.isNear(
             setpoint.getHeight().in(Rotations), _elevatorReference.getValueAsDouble(), 0.001)
-        && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001);
+        && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
+        && !_isManual;
   }
 
   /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
   private void findNextSetpoint(Setpoint goal) {
-    // if we just came from manual
-    // or if we haven't finished the previous profiles
-    if (_isManual || !finishedProfiles(_nextSetpoint)) {
+    // if we haven't finished the previous profiles
+    if (!finishedProfiles(_nextSetpoint)) {
       Intermediate closest = Intermediate.INFINITY;
 
       // find the closest intermediate vertex
@@ -449,6 +452,14 @@ public class Wristevator extends AdvancedSubsystem {
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
     return run(() -> {
+          // move towards the next setpoint
+          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
+          _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
+
+          refreshProfileReferences();
+
+          if (_isManual) _isManual = false;
+
           // once the next setpoint is reached, re-find the next one
           if (finishedProfiles(_nextSetpoint)) {
             findNextSetpoint(goal);
@@ -465,12 +476,6 @@ public class Wristevator extends AdvancedSubsystem {
                   Robot.kDefaultPeriod, _elevatorMaxSetpoint, _elevatorMaxGoal);
           _wristMaxSetpoint =
               _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxSetpoint, _wristMaxGoal);
-
-          // move towards the next setpoint
-          _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
-          _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
-
-          refreshProfileReferences();
         })
         .beforeStarting(
             setSpeeds(() -> 0, () -> 0)
@@ -482,8 +487,6 @@ public class Wristevator extends AdvancedSubsystem {
                     () -> {
                       findNextSetpoint(goal);
                       findProfileConstraints(_nextSetpoint);
-
-                      _isManual = false;
                     }))
         .until(() -> finishedProfiles(goal))
         .withName("Set Goal");
