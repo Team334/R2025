@@ -37,7 +37,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -303,7 +302,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Indicate switch to manual control. */
   public Command switchToManual() {
-    return Commands.runOnce(() -> _isManual = true).withName("Switch To Manual");
+    return runOnce(() -> _isManual = true).withName("Switch To Manual");
   }
 
   private Command holdInPlace() {
