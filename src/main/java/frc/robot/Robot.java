@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -44,6 +45,8 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
+import frc.robot.utils.AlignPoses;
+import frc.robot.utils.AlignPoses.AlignSide;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -187,14 +190,30 @@ public class Robot extends TimedRobot {
                     .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
 
-  private void configureDriverBindings() {
-    _driverController.x().whileTrue(_swerve.brake());
-    _driverController.a().onTrue(_swerve.toggleFieldOriented());
-    _driverController.y().onTrue(_swerve.resetHeading());
+  private void alignmentTriggers(Trigger button, AlignPoses poses) {
+    button
+        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
+        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT));
 
-    // _driverController
-    //     .b()
-    //     .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+    button
+        .and(
+            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
+        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER));
+
+    button
+        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
+        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT));
+  }
+
+  private void configureDriverBindings() {
+    _driverController.a().whileTrue(_swerve.brake());
+    _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
+    _driverController.povDown().onTrue(_swerve.resetHeading());
+
+    alignmentTriggers(_driverController.x(), FieldConstants.reef);
+    alignmentTriggers(_driverController.y(), FieldConstants.human);
+    alignmentTriggers(_driverController.b(), FieldConstants.processor);
+    alignmentTriggers(_driverController.start(), FieldConstants.cage);
   }
 
   private void configureOperatorBindings() {

@@ -11,8 +11,11 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
@@ -26,6 +29,7 @@ import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import frc.robot.generated.TunerConstants;
+import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
 
@@ -50,6 +54,50 @@ public final class Constants {
   public static class FieldConstants {
     public static final AprilTagFieldLayout fieldLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+
+    public static final Translation2d reefCenter =
+        new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
+
+    public static final Translation2d fieldCenter =
+        new Translation2d(fieldLayout.getFieldLength() / 2, fieldLayout.getFieldWidth() / 2);
+
+    public static final Translation2d humanCenter =
+        new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));
+
+    public static final AlignPoses reef =
+        new AlignPoses(
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
+            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero));
+
+    public static final AlignPoses human =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(23.14).in(Meters),
+                Inches.of(264.66).in(Meters),
+                new Rotation2d(Degrees.of(126))),
+            new Pose2d(
+                Inches.of(41.17).in(Meters),
+                Inches.of(282.69).in(Meters),
+                new Rotation2d(Degrees.of(126))),
+            new Pose2d(
+                Inches.of(64.61).in(Meters),
+                Inches.of(294.86).in(Meters),
+                new Rotation2d(Degrees.of(126))));
+
+    public static final AlignPoses processor =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(233.7).in(Meters), Inches.of(16.2).in(Meters), Rotation2d.kCW_90deg));
+
+    public static final AlignPoses cage =
+        new AlignPoses(
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(285.84).in(Meters), Rotation2d.kCCW_90deg),
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(241.89).in(Meters), Rotation2d.kCCW_90deg),
+            new Pose2d(
+                Inches.of(324.95).in(Meters), Inches.of(200.16).in(Meters), Rotation2d.kCCW_90deg));
   }
 
   public static class VisionConstants {

@@ -5,7 +5,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
@@ -47,6 +47,8 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.utils.AlignPoses;
+import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
@@ -54,6 +56,7 @@ import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -145,6 +148,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
+
+  private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -425,6 +430,84 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withSpeeds(desiredSpeeds)
             .withWheelForceFeedforwardsX(sample.moduleForcesX())
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
+  }
+
+  /**
+   * Aligns to a {@link AlignPoses} to the correct side.
+   *
+   * @return Drive to the correct pose.
+   */
+  public Command alignTo(AlignPoses alignGoal, AlignSide side) {
+    return runOnce(
+            () -> {
+              Pose2d pose = getPose();
+              Optional<Alliance> alliance = DriverStation.getAlliance();
+
+              if (alignGoal == FieldConstants.reef) {
+                double minDistance = Double.MAX_VALUE;
+
+                var goal =
+                    alliance.get() == Alliance.Red
+                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : alignGoal;
+
+                var reefCenter =
+                    alliance.get() == Alliance.Red
+                        ? FieldConstants.reefCenter.rotateAround(
+                            FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : FieldConstants.reefCenter;
+
+                for (int i = 0; i < 6; i++) {
+                  var rotated = goal.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
+
+                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = rotated;
+                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  }
+                }
+              }
+
+              if (alignGoal == FieldConstants.human) {
+                double minDistance = Double.MAX_VALUE;
+
+                for (int i = 0; i < 2; i++) {
+                  AlignPoses rotated = alignGoal.offset(0, -6.26 * i);
+
+                  rotated =
+                      alliance.get() == Alliance.Red
+                          ? rotated.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                          : rotated;
+
+                  rotated =
+                      rotated.rotateAround(
+                          rotated.getCenter().getTranslation(),
+                          Rotation2d.fromDegrees(106).times(i));
+
+                  if (pose.minus(rotated.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = rotated;
+                    minDistance = pose.minus(rotated.getCenter()).getTranslation().getNorm();
+                  }
+                }
+              }
+
+              if (alignGoal == FieldConstants.processor) {
+                _alignGoal =
+                    alliance.get() == Alliance.Red
+                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : alignGoal;
+              }
+
+              if (alignGoal == FieldConstants.cage) {
+                _alignGoal =
+                    alliance.get() == Alliance.Red
+                        ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
+                        : alignGoal;
+              }
+
+              DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
+            })
+        .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))
+        .withName("Align To");
   }
 
   /** Drives the robot in a straight line to some given goal pose. */
