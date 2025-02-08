@@ -35,13 +35,7 @@ public class Intake extends AdvancedSubsystem {
   private final MechanismRoot2d _root = _mech.getRoot("pivot", 0.5, 0.1);
 
   private final MechanismLigament2d _intake =
-      _root.append(
-          new MechanismLigament2d(
-              "intake",
-              0.5,
-              0,
-              3,
-              new Color8Bit(Color.kBlue)));
+      _root.append(new MechanismLigament2d("intake", 0.5, 0, 3, new Color8Bit(Color.kBlue)));
 
   private final TalonFX _actuatorMotor =
       new TalonFX(IntakeConstants.actuatorMotorId, Constants.canivore);
