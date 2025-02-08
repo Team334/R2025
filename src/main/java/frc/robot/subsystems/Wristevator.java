@@ -310,8 +310,6 @@ public class Wristevator extends AdvancedSubsystem {
     return run(() -> {
           _leftMotor.setControl(_heightSetter);
           _wristMotor.setControl(_angleSetter);
-
-          refreshProfileReferences();
         })
         .withName("Hold In Place");
   }
@@ -461,9 +459,9 @@ public class Wristevator extends AdvancedSubsystem {
           _leftMotor.setControl(_heightSetter.withPosition(_nextSetpoint.getHeight()));
           _wristMotor.setControl(_angleSetter.withPosition(_nextSetpoint.getAngle()));
 
-          refreshProfileReferences();
+          if (!_isMotionMagic) return;
 
-          if (_isMotionMagic) _isManual = false;
+          _isManual = false;
 
           // once the next setpoint is reached, re-find the next one
           if (finishedProfiles(_nextSetpoint)) {
@@ -519,10 +517,7 @@ public class Wristevator extends AdvancedSubsystem {
   public void periodic() {
     super.periodic();
 
-    _isMotionMagic =
-        _leftMotor.getMotionMagicIsRunning().getValue() == MotionMagicIsRunningValue.Enabled
-            && _wristMotor.getMotionMagicIsRunning().getValue()
-                == MotionMagicIsRunningValue.Enabled;
+    refreshProfileReferences();
 
     DogLog.log(
         "Wristevator/Elevator Reference",
