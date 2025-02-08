@@ -39,7 +39,7 @@ public class Intake extends AdvancedSubsystem {
           new MechanismLigament2d(
               "intake",
               0.5,
-              IntakeConstants.actuatorStowed.in(Degrees),
+              0,
               3,
               new Color8Bit(Color.kBlue)));
 
@@ -97,7 +97,7 @@ public class Intake extends AdvancedSubsystem {
               IntakeConstants.minAngle.in(Radians),
               IntakeConstants.maxAngle.in(Radians),
               false,
-              IntakeConstants.actuatorStowed.in(Radians));
+              0);
 
       startSimThread();
     }

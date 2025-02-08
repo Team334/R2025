@@ -114,8 +114,8 @@ public final class Constants {
     public static final Angle maxAngle = Radians.of(Math.PI);
     public static final Angle minAngle = Radians.of(Math.PI / 2);
 
-    public static final Angle actuatorStowed = Radians.of(Math.PI / 2);
-    public static final Angle actuatorOut = Radians.of(Math.PI);
+    public static final Angle actuatorStowed = Radians.of(0);
+    public static final Angle actuatorOut = Radians.of(Math.PI / 2);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
   }
