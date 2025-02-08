@@ -65,8 +65,8 @@ public class Manipulator extends AdvancedSubsystem {
   private DIOSim _coralBeamSim;
   private DIOSim _algaeBeamSim;
 
-  private BooleanEntry _beamSimValue;
-  private BooleanEntry _limitSwitchSimValue;
+  private BooleanEntry _coralBeamSimValue;
+  private BooleanEntry _algaeBeamSimValue;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
@@ -93,8 +93,8 @@ public class Manipulator extends AdvancedSubsystem {
       _coralBeamSim = new DIOSim(_coralBeam);
       _algaeBeamSim = new DIOSim(_algaeBeam);
 
-      _beamSimValue = Tuning.entry("/Tuning/Manipulator Beam", false);
-      _limitSwitchSimValue = Tuning.entry("/Tuning/Manipulator Limit Switch", false);
+      _coralBeamSimValue = Tuning.entry("/Tuning/Manipulator Coral Beam", false);
+      _algaeBeamSimValue = Tuning.entry("/Tuning/Manipulator Algae Beam", false);
 
       _leftFlywheelSim =
           new FlywheelSim(
@@ -143,12 +143,12 @@ public class Manipulator extends AdvancedSubsystem {
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
-  @Logged(name = "Beam")
+  @Logged(name = "Coral Beam")
   public boolean getCoralBeam() {
     return !_coralBeam.get();
   }
 
-  @Logged(name = "Switch")
+  @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
     return !_algaeBeam.get();
   }
@@ -168,23 +168,21 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Sets the current piece when the coral beam changes state. */
   private Command watchCoralBeam(Piece piece, boolean onTrue) {
+    BooleanEvent coralEvent = onTrue ? _coralEvent.rising() : _coralEvent.falling();
+
     return Commands.run(
         () -> {
-          if (onTrue && _coralEvent.rising().getAsBoolean()
-              || !onTrue && _coralEvent.falling().getAsBoolean()) {
-            _currentPieceSetter.accept(piece);
-          }
+          if (coralEvent.getAsBoolean()) _currentPieceSetter.accept(piece);
         });
   }
 
   /** Sets the current piece when the algae beam changes state. */
   private Command watchAlgaeBeam(Piece piece, boolean onTrue) {
+    BooleanEvent algaeEvent = onTrue ? _algaeEvent.rising() : _algaeEvent.falling();
+
     return Commands.run(
         () -> {
-          if (onTrue && _algaeEvent.rising().getAsBoolean()
-              || !onTrue && _algaeEvent.falling().getAsBoolean()) {
-            _currentPieceSetter.accept(piece);
-          }
+          if (algaeEvent.getAsBoolean()) _currentPieceSetter.accept(piece);
         });
   }
 
@@ -255,8 +253,8 @@ public class Manipulator extends AdvancedSubsystem {
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    _coralBeamSim.setValue(!_beamSimValue.get());
-    _algaeBeamSim.setValue(_limitSwitchSimValue.get());
+    _coralBeamSim.setValue(!_coralBeamSimValue.get());
+    _algaeBeamSim.setValue(!_algaeBeamSimValue.get());
   }
 
   @Override
@@ -269,7 +267,7 @@ public class Manipulator extends AdvancedSubsystem {
 
     _simNotifier.close();
 
-    _beamSimValue.close();
-    _limitSwitchSimValue.close();
+    _coralBeamSimValue.close();
+    _algaeBeamSimValue.close();
   }
 }
