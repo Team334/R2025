@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
