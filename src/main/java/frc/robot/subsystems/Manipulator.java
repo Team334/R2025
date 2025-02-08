@@ -36,15 +36,13 @@ import frc.robot.Robot;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
-  private final DigitalInput _beam = new DigitalInput(ManipulatorConstants.beamPort);
-  private final DigitalInput _limitSwitch = new DigitalInput(ManipulatorConstants.switchPort);
+  private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
+  private final DigitalInput _algaeBeam = new DigitalInput(ManipulatorConstants.algaeBeam);
 
-  private final BooleanEvent _beamOnFalse =
-      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getBeam)
-          .falling();
-  private final BooleanEvent _switchOnTrue =
-      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getSwitch)
-          .rising();
+  private final BooleanEvent _coralEvent =
+      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam);
+  private final BooleanEvent _algaeEvent =
+      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getAlgaeBeam);
 
   private final Consumer<Piece> _currentPieceSetter;
 
@@ -64,8 +62,8 @@ public class Manipulator extends AdvancedSubsystem {
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
-  private DIOSim _beamSim;
-  private DIOSim _limitSwitchSim;
+  private DIOSim _coralBeamSim;
+  private DIOSim _algaeBeamSim;
 
   private BooleanEntry _beamSimValue;
   private BooleanEntry _limitSwitchSimValue;
@@ -92,8 +90,8 @@ public class Manipulator extends AdvancedSubsystem {
     FaultLogger.register(_rightMotor);
 
     if (Robot.isSimulation()) {
-      _beamSim = new DIOSim(_beam);
-      _limitSwitchSim = new DIOSim(_limitSwitch);
+      _coralBeamSim = new DIOSim(_coralBeam);
+      _algaeBeamSim = new DIOSim(_algaeBeam);
 
       _beamSimValue = Tuning.entry("/Tuning/Manipulator Beam", false);
       _limitSwitchSimValue = Tuning.entry("/Tuning/Manipulator Limit Switch", false);
@@ -146,14 +144,13 @@ public class Manipulator extends AdvancedSubsystem {
   }
 
   @Logged(name = "Beam")
-  public boolean getBeam() {
-    return !_beam.get();
+  public boolean getCoralBeam() {
+    return !_coralBeam.get();
   }
 
   @Logged(name = "Switch")
-  public boolean getSwitch() {
-    // TODO: might have two switches
-    return _limitSwitch.get();
+  public boolean getAlgaeBeam() {
+    return !_algaeBeam.get();
   }
 
   @Logged(name = "Speed")
@@ -169,21 +166,23 @@ public class Manipulator extends AdvancedSubsystem {
         });
   }
 
-  /** Sets the current piece when the beam changes from true to false. */
-  private Command watchBeam(Piece piece) {
+  /** Sets the current piece when the coral beam changes state. */
+  private Command watchCoralBeam(Piece piece, boolean onTrue) {
     return Commands.run(
         () -> {
-          if (_beamOnFalse.getAsBoolean()) {
+          if (onTrue && _coralEvent.rising().getAsBoolean()
+              || !onTrue && _coralEvent.falling().getAsBoolean()) {
             _currentPieceSetter.accept(piece);
           }
         });
   }
 
-  /** Sets the current piece when the limit switch changes from false to true. */
-  private Command watchSwitch(Piece piece) {
+  /** Sets the current piece when the algae beam changes state. */
+  private Command watchAlgaeBeam(Piece piece, boolean onTrue) {
     return Commands.run(
         () -> {
-          if (_switchOnTrue.getAsBoolean()) {
+          if (onTrue && _algaeEvent.rising().getAsBoolean()
+              || !onTrue && _algaeEvent.falling().getAsBoolean()) {
             _currentPieceSetter.accept(piece);
           }
         });
@@ -199,7 +198,7 @@ public class Manipulator extends AdvancedSubsystem {
     return run(() -> {
           _leftMotor.setControl(_feedVoltageSetter.withOutput(0));
         })
-        .alongWith(watchBeam(Piece.NONE))
+        .alongWith(watchCoralBeam(Piece.NONE, false))
         .withName("Hold Coral");
   }
 
@@ -209,35 +208,42 @@ public class Manipulator extends AdvancedSubsystem {
           _leftMotor.setControl(
               _feedVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
         })
-        .alongWith(watchBeam(Piece.NONE))
+        .alongWith(watchAlgaeBeam(Piece.NONE, false))
         .withName("Hold Algae");
   }
 
   /** General intake. */
   public Command intake() {
     return setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
-        .alongWith(watchBeam(Piece.CORAL), watchSwitch(Piece.ALGAE))
+        .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true))
         .withName("Intake");
   }
 
   /** General outtake. */
   public Command outtake() {
     return setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
-        .alongWith(watchBeam(Piece.NONE))
+        .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }
 
   /** Passoff from the serializer. */
   public Command passoff() {
     return setSpeed(0)
-        .until(this::getBeam)
-        .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)))
+        .alongWith(watchCoralBeam(Piece.CORAL, false))
+        .until(() -> getCurrentPiece() == Piece.CORAL)
+        .finallyDo(this::pulse)
         .withName("Passoff");
   }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
     return setSpeed(0).withName("Inverse Passoff");
+  }
+
+  /** Pulse the manipulator until coral triggers the beam */
+  public Command pulse() {
+    return setSpeed(ManipulatorConstants.feedSpeed.div(2).in(RadiansPerSecond))
+        .until(() -> _coralEvent.rising().getAsBoolean());
   }
 
   @Override
@@ -249,14 +255,14 @@ public class Manipulator extends AdvancedSubsystem {
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    _beamSim.setValue(!_beamSimValue.get());
-    _limitSwitchSim.setValue(_limitSwitchSimValue.get());
+    _coralBeamSim.setValue(!_beamSimValue.get());
+    _algaeBeamSim.setValue(_limitSwitchSimValue.get());
   }
 
   @Override
   public void close() {
-    _beam.close();
-    _limitSwitch.close();
+    _coralBeam.close();
+    _algaeBeam.close();
 
     _leftMotor.close();
     _rightMotor.close();
