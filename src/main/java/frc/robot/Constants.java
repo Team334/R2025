@@ -102,6 +102,7 @@ public final class Constants {
 
   public static class VisionConstants {
     public static final String blueArducamName = "blue-arducam";
+    public static final String limelightName = "limelight-main";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
