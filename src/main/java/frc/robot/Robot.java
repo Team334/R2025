@@ -36,6 +36,7 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
+import frc.robot.commands.PieceAlign;
 import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
@@ -214,6 +215,9 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.y(), FieldConstants.human);
     alignmentTriggers(_driverController.b(), FieldConstants.processor);
     alignmentTriggers(_driverController.start(), FieldConstants.cage);
+
+    // align to piece
+    _driverController.leftBumper().whileTrue(new PieceAlign(_swerve));
   }
 
   private void configureOperatorBindings() {
