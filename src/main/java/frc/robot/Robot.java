@@ -217,7 +217,12 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.start(), FieldConstants.cage);
 
     // align to piece
-    _driverController.leftBumper().whileTrue(new PieceAlign(_swerve));
+    _driverController.leftBumper().whileTrue(new PieceAlign(
+      _swerve,
+      () -> _driverController.getLeftY() * SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond),
+      () -> _driverController.getLeftX() * SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond),
+      () -> _driverController.getRightX() * SwerveConstants.maxAngularSpeed.in(RadiansPerSecond)
+    ));
   }
 
   private void configureOperatorBindings() {

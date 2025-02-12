@@ -4,6 +4,8 @@
 
 package frc.robot.commands;
 
+import java.util.function.DoubleSupplier;
+
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.Tuning;
@@ -15,10 +17,19 @@ import frc.robot.utils.LimelightHelpers;
 public class PieceAlign extends Command {
   private final Swerve _swerve;
   private final double _KP = 1;
+
+  private DoubleSupplier _xInput;
+  private DoubleSupplier _yInput;
+  private DoubleSupplier _omegaInput;
+
   private final DoubleEntry _txLog = Tuning.entry("/Tuning/tx", 0.0);
 
-  public PieceAlign(Swerve swerve) {
+  public PieceAlign(Swerve swerve, DoubleSupplier xInput, DoubleSupplier yInput, DoubleSupplier omegaInput) {
     _swerve = swerve;
+
+    _xInput = xInput;
+    _yInput = yInput;
+    _omegaInput = omegaInput;
 
     addRequirements(_swerve);
   }
@@ -31,7 +42,7 @@ public class PieceAlign extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    _swerve.drive(0, 0, _txLog.getAsDouble() * _KP);
+    _swerve.drive(-_xInput.getAsDouble(), -_yInput.getAsDouble(), (_txLog.getAsDouble() * _KP) + -(_omegaInput.getAsDouble()));
   }
 
   // Returns true when the command should end.
