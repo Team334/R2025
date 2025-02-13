@@ -36,7 +36,6 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.commands.Autos;
-import frc.robot.commands.PieceAlign;
 import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
@@ -217,12 +216,7 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.start(), FieldConstants.cage);
 
     // align to piece
-    _driverController.leftBumper().whileTrue(new PieceAlign(
-      _swerve,
-      () -> _driverController.getLeftY() * SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond),
-      () -> _driverController.getLeftX() * SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond),
-      () -> _driverController.getRightX() * SwerveConstants.maxAngularSpeed.in(RadiansPerSecond)
-    ));
+    _driverController.leftBumper().whileTrue(run(() -> Swerve._driverOverride = true)).onFalse(run(() -> Swerve._driverOverride = false));
   }
 
   private void configureOperatorBindings() {

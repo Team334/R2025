@@ -27,6 +27,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -41,6 +42,7 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -168,6 +170,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final VisionSystemSim _visionSystemSim;
 
   private boolean _hasAppliedDriverPerspective;
+  
+  public static boolean _driverOverride;
+  private final double _KP = 1;
+  private final DoubleEntry _txLog = Tuning.entry("/Tuning/tx", 0.0);
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -371,7 +377,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public void drive(double velX, double velY, double velOmega) {
     _driverChassisSpeeds.vxMetersPerSecond = velX;
     _driverChassisSpeeds.vyMetersPerSecond = velY;
-    _driverChassisSpeeds.omegaRadiansPerSecond = velOmega;
+    _driverChassisSpeeds.omegaRadiansPerSecond = _driverOverride ? velOmega + _txLog.getAsDouble() : velOmega;
 
     // go through a couple of steps to ensure that input speeds are actually achievable
     ChassisSpeeds tempSpeeds = _driverChassisSpeeds;

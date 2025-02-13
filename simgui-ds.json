@@ -1,4 +1,9 @@
 {
+  "FMS": {
+    "window": {
+      "visible": false
+    }
+  },
   "Keyboard 0 Settings": {
     "window": {
       "visible": true
@@ -13,22 +18,19 @@
     {
       "axisConfig": [
         {
-          "decKey": 83,
-          "incKey": 87
-        },
-        {
-          "decKey": 68,
-          "incKey": 65
-        },
-        {
-          "decKey": 264,
-          "incKey": 265,
-          "keyRate": 0.009999999776482582
-        },
-        {
           "decKey": 262,
           "incKey": 263
         },
+        {
+          "decKey": 264,
+          "incKey": 265
+        },
+        {
+          "decKey": 65,
+          "incKey": 68,
+          "keyRate": 0.009999999776482582
+        },
+        {},
         {
           "decKey": 79,
           "incKey": 80
@@ -38,16 +40,19 @@
           "incKey": 73
         }
       ],
-      "axisCount": 2,
-      "buttonCount": 4,
+      "axisCount": 3,
+      "buttonCount": 16,
       "buttonKeys": [
         67,
         66,
         88,
         90,
-        -1,
-        -1,
-        -1,
+        81,
+        87,
+        69,
+        82,
+        84,
+        89,
         -1,
         -1,
         -1,
@@ -106,7 +111,6 @@
     }
   ],
   "robotJoysticks": [
-    {},
     {
       "guid": "Keyboard0"
     }
