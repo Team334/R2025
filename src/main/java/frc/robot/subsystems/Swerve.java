@@ -171,7 +171,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private boolean _hasAppliedDriverPerspective;
   
-  public static boolean _driverOverride;
+  private static boolean _driverOverride;
   private final double _KP = 1;
   private final DoubleEntry _txLog = Tuning.entry("/Tuning/tx", 0.0);
 
@@ -335,6 +335,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /** Brakes the swerve drive (modules form an "X" formation). */
   public Command brake() {
     return run(() -> setControl(_brakeRequest)).withName("Brake");
+  }
+
+  public Command togglePieceAlign() {
+    return run(() -> _driverOverride = !_driverOverride);
   }
 
   /** Resets the heading to zero */
