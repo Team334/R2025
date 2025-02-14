@@ -21,6 +21,7 @@ import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -149,7 +150,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
 
+  @Logged(name = "Aligning")
+  private boolean _isAligning = false;
+
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
+
+  private SwerveDrivePoseEstimator _alignEstimator =
+      new SwerveDrivePoseEstimator(
+          getKinematics(),
+          getHeading(),
+          getState().ModulePositions,
+          getPose(),
+          VecBuilder.fill(0, 0, 0), // This would be high because we don't use odometry
+          VecBuilder.fill(0, 0, 0));
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -589,14 +602,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     if (!_ignoreVisionEstimates) {
       _acceptedEstimates.sort(VisionPoseEstimate.sorter);
 
-      _acceptedEstimates.forEach(
-          (e) -> {
-            var stdDevs = e.stdDevs();
-            addVisionMeasurement(
-                e.pose().toPose2d(),
-                Utils.fpgaToCurrentTime(e.timestamp()),
-                VecBuilder.fill(stdDevs[0], stdDevs[1], stdDevs[2]));
-          });
+      if (!_isAligning) {
+        _acceptedEstimates.forEach(
+            (e) -> {
+              var stdDevs = e.stdDevs();
+              addVisionMeasurement(
+                  e.pose().toPose2d(),
+                  Utils.fpgaToCurrentTime(e.timestamp()),
+                  VecBuilder.fill(stdDevs[0], stdDevs[1], stdDevs[2]));
+            });
+      } else {
+        _acceptedEstimates.forEach(
+            (e) -> {
+              var distanceToTag = e.avgTagDistance();
+              var distance =
+                  distanceToTag * Math.cos(e.pitch()); // TODO: Add the camera pitch angle
+            });
+      }
     }
   }
 

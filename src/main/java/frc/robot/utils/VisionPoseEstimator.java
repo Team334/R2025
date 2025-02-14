@@ -118,6 +118,8 @@ public class VisionPoseEstimator implements AutoCloseable {
        * -1, -1] when no tags or invalid).
        */
       double[] stdDevs,
+      double yaw,
+      double pitch,
 
       /** Whether this estimate passed the filter or not. */
       boolean isValid) {
@@ -253,6 +255,8 @@ public class VisionPoseEstimator implements AutoCloseable {
     int[] detectedTags = new int[tagAmount];
     double avgTagDistance = 0;
     double[] stdDevs = new double[] {-1, -1, -1};
+    double yaw = 0;
+    double pitch = 0;
     boolean isValid = false;
 
     // ---- DISAMBIGUATE (if single-tag) ----
@@ -261,6 +265,9 @@ public class VisionPoseEstimator implements AutoCloseable {
       var target = estimate.targetsUsed.get(0);
       int tagId = target.getFiducialId();
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
+
+      yaw = target.getYaw();
+      pitch = target.getPitch();
 
       ambiguity = target.getPoseAmbiguity();
 
@@ -328,7 +335,15 @@ public class VisionPoseEstimator implements AutoCloseable {
     }
 
     return new VisionPoseEstimate(
-        estimatedPose, timestamp, ambiguity, detectedTags, avgTagDistance, stdDevs, isValid);
+        estimatedPose,
+        timestamp,
+        ambiguity,
+        detectedTags,
+        avgTagDistance,
+        stdDevs,
+        yaw,
+        pitch,
+        isValid);
   }
 
   /** Reads from the camera and generates an array of new latest {@link VisionPoseEstimate}(s). */
