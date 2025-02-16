@@ -18,13 +18,14 @@
             "/NT/Faults/Active Faults",
             "/Robot/Swerve/left-arducam",
             "/Robot/Swerve/left-arducam/Estimate",
-            "/Robot/Swerve/blue-arducam/Estimate",
             "/Robot",
-            "/Robot/Wristevator"
+            "/Robot/Swerve/blue-arducam/Estimate",
+            "/Robot/Swerve/blue-arducam",
+            "/Robot/Swerve"
           ]
         },
         "tabs": {
-          "selected": 3,
+          "selected": 2,
           "tabs": [
             {
               "type": 0,
@@ -120,7 +121,7 @@
                     "type": "ghost",
                     "logKey": "NT:/Robot/Swerve/Accepted Estimates",
                     "logType": "Pose3d[]",
-                    "visible": false,
+                    "visible": true,
                     "options": {
                       "color": "#00ff00"
                     }
@@ -129,32 +130,22 @@
                     "type": "ghost",
                     "logKey": "NT:/Robot/Swerve/Rejected Estimates",
                     "logType": "Pose3d[]",
-                    "visible": false,
+                    "visible": true,
                     "options": {
                       "color": "#ffff00"
                     }
                   },
                   {
-                    "type": "trajectory",
-                    "logKey": "NT:/Robot/Auto/Current Trajectory",
-                    "logType": "Pose2d[]",
-                    "visible": true,
-                    "options": {
-                      "color": "#ff00ff",
-                      "size": "normal"
-                    }
-                  },
-                  {
                     "type": "ghost",
-                    "logKey": "NT:/Robot/Auto/Current Trajectory Desired Pose",
-                    "logType": "Pose2d",
+                    "logKey": "NT:/Robot/Swerve/blue-arducam/Estimate/Alternate Pose",
+                    "logType": "Pose3d",
                     "visible": true,
                     "options": {
-                      "color": "#ff00ff"
+                      "color": "#00ffff"
                     }
                   }
                 ],
-                "game": "2025 Field",
+                "game": "2025 Field (Welded)",
                 "bumpers": "auto",
                 "origin": "blue",
                 "orientation": 0,
@@ -163,6 +154,54 @@
               "controllerUUID": "yb01i8b8ie8wdgv27adfp6hmhntv51s1",
               "renderer": null,
               "controlsHeight": 200
+            },
+            {
+              "type": 11,
+              "title": "Detected Tag Corners",
+              "controller": {
+                "sources": [
+                  {
+                    "type": "plus",
+                    "logKey": "NT:/Robot/Swerve/blue-arducam/Estimate/Detected Corners",
+                    "logType": "Translation2d[]",
+                    "visible": true,
+                    "options": {
+                      "size": "medium",
+                      "groupSize": "0"
+                    }
+                  }
+                ],
+                "width": 960,
+                "height": 720,
+                "orientation": "xr,yd",
+                "origin": "ul"
+              },
+              "controllerUUID": "y8wtc4kp61j7mneux9f7zg0p6wkvqyhj",
+              "renderer": null,
+              "controlsHeight": 200
+            },
+            {
+              "type": 10,
+              "title": "Wristevator",
+              "controller": [
+                {
+                  "type": "mechanism",
+                  "logKey": "NT:/SmartDashboard/Wristevator Visualizer",
+                  "logType": "Mechanism2d",
+                  "visible": true,
+                  "options": {}
+                },
+                {
+                  "type": "mechanism",
+                  "logKey": "NT:/SmartDashboard/Intake Visualizer",
+                  "logType": "Mechanism2d",
+                  "visible": true,
+                  "options": {}
+                }
+              ],
+              "controllerUUID": "nh1p7b3gpwcrbqxaplgte4jzsk0atj1e",
+              "renderer": null,
+              "controlsHeight": 180
             },
             {
               "type": 11,
@@ -201,109 +240,11 @@
                   }
                 ],
                 "width": 100,
-                "height": 10,
+                "height": 5,
                 "orientation": "xr,yu",
                 "origin": "ll"
               },
               "controllerUUID": "9belppk6g6q3m1ap2vmnkv0necq1906m",
-              "renderer": null,
-              "controlsHeight": 200
-            },
-            {
-              "type": 10,
-              "title": "Wristevator",
-              "controller": [
-                {
-                  "type": "mechanism",
-                  "logKey": "NT:/SmartDashboard/Wristevator Visualizer",
-                  "logType": "Mechanism2d",
-                  "visible": true,
-                  "options": {}
-                },
-                {
-                  "type": "mechanism",
-                  "logKey": "NT:/SmartDashboard/Intake Visualizer",
-                  "logType": "Mechanism2d",
-                  "visible": true,
-                  "options": {}
-                }
-              ],
-              "controllerUUID": "nh1p7b3gpwcrbqxaplgte4jzsk0atj1e",
-              "renderer": null,
-              "controlsHeight": 180
-            },
-            {
-              "type": 1,
-              "title": "Line Graph",
-              "controller": {
-                "leftSources": [
-                  {
-                    "type": "stepped",
-                    "logKey": "NT:/Robot/Wristevator/Wrist Reference Slope",
-                    "logType": "Number",
-                    "visible": false,
-                    "options": {
-                      "color": "#2b66a2",
-                      "size": "normal"
-                    }
-                  },
-                  {
-                    "type": "stepped",
-                    "logKey": "NT:/Robot/Wristevator/Elevator Reference Slope",
-                    "logType": "Number",
-                    "visible": true,
-                    "options": {
-                      "color": "#e5b31b",
-                      "size": "normal"
-                    }
-                  },
-                  {
-                    "type": "stepped",
-                    "logKey": "NT:Robot/Wristevator/Wrist Velocity",
-                    "logType": "Number",
-                    "visible": false,
-                    "options": {
-                      "color": "#af2437",
-                      "size": "normal"
-                    }
-                  },
-                  {
-                    "type": "stepped",
-                    "logKey": "NT:Robot/Wristevator/Elevator Velocity",
-                    "logType": "Number",
-                    "visible": false,
-                    "options": {
-                      "color": "#af2437",
-                      "size": "normal"
-                    }
-                  },
-                  {
-                    "type": "stepped",
-                    "logKey": "NT:/Robot/Wristevator/Non-Adjusted Desired Elevator Speed",
-                    "logType": "Number",
-                    "visible": false,
-                    "options": {
-                      "color": "#80588e",
-                      "size": "normal"
-                    }
-                  }
-                ],
-                "rightSources": [],
-                "discreteSources": [],
-                "leftLockedRange": null,
-                "rightLockedRange": null,
-                "leftUnitConversion": {
-                  "type": null,
-                  "factor": 1
-                },
-                "rightUnitConversion": {
-                  "type": null,
-                  "factor": 1
-                },
-                "leftFilter": 0,
-                "rightFilter": 0
-              },
-              "controllerUUID": "k1almmklzxunotmndfr92dov3bxdpekl",
               "renderer": null,
               "controlsHeight": 200
             }

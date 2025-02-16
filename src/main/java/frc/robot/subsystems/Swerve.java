@@ -153,11 +153,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private HolonomicController _poseController = new HolonomicController();
 
+  private boolean _hasAppliedDriverPerspective;
+
+  // cameras and vision measurements
   @Logged(name = VisionConstants.blueArducamName)
   private final VisionPoseEstimator _blueArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.blueArducam);
+      VisionPoseEstimator.buildFromConstants(VisionConstants.blueArducam, this::getHeadingAtTime);
 
-  // for easy iteration with multiple cameras
   private final List<VisionPoseEstimator> _cameras = List.of(_blueArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
@@ -166,8 +168,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
   private final VisionSystemSim _visionSystemSim;
-
-  private boolean _hasAppliedDriverPerspective;
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -543,7 +543,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     _detectedTags.clear();
 
     for (VisionPoseEstimator cam : _cameras) {
-      cam.update(this::getHeadingAtTime);
+      cam.update();
 
       var estimates = cam.getNewEstimates();
 
