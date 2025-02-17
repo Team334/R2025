@@ -525,9 +525,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getPose().getRotation();
   }
 
-  /** Returns the robot's estimated rotation at the given timestamp. */
+  /**
+   * Returns the robot's estimated rotation at the given timestamp. This timestamp must be in FPGA
+   * time.
+   */
   public Rotation2d getHeadingAtTime(double timestamp) {
-    return samplePoseAt(timestamp).orElse(getPose()).getRotation();
+    return samplePoseAt(Utils.fpgaToCurrentTime(timestamp)).orElse(getPose()).getRotation();
   }
 
   /** Wrapper for getting current robot-relative chassis speeds. */
