@@ -117,7 +117,7 @@ public class VisionPoseEstimator implements AutoCloseable {
       /** The detected tag ids in this measurement. */
       int[] detectedTags,
 
-      /** The average distance from the tag(s) (-1 when no tags). */
+      /** The average distance from the tag(s) in 3D space (-1 when no tags). */
       double avgTagDistance,
 
       /**
@@ -127,7 +127,13 @@ public class VisionPoseEstimator implements AutoCloseable {
       double[] stdDevs,
 
       /** Whether this estimate passed the filter or not. */
-      boolean isValid) {
+      boolean isValid,
+
+      /** The yaw to the center of the tag when there is one tag. */
+      double tx,
+
+      /** The pitch to the center of the tag when there is one tag. */
+      double ty) {
     /**
      * Used for sorting a list of vision pose estimates, first the timestamps are sorted (from
      * smallest to highest), then the standard deviations at the same timestamp are sorted if
@@ -164,7 +170,7 @@ public class VisionPoseEstimator implements AutoCloseable {
   public static VisionPoseEstimator buildFromConstants(
       VisionPoseEstimatorConstants camConstants, Function<Double, Rotation2d> gyroAtTime) {
     return buildFromConstants(
-        camConstants, NetworkTableInstance.getDefault(), FieldConstants.fieldLayout, gyroAtTime);
+        camConstants, NetworkTableInstance.getDefault(), FieldConstants.tagLayout, gyroAtTime);
   }
 
   /**
@@ -250,6 +256,8 @@ public class VisionPoseEstimator implements AutoCloseable {
     DogLog.log(_estimateLogPath + "Average Tag Distance", estimate.avgTagDistance);
     DogLog.log(_estimateLogPath + "Std Devs", estimate.stdDevs);
     DogLog.log(_estimateLogPath + "Is Valid", estimate.isValid);
+    DogLog.log(_estimateLogPath + "TX", estimate.tx);
+    DogLog.log(_estimateLogPath + "TY", estimate.ty);
   }
 
   /**
@@ -273,6 +281,8 @@ public class VisionPoseEstimator implements AutoCloseable {
     double avgTagDistance = 0;
     double[] stdDevs = new double[] {-1, -1, -1};
     boolean isValid = false;
+    double tx = -10000;
+    double ty = -10000;
 
     estimate.targetsUsed.forEach(
         t -> t.getDetectedCorners().forEach(c -> detectedCorners.add(new Translation2d(c.x, c.y))));
@@ -285,6 +295,9 @@ public class VisionPoseEstimator implements AutoCloseable {
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
 
       ambiguity = target.getPoseAmbiguity();
+
+      tx = target.getYaw();
+      ty = target.getPitch();
 
       Pose3d betterReprojPose = tagPose.transformBy(target.getBestCameraToTarget().inverse());
       Pose3d worseReprojPose = tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
@@ -360,7 +373,9 @@ public class VisionPoseEstimator implements AutoCloseable {
         detectedTags,
         avgTagDistance,
         stdDevs,
-        isValid);
+        isValid,
+        tx,
+        ty);
   }
 
   /** Reads from the camera and generates an array of new latest {@link VisionPoseEstimate}(s). */

@@ -323,7 +323,9 @@ public class VisionPoseEstimatorTest {
               new int[] {1},
               1.2,
               new double[] {0.3, 0.1, 0.2},
-              true));
+              true,
+              -1000,
+              -1000));
     }
 
     newEstimates.add(
@@ -339,7 +341,9 @@ public class VisionPoseEstimatorTest {
               4, 3, 5
             }, // these are worse std devs, so it should come before the better estimate @ timestamp
             // = 2s
-            true));
+            true,
+            -1000,
+            -1000));
 
     newEstimates.sort(VisionPoseEstimate.sorter);
 
