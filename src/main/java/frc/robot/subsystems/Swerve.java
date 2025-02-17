@@ -548,7 +548,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     double ty = visionEstimate.ty();
 
     // TODO: trig over here using the above values
-    Pose2d trigPose = getPose();
+    Pose2d trigPose = Pose2d.kZero;
 
     Pose2d oldPose =
         samplePoseAt(Utils.fpgaToCurrentTime(visionEstimate.timestamp())).orElse(getPose());
