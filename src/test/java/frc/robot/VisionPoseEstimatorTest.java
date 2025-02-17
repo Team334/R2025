@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.VisionPoseEstimator;
@@ -74,7 +75,9 @@ public class VisionPoseEstimatorTest {
             3,
             7);
 
-    _testCam = VisionPoseEstimator.buildFromConstants(testCam, getNtInst(), _fieldLayout);
+    _testCam =
+        VisionPoseEstimator.buildFromConstants(
+            testCam, getNtInst(), _fieldLayout, this::dummyGyroHeading);
 
     _visionSystemSim = new VisionSystemSim("");
     _visionSystemSim.addCamera(_testCam.getCameraSim(), _testCam.robotToCam);
@@ -89,7 +92,7 @@ public class VisionPoseEstimatorTest {
   public void noResults() {
     _visionSystemSim.update(Pose2d.kZero);
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     // no targets, no new estimates
     assertEquals(0, _testCam.getNewEstimates().size());
@@ -102,7 +105,7 @@ public class VisionPoseEstimatorTest {
 
     _visionSystemSim.update(Pose2d.kZero); // should see the single target
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     assertEquals(1, _testCam.getNewEstimates().size());
   }
@@ -115,7 +118,7 @@ public class VisionPoseEstimatorTest {
     _visionSystemSim.update(Pose2d.kZero);
     _visionSystemSim.update(Pose2d.kZero); // should see two new results of the single target
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     assertEquals(2, _testCam.getNewEstimates().size());
   }
@@ -127,7 +130,7 @@ public class VisionPoseEstimatorTest {
 
     _visionSystemSim.update(Pose2d.kZero);
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     var estimates = _testCam.getNewEstimates(); // 1 estimate
     assertEquals(1, estimates.size());
@@ -167,7 +170,7 @@ public class VisionPoseEstimatorTest {
     _visionSystemSim.addAprilTags(_fieldLayout);
     _visionSystemSim.update(Pose2d.kZero);
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     var estimates = _testCam.getNewEstimates(); // 1 estimate
     assertEquals(1, estimates.size());
@@ -220,7 +223,7 @@ public class VisionPoseEstimatorTest {
     // float the robot above the ground by 0.3 meters
     _visionSystemSim.update(new Pose3d(0, 0, 0.3, Rotation3d.kZero));
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     var estimates = _testCam.getNewEstimates(); // 1 estimate
     assertEquals(1, estimates.size());
@@ -266,7 +269,7 @@ public class VisionPoseEstimatorTest {
 
     _visionSystemSim.update(Pose2d.kZero);
 
-    _testCam.update(this::dummyGyroHeading);
+    _testCam.update();
 
     var estimates = _testCam.getNewEstimates(); // 1 estimate
     assertEquals(1, estimates.size());
@@ -312,7 +315,15 @@ public class VisionPoseEstimatorTest {
     for (int i = 3; i > 0; i--) {
       newEstimates.add(
           new VisionPoseEstimate(
-              Pose3d.kZero, i, 0.03, new int[] {1}, 1.2, new double[] {0.3, 0.1, 0.2}, true));
+              Pose3d.kZero,
+              i,
+              0.03,
+              Pose3d.kZero,
+              new Translation2d[] {Translation2d.kZero},
+              new int[] {1},
+              1.2,
+              new double[] {0.3, 0.1, 0.2},
+              true));
     }
 
     newEstimates.add(
@@ -320,6 +331,8 @@ public class VisionPoseEstimatorTest {
             Pose3d.kZero,
             2, // same timestamp case
             0.03,
+            Pose3d.kZero,
+            new Translation2d[] {Translation2d.kZero},
             new int[] {1},
             1.2,
             new double[] {

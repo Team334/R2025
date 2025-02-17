@@ -223,6 +223,8 @@ public class VisionPoseEstimator implements AutoCloseable {
     if (Robot.isSimulation()) {
       var cameraProps = new SimCameraProperties();
 
+      cameraProps.setCalibError(0.01, 0.001);
+
       _cameraSim = new PhotonCameraSim(_camera, cameraProps, fieldLayout);
     } else {
       _cameraSim = null;
