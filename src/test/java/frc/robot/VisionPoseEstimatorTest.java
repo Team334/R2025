@@ -41,23 +41,18 @@ public class VisionPoseEstimatorTest {
   public static void setupField() {
     List<AprilTag> tags = new ArrayList<>();
 
-    // // add all tags to the field layout
+    // add all tags to the field layout
     tags.add(
-        new AprilTag(1, new Pose3d(1, 0, 1.2, new Rotation3d(0, 0, -Math.PI)))); // close tag #1
-    tags.add(
-        new AprilTag(
-            2,
-            new Pose3d(
-                2, 0.5, 0.5, new Rotation3d(0, -0.3, -Math.PI)))); // close tag #2 (for multi-tag)
+        new AprilTag(1, new Pose3d(1, 0, 1.2, new Rotation3d(0, -0.3, -Math.PI)))); // close tag #1
     tags.add(
         new AprilTag(
-            3,
-            new Pose3d(
-                5, 0.5, 0.5, new Rotation3d(0, -1, -Math.PI)))); // far tag #1 (for distance test)
+            2, new Pose3d(2, 0.5, 0.5, new Rotation3d(0, -0.3, -Math.PI)))); // close tag #2
     tags.add(
-        new AprilTag(
-            4,
-            new Pose3d(1.5, 0, 1, new Rotation3d(0, 0, -Math.PI)))); // close tag #3 (for ambiguity)
+        new AprilTag(3, new Pose3d(5, 0.5, 0.5, new Rotation3d(0, -1, -Math.PI)))); // far tag #1
+    tags.add(
+        new AprilTag(4, new Pose3d(7, 0.8, 0.8, new Rotation3d(-0.5, -1, -Math.PI)))); // far tag #2
+    tags.add(
+        new AprilTag(5, new Pose3d(1.5, 0, 1, new Rotation3d(0, 0, -Math.PI)))); // ambigious tag
 
     _fieldLayout = new AprilTagFieldLayout(tags, Units.feetToMeters(54), Units.feetToMeters(27));
   }
@@ -73,7 +68,7 @@ public class VisionPoseEstimatorTest {
             0.2,
             0.0001,
             3,
-            7);
+            5);
 
     _testCam =
         VisionPoseEstimator.buildFromConstants(
@@ -187,7 +182,7 @@ public class VisionPoseEstimatorTest {
     assertEquals(0, estimate.pose().getRotation().getY(), 1e-2);
     assertEquals(0, estimate.pose().getRotation().getZ(), 1e-2);
 
-    assert estimate.detectedTags().length == 4;
+    assert estimate.detectedTags().length == 5;
 
     assertEquals(-1, estimate.ambiguity()); // -1 ambiguity, it's not present during multi-tag
 
@@ -198,7 +193,7 @@ public class VisionPoseEstimatorTest {
       distance += tag.pose.getTranslation().getDistance(Pose3d.kZero.getTranslation());
     }
 
-    assertEquals(distance / 4, estimate.avgTagDistance(), 1e-2);
+    assertEquals(distance / 5, estimate.avgTagDistance(), 1e-2);
 
     // std devs validity
     assertNotEquals(new int[] {-1, -1, -1}, estimate.stdDevs());
@@ -223,12 +218,7 @@ public class VisionPoseEstimatorTest {
     assertFalse(estimate.isValid());
 
     // pose validity
-    assertEquals(0, estimate.pose().getX(), 1e-2);
-    assertEquals(0, estimate.pose().getY(), 1e-2);
     assertNotEquals(0, estimate.pose().getZ(), 1e-2);
-    assertEquals(0, estimate.pose().getRotation().getX(), 0.31);
-    assertEquals(0, estimate.pose().getRotation().getY(), 1e-2);
-    assertEquals(0, estimate.pose().getRotation().getZ(), 1e-2);
 
     // should see only ID 1
     assertArrayEquals(new int[] {1}, estimate.detectedTags());
@@ -295,7 +285,53 @@ public class VisionPoseEstimatorTest {
 
   @Test
   public void multiTagDistanceFilter() {
-    // TODO
+    _visionSystemSim.addVisionTargets(
+        new VisionTargetSim(_fieldLayout.getTagPose(3).get(), TargetModel.kAprilTag36h11, 3),
+        new VisionTargetSim(_fieldLayout.getTagPose(4).get(), TargetModel.kAprilTag36h11, 4));
+
+    _visionSystemSim.update(Pose2d.kZero);
+
+    _testCam.update();
+
+    var estimates = _testCam.getNewEstimates(); // 1 estimate
+    assertEquals(1, estimates.size());
+
+    var estimate = estimates.get(0);
+
+    assertFalse(estimate.isValid());
+
+    // pose validity
+    assertEquals(0, estimate.pose().getX(), 1e-2);
+    assertEquals(0, estimate.pose().getY(), 1e-2);
+    assertEquals(0, estimate.pose().getZ(), 1e-2);
+    assertEquals(0, estimate.pose().getRotation().getX(), 1e-2);
+    assertEquals(0, estimate.pose().getRotation().getY(), 1e-2);
+    assertEquals(0, estimate.pose().getRotation().getZ(), 1e-2);
+
+    // should see ID 3 and 4
+    assertArrayEquals(new int[] {3, 4}, estimate.detectedTags());
+
+    // should be no ambiguity
+    assertEquals(-1, estimate.ambiguity());
+
+    // distance validity
+    assertEquals(
+        (_fieldLayout
+                    .getTagPose(3)
+                    .get()
+                    .getTranslation()
+                    .getDistance(Pose3d.kZero.getTranslation())
+                + _fieldLayout
+                    .getTagPose(4)
+                    .get()
+                    .getTranslation()
+                    .getDistance(Pose3d.kZero.getTranslation()))
+            / 2,
+        estimate.avgTagDistance(),
+        1e-2);
+
+    // std devs validity
+    assertArrayEquals(new double[] {-1, -1, -1}, estimate.stdDevs());
   }
 
   @Test
