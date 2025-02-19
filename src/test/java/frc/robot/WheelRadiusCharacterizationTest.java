@@ -10,7 +10,10 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+@Disabled
 public class WheelRadiusCharacterizationTest {
   // chassis omega during characterization (TODO: this would be tuneable later)
   private final double velOmega = 1;
@@ -31,7 +34,7 @@ public class WheelRadiusCharacterizationTest {
     reset(_swerve);
   }
 
-  // @Test
+  @Test
   public void wheelRadiusCharacterization() {
     // run enough ticks to complete 4pi radians at the given characterization omega
     run(_characterization, (int) ((Math.PI * 4 / velOmega) / TICK_RATE.in(Seconds)));

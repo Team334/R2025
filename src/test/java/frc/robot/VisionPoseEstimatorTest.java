@@ -74,6 +74,9 @@ public class VisionPoseEstimatorTest {
         VisionPoseEstimator.buildFromConstants(
             testCam, getNtInst(), _fieldLayout, this::dummyGyroHeading);
 
+    // specific corner noise for these tests
+    _testCam.getCameraSim().prop.setCalibError(0.01, 0.001);
+
     _visionSystemSim = new VisionSystemSim("");
     _visionSystemSim.addCamera(_testCam.getCameraSim(), _testCam.robotToCam);
   }
@@ -121,7 +124,7 @@ public class VisionPoseEstimatorTest {
   @Test
   public void singleTagEstimate() {
     _visionSystemSim.addVisionTargets(
-        new VisionTargetSim(_fieldLayout.getTagPose(1).get(), TargetModel.kAprilTag36h11, 1));
+        new VisionTargetSim(_fieldLayout.getTagPose(2).get(), TargetModel.kAprilTag36h11, 2));
 
     _visionSystemSim.update(Pose2d.kZero);
 
@@ -131,6 +134,9 @@ public class VisionPoseEstimatorTest {
     assertEquals(1, estimates.size());
 
     var estimate = estimates.get(0);
+
+    // this test sometimes fails for some unknown reason, so this is here in case
+    System.out.println(estimate);
 
     assert estimate.isValid();
 
@@ -142,13 +148,13 @@ public class VisionPoseEstimatorTest {
     assertEquals(0, estimate.pose().getRotation().getY(), 1e-2);
     assertEquals(0, estimate.pose().getRotation().getZ(), 1e-2);
 
-    // should see only ID 1
-    assertArrayEquals(new int[] {1}, estimate.detectedTags());
+    // should see only ID 2
+    assertArrayEquals(new int[] {2}, estimate.detectedTags());
 
     // distance validity
     assertEquals(
         _fieldLayout
-            .getTagPose(1)
+            .getTagPose(2)
             .get()
             .getTranslation()
             .getDistance(Pose3d.kZero.getTranslation()),
@@ -239,7 +245,37 @@ public class VisionPoseEstimatorTest {
 
   @Test
   public void ambiguityFilter() {
-    // TODO
+    _visionSystemSim.addVisionTargets(
+        new VisionTargetSim(_fieldLayout.getTagPose(5).get(), TargetModel.kAprilTag36h11, 5));
+
+    _visionSystemSim.update(Pose2d.kZero);
+
+    _testCam.update();
+
+    var estimates = _testCam.getNewEstimates(); // 1 estimate
+    assertEquals(1, estimates.size());
+
+    var estimate = estimates.get(0);
+
+    assertFalse(estimate.isValid());
+
+    assert estimate.ambiguity() > _testCam.ambiguityThreshold;
+
+    // should see only ID 5
+    assertArrayEquals(new int[] {5}, estimate.detectedTags());
+
+    // distance validity (is still accurate in ambigious scenarios)
+    assertEquals(
+        _fieldLayout
+            .getTagPose(5)
+            .get()
+            .getTranslation()
+            .getDistance(Pose3d.kZero.getTranslation()),
+        estimate.avgTagDistance(),
+        1e-2);
+
+    // std devs validity
+    assertArrayEquals(new double[] {-1, -1, -1}, estimate.stdDevs());
   }
 
   @Test
@@ -385,6 +421,35 @@ public class VisionPoseEstimatorTest {
 
   @Test
   public void disambiguation() {
-    // TODO
+    _visionSystemSim.addVisionTargets(
+        new VisionTargetSim(_fieldLayout.getTagPose(2).get(), TargetModel.kAprilTag36h11, 2));
+
+    _visionSystemSim.update(Pose2d.kZero);
+
+    _testCam.update();
+
+    var estimates = _testCam.getNewEstimates(); // 1 estimate
+    assertEquals(1, estimates.size());
+
+    var estimate = estimates.get(0);
+
+    // this test sometimes fails for some unknown reason, so this is here in case
+    System.out.println(estimate);
+
+    assert estimate.isValid();
+
+    // everything alr checked in singleTagEstimate, so just checking disambiguation here ⤵
+
+    var closerError =
+        estimate.pose().getRotation().toRotation2d().minus(dummyGyroHeading(estimate.timestamp()));
+    var furtherError =
+        estimate
+            .altPose()
+            .getRotation()
+            .toRotation2d()
+            .minus(dummyGyroHeading(estimate.timestamp()));
+
+    // pose's heading should be closer to the gyro than altPose's heading
+    assert Math.abs(closerError.getRadians()) < Math.abs(furtherError.getRadians());
   }
 }

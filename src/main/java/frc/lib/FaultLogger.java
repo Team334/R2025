@@ -48,12 +48,18 @@ public final class FaultLogger {
   private static FaultsTable activeAlerts;
   private static FaultsTable totalAlerts;
 
+  private static boolean _hasBeenSetup = false;
+
   /** Must be called to setup the fault logger. */
   public static void setup(NetworkTableInstance ntInst) {
+    if (_hasBeenSetup) return;
+
     var base = ntInst.getTable("Faults");
 
     activeAlerts = new FaultsTable(base, "Active Faults");
     totalAlerts = new FaultsTable(base, "Total Faults");
+
+    _hasBeenSetup = true;
   }
 
   /** Must be called to setup the fault logger. */

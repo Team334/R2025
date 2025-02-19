@@ -44,22 +44,10 @@ public class UnitTestingUtil {
     DogLog.setEnabled(false); // disabling doglog since it logs to the default nt instance
 
     FaultLogger.setup(_ntInst);
-
-    FaultLogger.clear();
-    FaultLogger.unregisterAll();
     FaultLogger.enableConsole(false);
 
     // delay 100 ms to wait for CTRE device enable
     Timer.delay(0.100);
-  }
-
-  /** Resets the CommandScheduler and the test NT instance. */
-  public static void reset() {
-    _ntInst.close();
-    _ntInst = null;
-
-    CommandScheduler.getInstance().unregisterAllSubsystems();
-    CommandScheduler.getInstance().cancelAll();
   }
 
   /**
@@ -68,7 +56,11 @@ public class UnitTestingUtil {
    * @param closeables All closeables that need to be closed.
    */
   public static void reset(AutoCloseable... closeables) {
-    reset();
+    _ntInst.close();
+    _ntInst = null;
+
+    CommandScheduler.getInstance().unregisterAllSubsystems();
+    CommandScheduler.getInstance().cancelAll();
 
     for (AutoCloseable closeable : closeables) {
       try {
@@ -77,6 +69,11 @@ public class UnitTestingUtil {
         e.printStackTrace();
       }
     }
+
+    FaultLogger.clear();
+    FaultLogger.unregisterAll();
+
+    HAL.shutdown();
   }
 
   /**
