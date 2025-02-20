@@ -119,6 +119,9 @@ public final class Constants {
             0.0001,
             3,
             7);
+
+    public static final Distance heightFromGround = Meters.of(0.5);
+    public static final Angle pitchAngle = Degrees.of(-45);
   }
 
   public static class SwerveConstants {

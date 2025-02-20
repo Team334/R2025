@@ -24,6 +24,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -52,6 +53,7 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
+import frc.robot.utils.LimelightHelpers;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
@@ -170,8 +172,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final VisionSystemSim _visionSystemSim;
 
   private boolean _hasAppliedDriverPerspective;
-  
-  private static boolean _driverOverride;
+
+  private Pose2d _pieceAlignPose;
+
+  private boolean _driverOverride;
   private final double _KP = 1;
   private final DoubleEntry _txLog = Tuning.entry("/Tuning/tx", 0.0);
 
@@ -337,8 +341,31 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
+  /** Make the robot align towards a piece */
   public Command togglePieceAlign() {
-    return run(() -> _driverOverride = !_driverOverride);
+    return runOnce(
+            () -> {
+              // _driverOverride = !_driverOverride;
+
+              double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
+              double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
+
+              double distanceToPiece =
+                  VisionConstants.heightFromGround.in(Meters)
+                      * Math.tan(VisionConstants.pitchAngle.in(Radians) - ty);
+              Rotation2d totalAngle = getHeading().plus(new Rotation2d(tx));
+
+              _pieceAlignPose =
+                  new Pose2d(
+                      getPose()
+                          .getTranslation()
+                          .minus(
+                              new Translation2d(
+                                  distanceToPiece * totalAngle.getCos(),
+                                  distanceToPiece * totalAngle.getSin())),
+                      totalAngle);
+            })
+        .andThen(defer(() -> driveTo(_pieceAlignPose)));
   }
 
   /** Resets the heading to zero */
@@ -381,7 +408,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public void drive(double velX, double velY, double velOmega) {
     _driverChassisSpeeds.vxMetersPerSecond = velX;
     _driverChassisSpeeds.vyMetersPerSecond = velY;
-    _driverChassisSpeeds.omegaRadiansPerSecond = _driverOverride ? velOmega + _txLog.getAsDouble() : velOmega;
+    _driverChassisSpeeds.omegaRadiansPerSecond =
+        _driverOverride ? velOmega + _txLog.getAsDouble() : velOmega;
 
     // go through a couple of steps to ensure that input speeds are actually achievable
     ChassisSpeeds tempSpeeds = _driverChassisSpeeds;
