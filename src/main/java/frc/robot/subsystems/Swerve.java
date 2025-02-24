@@ -28,7 +28,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -43,7 +42,6 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
-import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -155,6 +153,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
+  private Pose2d _pieceAlignPose;
+
   private HolonomicController _poseController = new HolonomicController();
 
   @Logged(name = VisionConstants.blueArducamName)
@@ -172,12 +172,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final VisionSystemSim _visionSystemSim;
 
   private boolean _hasAppliedDriverPerspective;
-
-  private Pose2d _pieceAlignPose;
-
-  private boolean _driverOverride;
-  private final double _KP = 1;
-  private final DoubleEntry _txLog = Tuning.entry("/Tuning/tx", 0.0);
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -341,33 +335,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
-  /** Make the robot align towards a piece */
-  public Command togglePieceAlign() {
-    return runOnce(
-            () -> {
-              // _driverOverride = !_driverOverride;
-
-              double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
-              double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
-
-              double distanceToPiece =
-                  VisionConstants.heightFromGround.in(Meters)
-                      * Math.tan(VisionConstants.pitchAngle.in(Radians) - ty);
-              Rotation2d totalAngle = getHeading().plus(new Rotation2d(tx));
-
-              _pieceAlignPose =
-                  new Pose2d(
-                      getPose()
-                          .getTranslation()
-                          .minus(
-                              new Translation2d(
-                                  distanceToPiece * totalAngle.getCos(),
-                                  distanceToPiece * totalAngle.getSin())),
-                      totalAngle);
-            })
-        .andThen(defer(() -> driveTo(_pieceAlignPose)));
-  }
-
   /** Resets the heading to zero */
   public Command resetHeading() {
     return runOnce(
@@ -408,8 +375,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public void drive(double velX, double velY, double velOmega) {
     _driverChassisSpeeds.vxMetersPerSecond = velX;
     _driverChassisSpeeds.vyMetersPerSecond = velY;
-    _driverChassisSpeeds.omegaRadiansPerSecond =
-        _driverOverride ? velOmega + _txLog.getAsDouble() : velOmega;
+    _driverChassisSpeeds.omegaRadiansPerSecond = velOmega;
 
     // go through a couple of steps to ensure that input speeds are actually achievable
     ChassisSpeeds tempSpeeds = _driverChassisSpeeds;
@@ -461,13 +427,38 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     desiredSpeeds = _poseController.calculate(desiredSpeeds, desiredPose, getPose());
 
-    DogLog.log("Auto/Current Trajectory Desired Pose", desiredPose);
-
     setControl(
         _fieldSpeedsRequest
             .withSpeeds(desiredSpeeds)
             .withWheelForceFeedforwardsX(sample.moduleForcesX())
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
+  }
+
+  /** Make the chassis align to a piece. */
+  public Command alignToPiece() {
+    return runOnce(
+            () -> {
+              double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
+              double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
+
+              double groundDistance =
+                  (VisionConstants.robotToLimelight.getY()
+                          + SwerveConstants.chassisHeight.in(Meters))
+                      * Math.tan(VisionConstants.robotToLimelight.getRotation().getY() - ty);
+              Rotation2d groundAngle = getHeading().plus(new Rotation2d(tx));
+
+              _pieceAlignPose =
+                  new Pose2d(
+                      getPose()
+                          .getTranslation()
+                          .minus(
+                              new Translation2d(
+                                  groundDistance * groundAngle.getCos(),
+                                  groundDistance * groundAngle.getSin())),
+                      groundAngle);
+            })
+        .andThen(defer(() -> driveTo(_pieceAlignPose)))
+        .withName("Align To Piece");
   }
 
   /**
@@ -529,8 +520,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   }
                 }
               }
-
-              DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
         .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))
         .withName("Align To");

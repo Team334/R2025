@@ -120,12 +120,13 @@ public final class Constants {
             3,
             7);
 
-    public static final Distance heightFromGround = Meters.of(0.5);
-    public static final Angle pitchAngle = Degrees.of(-45);
+    public static final Transform3d robotToLimelight = new Transform3d(0, 0, 0, new Rotation3d());
   }
 
   public static class SwerveConstants {
     public static final Frequency odometryFrequency = Hertz.of(250);
+
+    public static final Distance chassisHeight = Meters.of(0);
 
     public static final Distance driveRadius =
         Meters.of(

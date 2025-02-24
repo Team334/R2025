@@ -216,7 +216,7 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.start(), FieldConstants.cage);
 
     // align to piece
-    _driverController.leftBumper().whileTrue(_swerve.togglePieceAlign());
+    _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
   }
 
   private void configureOperatorBindings() {
