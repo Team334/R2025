@@ -9,6 +9,8 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class SwerveTest {
   private Swerve _swerve;
@@ -25,7 +27,8 @@ public class SwerveTest {
     reset(_swerve);
   }
 
-  // @Test
+  @Disabled
+  @Test
   public void driveTo() {
     // TODO: ts don't work
     var goal = new Pose2d(0.5, 0, Rotation2d.fromDegrees(5));

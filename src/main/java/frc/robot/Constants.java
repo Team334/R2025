@@ -52,14 +52,14 @@ public final class Constants {
   }
 
   public static class FieldConstants {
-    public static final AprilTagFieldLayout fieldLayout =
+    public static final AprilTagFieldLayout tagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
 
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
 
     public static final Translation2d fieldCenter =
-        new Translation2d(fieldLayout.getFieldLength() / 2, fieldLayout.getFieldWidth() / 2);
+        new Translation2d(tagLayout.getFieldLength() / 2, tagLayout.getFieldWidth() / 2);
 
     public static final Translation2d humanCenter =
         new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));
@@ -221,7 +221,8 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(0), Radians.of(50));
+      I1(Radians.of(0), Radians.of(50)),
+      I2(Radians.of(0), Radians.of(20));
 
       private final Angle _angle;
       private final Angle _height;

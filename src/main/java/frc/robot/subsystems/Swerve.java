@@ -56,6 +56,7 @@ import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -157,21 +158,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private HolonomicController _poseController = new HolonomicController();
 
+  private boolean _hasAppliedDriverPerspective;
+
+  // cameras and vision measurements
   @Logged(name = VisionConstants.blueArducamName)
   private final VisionPoseEstimator _blueArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.blueArducam);
+      VisionPoseEstimator.buildFromConstants(VisionConstants.blueArducam, this::getHeadingAtTime);
 
-  // for easy iteration with multiple cameras
   private final List<VisionPoseEstimator> _cameras = List.of(_blueArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
 
+  private final List<VisionPoseEstimate> _allEstimates = new ArrayList<>();
+
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
   private final VisionSystemSim _visionSystemSim;
-
-  private boolean _hasAppliedDriverPerspective;
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -227,7 +230,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       startSimThread();
 
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
-      _visionSystemSim.addAprilTags(FieldConstants.fieldLayout);
+      _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
       _cameras.forEach(cam -> _visionSystemSim.addCamera(cam.getCameraSim(), cam.robotToCam));
     } else {
@@ -542,6 +545,44 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         .withName("Drive To");
   }
 
+  /**
+   * Returns the robot's field-relative pose using trig. This estimate uses the side-view and
+   * top-view right triangles formed between the robot and the specified tag to estimate the robot's
+   * pose. For this to work, a tag must by in view of one of the {@link VisionPoseEstimator}s.
+   *
+   * @param tagId The tag id to use for the trig estimate.
+   * @return The trig estimate (which also gets latency compensated). If the tag doesn't exist or
+   *     isn't in view of any of the cameras, the normal pose estimator pose is returned as a
+   *     default.
+   */
+  public Pose2d getTrigPose(int tagId) {
+    if (FieldConstants.tagLayout.getTagPose(tagId).isEmpty()) return getPose();
+
+    VisionPoseEstimate[] tagIsVisible =
+        _allEstimates.stream()
+            .filter(e -> Arrays.asList(e.detectedTags()).contains((Object) tagId))
+            .toArray(VisionPoseEstimate[]::new);
+
+    if (tagIsVisible.length == 0) return getPose();
+
+    VisionPoseEstimate visionEstimate = tagIsVisible[0];
+
+    Pose3d tagPose = FieldConstants.tagLayout.getTagPose(tagId).get();
+
+    double distance = visionEstimate.avgTagDistance();
+
+    double tx = visionEstimate.tx();
+    double ty = visionEstimate.ty();
+
+    // TODO: trig over here using the above values
+    Pose2d trigPose = Pose2d.kZero;
+
+    Pose2d oldPose =
+        samplePoseAt(Utils.fpgaToCurrentTime(visionEstimate.timestamp())).orElse(getPose());
+
+    return trigPose.transformBy(getPose().minus(oldPose));
+  }
+
   /** Wrapper for getting estimated pose. */
   public Pose2d getPose() {
     return getState().Pose;
@@ -552,9 +593,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getPose().getRotation();
   }
 
-  /** Returns the robot's estimated rotation at the given timestamp. */
+  /**
+   * Returns the robot's estimated rotation at the given timestamp. This timestamp must be in FPGA
+   * time.
+   */
   public Rotation2d getHeadingAtTime(double timestamp) {
-    return samplePoseAt(timestamp).orElse(getPose()).getRotation();
+    return samplePoseAt(Utils.fpgaToCurrentTime(timestamp)).orElse(getPose()).getRotation();
   }
 
   /** Wrapper for getting current robot-relative chassis speeds. */
@@ -567,10 +611,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     _acceptedEstimates.clear();
     _rejectedEstimates.clear();
 
+    _allEstimates.clear();
+
     _detectedTags.clear();
 
     for (VisionPoseEstimator cam : _cameras) {
-      cam.update(this::getHeadingAtTime);
+      cam.update();
 
       var estimates = cam.getNewEstimates();
 
@@ -579,13 +625,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           (estimate) -> {
             // add all detected tag poses
             for (int id : estimate.detectedTags()) {
-              FieldConstants.fieldLayout.getTagPose(id).ifPresent(pose -> _detectedTags.add(pose));
+              FieldConstants.tagLayout.getTagPose(id).ifPresent(pose -> _detectedTags.add(pose));
             }
 
             // add robot poses to their corresponding arrays
             if (estimate.isValid()) _acceptedEstimates.add(estimate);
             else _rejectedEstimates.add(estimate);
           });
+
+      _allEstimates.addAll(_acceptedEstimates);
+      _allEstimates.addAll(_rejectedEstimates);
     }
   }
 
