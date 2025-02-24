@@ -101,7 +101,7 @@ public final class Constants {
   }
 
   public static class VisionConstants {
-    public static final String blueArducamName = "blue-arducam";
+    public static final String arducamOneName = "arducam-1";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
@@ -110,9 +110,9 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final VisionPoseEstimatorConstants blueArducam =
+    public static final VisionPoseEstimatorConstants arducamOne =
         new VisionPoseEstimatorConstants(
-            blueArducamName,
+            arducamOneName,
             new Transform3d(new Translation3d(0, 0, 1), new Rotation3d()),
             0.2,
             0.0001,
