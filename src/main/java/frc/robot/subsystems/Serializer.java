@@ -1,6 +1,6 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.*;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -58,6 +58,11 @@ public class Serializer extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
 
+    feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
+    feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
+
+    feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
+
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     FaultLogger.register(_feedMotor);
@@ -96,17 +101,19 @@ public class Serializer extends AdvancedSubsystem {
   }
 
   public Command idle() {
-    return setSpeed(0).withName("Idle");
+    return setSpeed(SerializerConstants.feedGearRatio).withName("Idle");
   }
 
   /** Intakes a coral until the front beam is broken. */
   public Command intake() {
-    return setSpeed(0).until(this::getFrontBeam).withName("Intake");
+    return setSpeed(SerializerConstants.feedSpeed.in(RadiansPerSecond))
+        .until(this::getFrontBeam)
+        .withName("Intake");
   }
 
   /** Outtakes a coral to the intake. */
   public Command outtake() {
-    return setSpeed(0).withName("Outtake");
+    return setSpeed(-SerializerConstants.feedSpeed.in(RadiansPerSecond)).withName("Outtake");
   }
 
   /** Passoffs a coral to the manipulator. */

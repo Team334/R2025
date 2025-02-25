@@ -168,9 +168,12 @@ public class Wristevator extends AdvancedSubsystem {
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
-    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+    CTREUtil.attempt(
+        () -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
+    CTREUtil.attempt(
+        () -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
+    CTREUtil.attempt(
+        () -> _wristMotor.getConfigurator().apply(new TalonFXConfiguration()), _wristMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);

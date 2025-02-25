@@ -80,6 +80,9 @@ public class Manipulator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
 
     leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kP = ManipulatorConstants.flywheelkP.in(Volts.per(RotationsPerSecond));
+
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
@@ -226,7 +229,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Passoff from the serializer. */
   public Command passoff() {
-    return setSpeed(0)
+    return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.CORAL, false))
         .until(() -> getCurrentPiece() == Piece.CORAL)
         .finallyDo(this::pulse)
@@ -240,7 +243,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Pulse the manipulator until coral triggers the beam */
   public Command pulse() {
-    return setSpeed(ManipulatorConstants.feedSpeed.div(2).in(RadiansPerSecond))
+    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .until(() -> _coralEvent.rising().getAsBoolean());
   }
 
