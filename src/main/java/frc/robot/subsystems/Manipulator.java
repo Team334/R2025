@@ -16,6 +16,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
@@ -26,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -33,6 +35,7 @@ import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
+import frc.robot.utils.SysId;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
@@ -61,6 +64,12 @@ public class Manipulator extends AdvancedSubsystem {
   private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
+
+  private final SysIdRoutine _feedRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
   private DIOSim _coralBeamSim;
   private DIOSim _algaeBeamSim;
@@ -91,6 +100,8 @@ public class Manipulator extends AdvancedSubsystem {
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
+
+    SysId.displayRoutine("Manipulator Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
       _coralBeamSim = new DIOSim(_coralBeam);
@@ -245,6 +256,10 @@ public class Manipulator extends AdvancedSubsystem {
   public Command pulse() {
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .until(() -> _coralEvent.rising().getAsBoolean());
+  }
+
+  private void setFeedVoltage(double volts) {
+    _leftMotor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
   @Override
