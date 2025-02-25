@@ -1,19 +1,23 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -21,6 +25,8 @@ import frc.lib.Tuning;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.Manipulator.Piece;
+import frc.robot.utils.SysId;
+
 import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {
@@ -38,6 +44,14 @@ public class Serializer extends AdvancedSubsystem {
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
+  private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
+
+  private final SysIdRoutine _feedRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
+
   private final Consumer<Piece> _currentPieceSetter;
 
   public Serializer(Consumer<Piece> currentPieceSetter) {
@@ -47,6 +61,8 @@ public class Serializer extends AdvancedSubsystem {
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
+
+    SysId.displayRoutine("Serializer Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
@@ -120,6 +136,10 @@ public class Serializer extends AdvancedSubsystem {
         .until(this::getBackBeam)
         .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.NONE)))
         .withName("Inverse Passoff");
+  }
+
+  private void setFeedVoltage(double volts) {
+    _feedMotor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
   @Override
