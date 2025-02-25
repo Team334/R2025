@@ -191,13 +191,14 @@ public class Robot extends TimedRobot {
   }
 
   private void configureDriverBindings() {
-    _driverController.x().whileTrue(_swerve.brake());
-    _driverController.a().onTrue(_swerve.toggleFieldOriented());
-    _driverController.y().onTrue(_swerve.resetHeading());
+    _driverController.a().whileTrue(_swerve.brake());
+    _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
+    _driverController.povDown().onTrue(_swerve.resetHeading());
 
-    // _driverController
-    //     .b()
-    //     .whileTrue(_swerve.driveTo(new Pose2d(10, 3, Rotation2d.fromDegrees(-150))));
+    _driverController.x().whileTrue(led.align("Reef"));
+    _driverController.y().whileTrue(led.align("Human"));
+    _driverController.b().whileTrue(led.align("Processor"));
+    _driverController.start().whileTrue(led.align("Cage"));
   }
 
   private void configureOperatorBindings() {

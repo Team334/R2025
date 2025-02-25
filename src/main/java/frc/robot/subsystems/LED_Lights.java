@@ -104,9 +104,31 @@ public class LED_Lights extends SubsystemBase {
     _patternState.applyTo(m_ledBuffer);
   }
 
+  public void aligning(String state) {
+    LEDPattern pattern = LEDPattern.kOff;
+
+    if (state.equals("Reef")) {
+      pattern = LEDPattern.solid(Color.kOrange).blink(Seconds.of(0.15));
+    } else if (state.equals("Human")) {
+      pattern = LEDPattern.solid(Color.kYellow).blink(Seconds.of(0.15));
+    } else if (state.equals("Processor")) {
+      pattern = LEDPattern.solid(Color.kMagenta).blink(Seconds.of(0.15));
+    } else if(state.equals("Cage")){
+      pattern = LEDPattern.solid(Color.kSkyBlue).blink(Seconds.of(0.15));
+    }
+
+    pattern.applyTo(m_ledBuffer);
+  }
+
   public Command runPattern(LEDPattern pattern) {
     return run(() -> {
       stateLogic();
+    });
+  }
+
+  public Command align(String state) {
+    return run(() -> {
+      aligning(state);
     });
   }
 }
