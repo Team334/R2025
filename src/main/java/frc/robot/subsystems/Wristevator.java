@@ -52,7 +52,6 @@ import frc.robot.Constants.WristevatorConstants.Preset;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
-
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -91,7 +90,6 @@ public class Wristevator extends AdvancedSubsystem {
   private final StatusSignal<Double> _wristReference = _wristMotor.getClosedLoopReference();
   private final StatusSignal<Double> _wristReferenceSlope =
       _wristMotor.getClosedLoopReferenceSlope();
-
 
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
@@ -567,7 +565,6 @@ public class Wristevator extends AdvancedSubsystem {
         })
         .withName("Set Speeds");
   }
-
 
   private void setElevatorVoltage(double volts) {
     _leftMotor.setControl(_elevatorVoltageSetter.withOutput(volts));

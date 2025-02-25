@@ -26,7 +26,6 @@ import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.utils.SysId;
-
 import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {

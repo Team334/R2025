@@ -59,7 +59,7 @@ public class Intake extends AdvancedSubsystem {
           new SysIdRoutine.Config(),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setActuatorVoltage(volts.in(Volts)), null, this));
-  
+
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(),
@@ -198,6 +198,7 @@ public class Intake extends AdvancedSubsystem {
   private void setActuatorVoltage(double volts) {
     _actuatorMotor.setControl(_actuatorVoltageSetter.withOutput(volts));
   }
+
   private void setFeedVoltage(double volts) {
     _feedMotor.setControl(_feedVoltageSetter.withOutput(volts));
   }

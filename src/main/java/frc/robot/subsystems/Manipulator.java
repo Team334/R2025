@@ -36,7 +36,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
-
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
