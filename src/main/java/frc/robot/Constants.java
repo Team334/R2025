@@ -44,7 +44,7 @@ import java.util.HashMap;
 public final class Constants {
   public static final Frequency simUpdateFrequency = Hertz.of(200);
 
-  public static final String canivore = "Drivetrain";
+  public static final String canivore = "CTRE";
 
   public static class Ports {
     public static final int driverController = 0;
@@ -143,8 +143,8 @@ public final class Constants {
   }
 
   public static class IntakeConstants {
-    public static final int feedMotorId = 8;
-    public static final int actuatorMotorId = 9;
+    public static final int feedMotorId = 15;
+    public static final int actuatorMotorId = 8;
 
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
@@ -253,9 +253,9 @@ public final class Constants {
 
     public static final int homeSwitch = 0;
 
-    public static final int leftMotorId = 10;
-    public static final int rightMotorId = 11;
-    public static final int wristMotorId = 12;
+    public static final int leftMotorId = 12;
+    public static final int rightMotorId = 9;
+    public static final int wristMotorId = 13;
 
     public static final double elevatorGearRatio = 9;
 
@@ -294,12 +294,12 @@ public final class Constants {
     public static final int frontBeamPort = 1;
     public static final int backBeamPort = 2;
 
-    public static final int feedMotorId = 13;
+    public static final int feedMotorId = 10;
   }
 
   public static class ManipulatorConstants {
-    public static final int leftMotorId = 14;
-    public static final int rightMotorId = 15;
+    public static final int leftMotorId = 11;
+    public static final int rightMotorId = 14;
 
     public static final int coralBeam = 3;
     public static final int algaeBeam = 4;
