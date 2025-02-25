@@ -113,7 +113,7 @@ public final class Constants {
     public static final VisionPoseEstimatorConstants arducamOne =
         new VisionPoseEstimatorConstants(
             arducamOneName,
-            new Transform3d(new Translation3d(0, 0.3, 1), new Rotation3d(0, 1, -Math.PI / 2)),
+            new Transform3d(new Translation3d(0, 1.5, 1), new Rotation3d(0, -0.7, -Math.PI / 2)),
             0.2,
             0.0001,
             3,

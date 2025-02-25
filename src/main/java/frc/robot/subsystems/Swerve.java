@@ -24,6 +24,8 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -221,6 +223,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     SysId.displayRoutine("Swerve Rotation", _sysIdRoutineRotation);
 
     registerFallibles();
+
+    resetPose(new Pose2d(9.312, 3.002, new Rotation2d(-1.57)));
 
     if (Robot.isSimulation()) {
       startSimThread();
@@ -598,8 +602,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
       var estimates = cam.getNewEstimates();
 
+      // TEMPORARY CAMERA PLACEMENT VISUALIZATION:
       DogLog.log(
-          "Swerve/" + cam.camName + " Position", new Pose3d(getPose()).transformBy(cam.robotToCam));
+          "Swerve/" + cam.camName + " Position",
+          new Pose3d(getPose())
+              .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
+              .transformBy(cam.robotToCam));
 
       // process estimates
       estimates.forEach(
