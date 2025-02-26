@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.*;
 import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -99,7 +100,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final SysIdRoutine _wristRoutine =
       new SysIdRoutine(
-          new SysIdRoutine.Config(),
+          new SysIdRoutine.Config(
+              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
 
@@ -175,24 +177,30 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
-    leftMotorConfigs.Slot0.kA =
-        WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // leftMotorConfigs.Slot0.kV =
+    // WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    // leftMotorConfigs.Slot0.kA =
+    //     WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+    // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
-    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
-    wristMotorConfigs.Slot0.kA =
-        WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
+    // wristMotorConfigs.Slot0.kA =
+    //     WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+    // wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
-    CTREUtil.attempt(
-        () -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
-    CTREUtil.attempt(
-        () -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
-    CTREUtil.attempt(
-        () -> _wristMotor.getConfigurator().apply(new TalonFXConfiguration()), _wristMotor);
+    wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+        WristevatorConstants.maxWristAngle.in(Rotations);
+    wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        WristevatorConstants.minWristAngle.in(Rotations);
+
+    wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
+    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);

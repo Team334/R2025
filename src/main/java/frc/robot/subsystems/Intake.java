@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
@@ -57,7 +58,8 @@ public class Intake extends AdvancedSubsystem {
 
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
-          new SysIdRoutine.Config(),
+          new SysIdRoutine.Config(
+              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setActuatorVoltage(volts.in(Volts)), null, this));
 
@@ -131,7 +133,7 @@ public class Intake extends AdvancedSubsystem {
               IntakeConstants.actuatorStowed.in(Radians),
               IntakeConstants.actuatorOut.in(Radians),
               false,
-              0);
+              IntakeConstants.actuatorStowed.in(Radians));
 
       startSimThread();
     }
