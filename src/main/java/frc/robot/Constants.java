@@ -120,13 +120,14 @@ public final class Constants {
             3,
             7);
 
-    public static final Transform3d robotToLimelight = new Transform3d(0, 0, 0, new Rotation3d());
+    public static final Transform3d robotToLimelight =
+        new Transform3d(0, 0.5, 0, new Rotation3d(0, -45, 0));
   }
 
   public static class SwerveConstants {
     public static final Frequency odometryFrequency = Hertz.of(250);
 
-    public static final Distance chassisHeight = Meters.of(0);
+    public static final Distance chassisHeight = Inches.of(0.615);
 
     public static final Distance driveRadius =
         Meters.of(

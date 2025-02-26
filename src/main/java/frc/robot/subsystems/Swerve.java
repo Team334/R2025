@@ -24,7 +24,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -451,14 +451,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               Rotation2d groundAngle = getHeading().plus(new Rotation2d(tx));
 
               _pieceAlignPose =
-                  new Pose2d(
-                      getPose()
-                          .getTranslation()
-                          .minus(
-                              new Translation2d(
-                                  groundDistance * groundAngle.getCos(),
-                                  groundDistance * groundAngle.getSin())),
-                      groundAngle);
+                  getPose()
+                      .transformBy(
+                          new Transform2d(
+                              groundDistance * groundAngle.getCos(),
+                              groundDistance * groundAngle.getSin(),
+                              groundAngle));
             })
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
         .withName("Align To Piece");

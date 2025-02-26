@@ -9,6 +9,11 @@
       "visible": true
     }
   },
+  "System Joysticks": {
+    "window": {
+      "enabled": false
+    }
+  },
   "keyboardJoysticks": [
     {
       "axisConfig": [
