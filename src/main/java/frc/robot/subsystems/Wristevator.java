@@ -95,7 +95,8 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(2
+              ).per(Second), Volts.of(4), null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 
@@ -188,7 +189,7 @@ public class Wristevator extends AdvancedSubsystem {
 
     // leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
-    // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
     // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
     // wristMotorConfigs.Slot0.kA =
@@ -196,15 +197,22 @@ public class Wristevator extends AdvancedSubsystem {
 
     // wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
-    wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+    // wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
-    wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        WristevatorConstants.maxWristAngle.in(Rotations);
-    wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
-        WristevatorConstants.minWristAngle.in(Rotations);
+    // wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+    //     WristevatorConstants.maxWristAngle.in(Rotations);
+    // wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+    //     WristevatorConstants.minWristAngle.in(Rotations);
 
-    wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-    wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+    // wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    // wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+      leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = WristevatorConstants.maxElevatorHeight.in(Rotations);
+      leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = WristevatorConstants.minElevatorHeight.in(Rotations);
+
+      leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+      leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
