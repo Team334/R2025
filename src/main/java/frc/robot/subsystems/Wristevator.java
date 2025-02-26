@@ -94,7 +94,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
-          new SysIdRoutine.Config(),
+          new SysIdRoutine.Config(
+              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 

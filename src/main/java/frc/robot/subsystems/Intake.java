@@ -65,7 +65,8 @@ public class Intake extends AdvancedSubsystem {
 
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
-          new SysIdRoutine.Config(),
+          new SysIdRoutine.Config(
+              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
