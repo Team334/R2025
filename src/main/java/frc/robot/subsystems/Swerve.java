@@ -453,7 +453,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   (VisionConstants.robotToLimelight.getY()
                           + SwerveConstants.chassisHeight.in(Meters))
                       * Math.tan(VisionConstants.robotToLimelight.getRotation().getY() - ty);
-              Rotation2d groundAngle = getHeading().plus(new Rotation2d(tx));
+              Rotation2d groundAngle = getHeading().plus(Rotation2d.fromDegrees(tx));
 
               _pieceAlignPose =
                   getPose()
@@ -461,7 +461,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                           new Transform2d(
                               groundDistance * groundAngle.getCos(),
                               groundDistance * groundAngle.getSin(),
-                              groundAngle));
+                              Rotation2d.fromDegrees(tx)));
             })
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
         .withName("Align To Piece");
