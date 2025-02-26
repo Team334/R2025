@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
 import edu.wpi.first.units.VoltageUnit;
@@ -44,7 +45,7 @@ import java.util.HashMap;
 public final class Constants {
   public static final Frequency simUpdateFrequency = Hertz.of(200);
 
-  public static final String canivore = "Drivetrain";
+  public static final String canivore = "CTRE";
 
   public static class Ports {
     public static final int driverController = 0;
@@ -111,10 +112,10 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final VisionPoseEstimatorConstants blueArducam =
+    public static final VisionPoseEstimatorConstants arducamOne =
         new VisionPoseEstimatorConstants(
             arducamOneName,
-            new Transform3d(new Translation3d(0, 0, 1), new Rotation3d()),
+            new Transform3d(new Translation3d(0, 0.3, 1), new Rotation3d(0, 1, -Math.PI / 2)),
             0.2,
             0.0001,
             3,
@@ -149,8 +150,14 @@ public final class Constants {
   }
 
   public static class IntakeConstants {
-    public static final int feedMotorId = 8;
-    public static final int actuatorMotorId = 9;
+    public static final int feedMotorId = 15;
+    public static final int actuatorMotorId = 8;
+
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
+        VoltsPerRadianPerSecond.ofNative(0);
+
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
+        VoltsPerRadianPerSecond.ofNative(0);
 
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
@@ -158,6 +165,8 @@ public final class Constants {
         VoltsPerRadianPerSecond.ofNative(0.9497114636959001);
     public static final Per<VoltageUnit, AngularAccelerationUnit> actuatorkA =
         VoltsPerRadianPerSecondSquared.ofNative(0.1);
+
+    public static final Per<VoltageUnit, AngleUnit> actuatorkP = Volts.per(Radians).ofNative(0);
 
     public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(12.63541660674576);
     public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(24);
@@ -167,11 +176,8 @@ public final class Constants {
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle maxAngle = Radians.of(Math.PI);
-    public static final Angle minAngle = Radians.of(Math.PI / 2);
-
-    public static final Angle actuatorStowed = Radians.of(0);
-    public static final Angle actuatorOut = Radians.of(Math.PI / 2);
+    public static final Angle actuatorStowed = Radians.of(Math.PI / 2);
+    public static final Angle actuatorOut = Radians.of(Math.PI);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
   }
@@ -259,9 +265,9 @@ public final class Constants {
 
     public static final int homeSwitch = 0;
 
-    public static final int leftMotorId = 10;
-    public static final int rightMotorId = 11;
-    public static final int wristMotorId = 12;
+    public static final int leftMotorId = 12;
+    public static final int rightMotorId = 9;
+    public static final int wristMotorId = 13;
 
     public static final double elevatorGearRatio = 9;
 
@@ -300,20 +306,33 @@ public final class Constants {
     public static final int frontBeamPort = 1;
     public static final int backBeamPort = 2;
 
-    public static final int feedMotorId = 13;
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
+        VoltsPerRadianPerSecond.ofNative(1);
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
+        VoltsPerRadianPerSecond.ofNative(1);
+
+    public static final double feedGearRatio = 70.0 / 30;
+
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
+
+    public static final int feedMotorId = 10;
   }
 
   public static class ManipulatorConstants {
-    public static final int leftMotorId = 14;
-    public static final int rightMotorId = 15;
+    public static final int leftMotorId = 11;
+    public static final int rightMotorId = 14;
 
     public static final int coralBeam = 3;
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(0.5);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
         VoltsPerRadianPerSecond.ofNative(1);
+    public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkP =
+        VoltsPerRadianPerSecond.ofNative(1);
+
     public static final double flywheelGearRatio = 1;
 
     public static final double holdAlgaeVoltage = 0; // need to find

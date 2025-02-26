@@ -162,10 +162,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   // cameras and vision measurements
   @Logged(name = VisionConstants.arducamOneName)
-  private final VisionPoseEstimator _blueArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.blueArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_blueArducam);
+  private final VisionPoseEstimator _arducamOne =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.arducamOne, this::getHeadingAtTime);
+
+
+  private final List<VisionPoseEstimator> _cameras = List.of(_arducamOne);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -231,6 +233,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
+
+      _arducamOne
+          .getCameraSim()
+          .prop
+          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
       _cameras.forEach(cam -> _visionSystemSim.addCamera(cam.getCameraSim(), cam.robotToCam));
     } else {
@@ -617,6 +624,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       cam.update();
 
       var estimates = cam.getNewEstimates();
+
+      DogLog.log(
+          "Swerve/" + cam.camName + " Position", new Pose3d(getPose()).transformBy(cam.robotToCam));
 
       // process estimates
       estimates.forEach(
