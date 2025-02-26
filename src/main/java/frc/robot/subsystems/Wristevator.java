@@ -102,7 +102,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _wristRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(1).per(Second),
+              Volts.of(4),
+              null,
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
 
@@ -183,13 +186,17 @@ public class Wristevator extends AdvancedSubsystem {
     // leftMotorConfigs.Slot0.kA =
     //     WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
+    // leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+
     // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
     // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
     // wristMotorConfigs.Slot0.kA =
     //     WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+    // wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+
+    wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
