@@ -22,6 +22,7 @@ import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.lib.Tuning;
+import frc.robot.Constants;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
 import frc.robot.subsystems.Manipulator.Piece;
@@ -38,14 +39,15 @@ public class Serializer extends AdvancedSubsystem {
   private BooleanEntry _frontBeamSimValue;
   private BooleanEntry _backBeamSimValue;
 
-  private final TalonFX _feedMotor = new TalonFX(SerializerConstants.feedMotorId);
+  private final TalonFX _feedMotor =
+      new TalonFX(SerializerConstants.feedMotorId, Constants.canivore);
 
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
   private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
-  private final SysIdRoutine _feedRoutine =
+  private final SysIdRoutine _serializerRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
               Volts.of(3).per(Second),
@@ -65,7 +67,7 @@ public class Serializer extends AdvancedSubsystem {
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
     _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
 
-    SysId.displayRoutine("Serializer Feed", _feedRoutine);
+    SysId.displayRoutine("Serializer Feed", _serializerRoutine);
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
