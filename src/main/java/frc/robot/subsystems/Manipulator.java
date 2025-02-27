@@ -95,8 +95,8 @@ public class Manipulator extends AdvancedSubsystem {
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
 

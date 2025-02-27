@@ -84,7 +84,7 @@ public class Serializer extends AdvancedSubsystem {
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
 
-    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
 
     FaultLogger.register(_feedMotor);
   }

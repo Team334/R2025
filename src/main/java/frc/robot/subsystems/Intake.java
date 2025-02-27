@@ -110,10 +110,10 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
         IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
-    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
 
     CTREUtil.attempt(
-        () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
+        () -> _actuatorMotor.getConfigurator().apply(new TalonFXConfiguration()), _actuatorMotor);
     CTREUtil.attempt(
         () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
 

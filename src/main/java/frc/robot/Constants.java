@@ -297,7 +297,7 @@ public final class Constants {
   }
 
   public static class SerializerConstants {
-    public static final int frontBeamPort = 1;
+    public static final int frontBeamPort = 9;
     public static final int backBeamPort = 2;
 
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
@@ -316,7 +316,7 @@ public final class Constants {
     public static final int leftMotorId = 11;
     public static final int rightMotorId = 14;
 
-    public static final int coralBeam = 0;
+    public static final int coralBeam = 8;
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
