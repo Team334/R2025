@@ -122,7 +122,7 @@ public class Serializer extends AdvancedSubsystem {
   }
 
   public Command idle() {
-    return setSpeed(SerializerConstants.feedGearRatio).withName("Idle");
+    return setSpeed(0).withName("Idle");
   }
 
   /** Intakes a coral until the front beam is broken. */
@@ -139,12 +139,12 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Passoffs a coral to the manipulator. */
   public Command passoff() {
-    return setSpeed(0).withName("Passoff");
+    return setSpeed(SerializerConstants.feedSpeed.in(RadiansPerSecond)).withName("Passoff");
   }
 
   /** Inverse passoff from the manipulator. */
   public Command inversePassoff() {
-    return setSpeed(0)
+    return setSpeed(-SerializerConstants.feedSpeed.in(RadiansPerSecond))
         .until(this::getBackBeam)
         .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.NONE)))
         .withName("Inverse Passoff");
