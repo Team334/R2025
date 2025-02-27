@@ -48,7 +48,10 @@ public class Serializer extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(3).per(Second), Volts.of(7), null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(3).per(Second),
+              Volts.of(7),
+              null,
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 

@@ -95,8 +95,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(2
-              ).per(Second), Volts.of(4), null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(2).per(Second),
+              Volts.of(4),
+              null,
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 
@@ -207,12 +209,13 @@ public class Wristevator extends AdvancedSubsystem {
     // wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     // wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-      leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold = WristevatorConstants.maxElevatorHeight.in(Rotations);
-      leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold = WristevatorConstants.minElevatorHeight.in(Rotations);
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+        WristevatorConstants.maxElevatorHeight.in(Rotations);
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        WristevatorConstants.minElevatorHeight.in(Rotations);
 
-      leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
-      leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
-
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
