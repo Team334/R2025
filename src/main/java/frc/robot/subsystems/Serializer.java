@@ -48,7 +48,7 @@ public class Serializer extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(3).per(Second), Volts.of(7), null, state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -74,8 +74,8 @@ public class Serializer extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
 
-    feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
-    feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
+    // feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
+    // feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
 

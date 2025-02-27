@@ -171,7 +171,7 @@ public final class Constants {
     public static final Distance intakeLength = Inches.of(15);
 
     public static final Angle actuatorStowed = Radians.of(Math.PI / 2);
-    public static final Angle actuatorOut = Radians.of(Math.PI);
+    public static final Angle actuatorOut = Radians.of(-1.382);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
   }
@@ -257,7 +257,7 @@ public final class Constants {
     public static final AngularAcceleration maxElevatorAcceleration =
         RadiansPerSecondPerSecond.of(90);
 
-    public static final int homeSwitch = 0;
+    public static final int homeSwitch = 5;
 
     public static final int leftMotorId = 12;
     public static final int rightMotorId = 9;
@@ -316,7 +316,7 @@ public final class Constants {
     public static final int leftMotorId = 11;
     public static final int rightMotorId = 14;
 
-    public static final int coralBeam = 3;
+    public static final int coralBeam = 0;
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
