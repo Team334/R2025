@@ -87,11 +87,11 @@ public class Intake extends AdvancedSubsystem {
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.feedGearRatio;
 
-    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
-    actuatorMotorConfigs.Slot0.kA =
-        IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
+    // actuatorMotorConfigs.Slot0.kA =
+    //     IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
+    // actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
 
     actuatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
@@ -110,10 +110,11 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
         IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
-    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
+    CTREUtil.attempt(
+        () -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
 
     CTREUtil.attempt(
-        () -> _actuatorMotor.getConfigurator().apply(new TalonFXConfiguration()), _actuatorMotor);
+        () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
     CTREUtil.attempt(
         () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
 

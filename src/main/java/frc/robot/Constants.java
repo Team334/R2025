@@ -29,6 +29,7 @@ import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.generated.TunerConstants;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
@@ -170,7 +171,7 @@ public final class Constants {
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle actuatorStowed = Radians.of(Math.PI / 2);
+    public static final Angle actuatorStowed = Radians.of(2.33874);
     public static final Angle actuatorOut = Radians.of(-1.382);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
@@ -300,10 +301,11 @@ public final class Constants {
     public static final int frontBeamPort = 9;
     public static final int backBeamPort = 2;
 
+    public static final Voltage feedkS = Volts.of(0.27445);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
-        VoltsPerRadianPerSecond.ofNative(1);
+        Volts.per(RotationsPerSecond).ofNative(0.12295);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        VoltsPerRadianPerSecond.ofNative(1);
+        Volts.per(RotationsPerSecond).ofNative(0.045193);
 
     public static final double feedGearRatio = 70.0 / 30;
 
@@ -322,12 +324,13 @@ public final class Constants {
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(0.5);
 
+    public static final Voltage flywheelkS = Volts.of(0.26538);
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
-        VoltsPerRadianPerSecond.ofNative(1);
+        Volts.per(RotationsPerSecond).ofNative(0.14499);
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkP =
-        VoltsPerRadianPerSecond.ofNative(1);
+        Volts.per(RotationsPerSecond).ofNative(0.075299);
 
-    public static final double flywheelGearRatio = 1;
+    public static final double flywheelGearRatio = 36.0 / 30;
 
     public static final double holdAlgaeVoltage = 0; // need to find
   }

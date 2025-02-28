@@ -61,6 +61,9 @@ public class Manipulator extends AdvancedSubsystem {
 
   private double _lastSimTime;
 
+  @Logged(name = "Desired Speed")
+  private double _desiredSpeed;
+
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
@@ -69,7 +72,10 @@ public class Manipulator extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -90,13 +96,15 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
+    leftMotorConfigs.Slot0.kS = ManipulatorConstants.flywheelkS.in(Volts);
     leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
+
     leftMotorConfigs.Slot0.kP = ManipulatorConstants.flywheelkP.in(Volts.per(RotationsPerSecond));
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
+    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
 
@@ -178,6 +186,7 @@ public class Manipulator extends AdvancedSubsystem {
   private Command setSpeed(double speed) {
     return run(
         () -> {
+          _desiredSpeed = speed;
           _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
         });
   }

@@ -185,8 +185,7 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV =
-    WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
     leftMotorConfigs.Slot0.kA =
         WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
@@ -218,9 +217,12 @@ public class Wristevator extends AdvancedSubsystem {
     leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
-    CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(new TalonFXConfiguration()), _wristMotor);
+    CTREUtil.attempt(
+        () -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
+    CTREUtil.attempt(
+        () -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
+    CTREUtil.attempt(
+        () -> _wristMotor.getConfigurator().apply(new TalonFXConfiguration()), _wristMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);

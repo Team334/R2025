@@ -39,6 +39,9 @@ public class Serializer extends AdvancedSubsystem {
   private BooleanEntry _frontBeamSimValue;
   private BooleanEntry _backBeamSimValue;
 
+  @Logged(name = "Desired Speed")
+  private double _desiredSpeed;
+
   private final TalonFX _feedMotor =
       new TalonFX(SerializerConstants.feedMotorId, Constants.canivore);
 
@@ -50,9 +53,9 @@ public class Serializer extends AdvancedSubsystem {
   private final SysIdRoutine _serializerRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(3).per(Second),
-              Volts.of(7),
-              null,
+              Volts.of(1).per(Second),
+              Volts.of(4),
+              Seconds.of(5),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
@@ -79,12 +82,13 @@ public class Serializer extends AdvancedSubsystem {
 
     var feedMotorConfigs = new TalonFXConfiguration();
 
-    // feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
-    // feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
+    feedMotorConfigs.Slot0.kS = SerializerConstants.feedkS.in(Volts);
+    feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
+    feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
 
-    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     FaultLogger.register(_feedMotor);
   }
@@ -98,6 +102,7 @@ public class Serializer extends AdvancedSubsystem {
   private Command setSpeed(double speed) {
     return run(
         () -> {
+          _desiredSpeed = speed;
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
         });
   }
