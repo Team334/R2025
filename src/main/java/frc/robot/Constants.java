@@ -176,7 +176,7 @@ public final class Constants {
     public static final Angle actuatorStowed = Radians.of(2.33874);
     public static final Angle actuatorOut = Radians.of(-1.382);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }
 
   public static class WristevatorConstants {
@@ -311,7 +311,7 @@ public final class Constants {
 
     public static final double feedGearRatio = 70.0 / 30;
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(30);
 
     public static final int feedMotorId = 10;
   }
@@ -324,7 +324,7 @@ public final class Constants {
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
-    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(0.5);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
     public static final Voltage flywheelkS = Volts.of(0.2593);
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
