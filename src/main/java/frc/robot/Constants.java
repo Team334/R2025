@@ -148,11 +148,13 @@ public final class Constants {
     public static final int feedMotorId = 15;
     public static final int actuatorMotorId = 8;
 
+    public static final Voltage feedkS = Volts.of(0.23179);
+
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
-        VoltsPerRadianPerSecond.ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.22463);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        VoltsPerRadianPerSecond.ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.34897);
 
     // kv is the voltage necessary to spin the pivot 1 rad/s
     // ka is the voltage necessary to accel the pivot 1 rad/s^2
@@ -166,7 +168,7 @@ public final class Constants {
     public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(12.63541660674576);
     public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(24);
 
-    public static final double feedGearRatio = 1;
+    public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
 
     public static final Distance intakeLength = Inches.of(15);
@@ -324,11 +326,11 @@ public final class Constants {
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(1);
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(0.5);
 
-    public static final Voltage flywheelkS = Volts.of(0.26538);
+    public static final Voltage flywheelkS = Volts.of(0.2593);
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0.14499);
+        Volts.per(RotationsPerSecond).ofNative(0.14628);
     public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkP =
-        Volts.per(RotationsPerSecond).ofNative(0.075299);
+        Volts.per(RotationsPerSecond).ofNative(0.16712);
 
     public static final double flywheelGearRatio = 36.0 / 30;
 

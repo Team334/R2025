@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -66,7 +67,10 @@ public class Intake extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -82,13 +86,10 @@ public class Intake extends AdvancedSubsystem {
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
-    // feedMotorConfigs.Slot0.kV = IntakeConstants.feedkV.in(Volts.per(RotationsPerSecond));
-    // feedMotorConfigs.Slot0.kP = IntakeConstants.feedkP.in(Volts.per(RotationsPerSecond));
+    feedMotorConfigs.Slot0.kS = IntakeConstants.feedkS.in(Volts);
+    feedMotorConfigs.Slot0.kV = IntakeConstants.feedkV.in(Volts.per(RotationsPerSecond));
 
-    // BaseStatusSignal.setUpdateFrequencyForAll(
-    //     250, _feedMotor.getPosition(), _feedMotor.getVelocity(), _feedMotor.getMotorVoltage());
-
-    _feedMotor.optimizeBusUtilization();
+    feedMotorConfigs.Slot0.kP = IntakeConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.feedGearRatio;
 
@@ -115,13 +116,17 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
         IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
-    CTREUtil.attempt(
-        () -> _feedMotor.getConfigurator().apply(new TalonFXConfiguration()), _feedMotor);
+    CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     CTREUtil.attempt(
         () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
     CTREUtil.attempt(
         () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
+
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        100, _feedMotor.getPosition(), _feedMotor.getVelocity(), _feedMotor.getMotorVoltage());
+
+    _feedMotor.optimizeBusUtilization();
 
     FaultLogger.register(_feedMotor);
     FaultLogger.register(_actuatorMotor);

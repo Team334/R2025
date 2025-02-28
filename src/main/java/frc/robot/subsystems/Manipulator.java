@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Robot.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -107,6 +108,12 @@ public class Manipulator extends AdvancedSubsystem {
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
+
+    BaseStatusSignal.setUpdateFrequencyForAll(
+        100, _leftMotor.getPosition(), _leftMotor.getVelocity(), _leftMotor.getMotorVoltage());
+
+    _leftMotor.optimizeBusUtilization();
+    _rightMotor.optimizeBusUtilization();
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
