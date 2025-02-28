@@ -88,6 +88,12 @@ public class Serializer extends AdvancedSubsystem {
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
 
+    // better sysid data
+    // BaseStatusSignal.setUpdateFrequencyForAll(
+    //     250, _feedMotor.getPosition(), _feedMotor.getVelocity(), _feedMotor.getMotorVoltage());
+
+    _feedMotor.optimizeBusUtilization();
+
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     FaultLogger.register(_feedMotor);

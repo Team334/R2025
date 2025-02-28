@@ -301,11 +301,11 @@ public final class Constants {
     public static final int frontBeamPort = 9;
     public static final int backBeamPort = 2;
 
-    public static final Voltage feedkS = Volts.of(0.27445);
+    public static final Voltage feedkS = Volts.of(0.28915);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
-        Volts.per(RotationsPerSecond).ofNative(0.12295);
+        Volts.per(RotationsPerSecond).ofNative(0.28474);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        Volts.per(RotationsPerSecond).ofNative(0.045193);
+        Volts.per(RotationsPerSecond).ofNative(0.41102);
 
     public static final double feedGearRatio = 70.0 / 30;
 
