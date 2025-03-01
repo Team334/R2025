@@ -32,6 +32,19 @@ public class Superstructure {
         .withName("Passoff");
   }
 
+  /**
+   * Ground intake (intake -> serializer) if needed. Afterwards ensures that serializer is still
+   * before doing a passoff from serializer -> manipulator.
+   */
+  public static Command pausePassoff(
+      Intake intake, Serializer serializer, Manipulator manipulator) {
+    return sequence(
+            groundIntake(intake, serializer),
+            waitUntil(() -> MathUtil.isNear(0, serializer.getSpeed(), 0.3)),
+            deadline(manipulator.passoff(), serializer.passoff()))
+        .withName("Pause Passoff");
+  }
+
   /** Coral passoff from manipulator -> serializer. */
   public static Command inversePassoff(Serializer serializer, Manipulator manipulator) {
     return deadline(serializer.inversePassoff(), manipulator.inversePassoff())
