@@ -260,7 +260,7 @@ public final class Constants {
     public static final AngularAcceleration maxElevatorAcceleration =
         RadiansPerSecondPerSecond.of(90);
 
-    public static final int homeSwitch = 5;
+    public static final int homeSwitch = 6;
 
     public static final int leftMotorId = 12;
     public static final int rightMotorId = 9;

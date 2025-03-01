@@ -9,6 +9,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
@@ -16,6 +17,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -66,6 +68,8 @@ public class Serializer extends AdvancedSubsystem {
   public Serializer(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
 
+    SmartDashboard.putData("SERIALIZ", intake());
+
     _currentPieceSetter = currentPieceSetter;
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
@@ -87,14 +91,25 @@ public class Serializer extends AdvancedSubsystem {
     feedMotorConfigs.Slot0.kV = SerializerConstants.feedkV.in(Volts.per(RotationsPerSecond));
     feedMotorConfigs.Slot0.kP = SerializerConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
+    feedMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
+
+    _feedVelocitySetter.UpdateFreqHz = 250;
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        100, _feedMotor.getPosition(), _feedMotor.getVelocity(), _feedMotor.getMotorVoltage());
+    CTREUtil.attempt(() -> _feedMotor.optimizeBusUtilization(), _feedMotor);
 
-    _feedMotor.optimizeBusUtilization();
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _feedMotor.getPosition(),
+                _feedMotor.getVelocity(),
+                _feedMotor.getMotorVoltage(),
+                _feedMotor.getClosedLoopReference()),
+        _feedMotor);
 
     FaultLogger.register(_feedMotor);
   }

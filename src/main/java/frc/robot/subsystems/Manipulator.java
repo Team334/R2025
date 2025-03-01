@@ -109,11 +109,18 @@ public class Manipulator extends AdvancedSubsystem {
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
 
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        100, _leftMotor.getPosition(), _leftMotor.getVelocity(), _leftMotor.getMotorVoltage());
+    CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
 
-    _leftMotor.optimizeBusUtilization();
-    _rightMotor.optimizeBusUtilization();
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _leftMotor.getPosition(),
+                _leftMotor.getVelocity(),
+                _leftMotor.getMotorVoltage(),
+                _leftMotor.getClosedLoopReference()),
+        _leftMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);

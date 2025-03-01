@@ -9,7 +9,6 @@ import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -26,6 +25,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -48,6 +48,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Constants.WristevatorConstants.Intermediate;
@@ -170,6 +171,8 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Finished Latest Profiles")
   private boolean _finishedLatestProfiles = true;
 
+  private BooleanEntry dipshit = Tuning.entry("DIPSHIT", false);
+
   private Setpoint _latestSetpoint = HOME;
 
   private DIOSim _homeSwitchSim;
@@ -226,11 +229,15 @@ public class Wristevator extends AdvancedSubsystem {
         () -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
 
+    // _leftMotor.optimizeBusUtilization();
+    // _rightMotor.optimizeBusUtilization();
+    // _wristMotor.optimizeBusUtilization();
+
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
     FaultLogger.register(_wristMotor);
 
-    _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
+    // _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
     setDefaultCommand(holdInPlace());
 
@@ -370,8 +377,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    // return _homeSwitch.get();
-    return true;
+    // return !_homeSwitch.get();
+    return dipshit.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
