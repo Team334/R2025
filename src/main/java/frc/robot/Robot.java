@@ -181,11 +181,11 @@ public class Robot extends TimedRobot {
         .onTrue(
             _wristevator.setSpeeds(
                 InputStream.of(_operatorController::getRightY)
-                    .deadband(0.05, 1)
+                    .deadband(0.07, 1)
                     .negate()
                     .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
                 InputStream.of(_operatorController::getLeftY)
-                    .deadband(0.05, 1)
+                    .deadband(0.07, 1)
                     .negate()
                     .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
   }
