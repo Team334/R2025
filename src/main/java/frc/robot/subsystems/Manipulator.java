@@ -275,7 +275,8 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
-    return setSpeed(0).withName("Inverse Passoff");
+    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+        .withName("Inverse Passoff");
   }
 
   /** Pulse the manipulator until coral triggers the beam. */

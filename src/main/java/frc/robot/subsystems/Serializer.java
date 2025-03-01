@@ -17,7 +17,6 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -67,8 +66,6 @@ public class Serializer extends AdvancedSubsystem {
 
   public Serializer(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
-
-    SmartDashboard.putData("SERIALIZ", intake());
 
     _currentPieceSetter = currentPieceSetter;
 
