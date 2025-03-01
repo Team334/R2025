@@ -258,10 +258,11 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Passoff from the serializer. */
   public Command passoff() {
+    BooleanEvent coralEventFalling = _coralEvent.falling();
+
     return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .alongWith(watchCoralBeam(Piece.CORAL, false))
-        .until(() -> getCurrentPiece() == Piece.CORAL)
-        .finallyDo(this::pulse)
+        .until(coralEventFalling::getAsBoolean)
+        .andThen(pulse().alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
@@ -270,10 +271,12 @@ public class Manipulator extends AdvancedSubsystem {
     return setSpeed(0).withName("Inverse Passoff");
   }
 
-  /** Pulse the manipulator until coral triggers the beam */
+  /** Pulse the manipulator until coral triggers the beam. */
   public Command pulse() {
+    BooleanEvent coralEventRising = _coralEvent.rising();
+
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .until(() -> _coralEvent.rising().getAsBoolean());
+        .until(coralEventRising::getAsBoolean);
   }
 
   private void setFeedVoltage(double volts) {
