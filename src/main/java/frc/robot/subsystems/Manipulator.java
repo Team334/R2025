@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Robot.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -61,6 +62,9 @@ public class Manipulator extends AdvancedSubsystem {
 
   private double _lastSimTime;
 
+  @Logged(name = "Desired Speed")
+  private double _desiredSpeed;
+
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
@@ -69,7 +73,10 @@ public class Manipulator extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -90,7 +97,9 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
+    leftMotorConfigs.Slot0.kS = ManipulatorConstants.flywheelkS.in(Volts);
     leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
+
     leftMotorConfigs.Slot0.kP = ManipulatorConstants.flywheelkP.in(Volts.per(RotationsPerSecond));
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
@@ -99,6 +108,19 @@ public class Manipulator extends AdvancedSubsystem {
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
 
     _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
+
+    CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _leftMotor.getPosition(),
+                _leftMotor.getVelocity(),
+                _leftMotor.getMotorVoltage(),
+                _leftMotor.getClosedLoopReference()),
+        _leftMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -178,6 +200,7 @@ public class Manipulator extends AdvancedSubsystem {
   private Command setSpeed(double speed) {
     return run(
         () -> {
+          _desiredSpeed = speed;
           _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
         });
   }
@@ -242,22 +265,26 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Passoff from the serializer. */
   public Command passoff() {
+    BooleanEvent coralEventFalling = _coralEvent.falling();
+
     return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .alongWith(watchCoralBeam(Piece.CORAL, false))
-        .until(() -> getCurrentPiece() == Piece.CORAL)
-        .finallyDo(this::pulse)
+        .until(coralEventFalling::getAsBoolean)
+        .andThen(pulse().alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
-    return setSpeed(0).withName("Inverse Passoff");
+    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+        .withName("Inverse Passoff");
   }
 
-  /** Pulse the manipulator until coral triggers the beam */
+  /** Pulse the manipulator until coral triggers the beam. */
   public Command pulse() {
+    BooleanEvent coralEventRising = _coralEvent.rising();
+
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .until(() -> _coralEvent.rising().getAsBoolean());
+        .until(coralEventRising::getAsBoolean);
   }
 
   private void setFeedVoltage(double volts) {
