@@ -13,7 +13,9 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.MotionMagicIsRunningValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
@@ -95,7 +97,10 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(2).per(Second),
+              Volts.of(4),
+              null,
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 
@@ -181,22 +186,23 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    // leftMotorConfigs.Slot0.kV =
-    // WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
-    // leftMotorConfigs.Slot0.kA =
-    //     WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kA =
+        WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+    leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
-    // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
 
     // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
     // wristMotorConfigs.Slot0.kA =
     //     WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+
+    wristMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
@@ -206,8 +212,18 @@ public class Wristevator extends AdvancedSubsystem {
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     wristMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
-    CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
-    CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+        WristevatorConstants.maxElevatorHeight.in(Rotations);
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        WristevatorConstants.minElevatorHeight.in(Rotations);
+
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+    CTREUtil.attempt(
+        () -> _leftMotor.getConfigurator().apply(new TalonFXConfiguration()), _leftMotor);
+    CTREUtil.attempt(
+        () -> _rightMotor.getConfigurator().apply(new TalonFXConfiguration()), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
 
     FaultLogger.register(_leftMotor);
@@ -354,7 +370,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    return _homeSwitch.get();
+    // return _homeSwitch.get();
+    return true;
   }
 
   /** Whether the wristevator is open for manual control or not. */
