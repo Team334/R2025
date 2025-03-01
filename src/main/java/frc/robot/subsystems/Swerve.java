@@ -158,15 +158,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private boolean _hasAppliedDriverPerspective;
 
-  @Logged(name = VisionConstants.lowerArducamName)
-  private final VisionPoseEstimator _lowerArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.lowerArducam, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.bugEyeOneName)
+  private final VisionPoseEstimator _BugEyeOne =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.bugeye1, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.upperArducamName)
-  private final VisionPoseEstimator _upperArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.upperArducam, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.bugEyeTwoName)
+  private final VisionPoseEstimator _BugEyeTwo =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.bugeye2, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerArducam, _upperArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_BugEyeOne, _BugEyeTwo);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -235,12 +235,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _lowerArducam
+      _BugEyeOne
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _upperArducam
+      _BugEyeTwo
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));

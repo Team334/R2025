@@ -101,8 +101,8 @@ public final class Constants {
   }
 
   public static class VisionConstants {
-    public static final String lowerArducamName = "lower-arducam";
-    public static final String upperArducamName = "upper-arducam";
+    public static final String bugEyeOneName = "bug-eye-1";
+    public static final String bugEyeTwoName = "bug-eye-2";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
@@ -111,19 +111,19 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final VisionPoseEstimatorConstants lowerArducam =
+    public static final VisionPoseEstimatorConstants bugeye1 =
         new VisionPoseEstimatorConstants(
-            lowerArducamName,
-            new Transform3d(new Translation3d(0.3, -0.3, 0.7), new Rotation3d(0, 0.3, 0.2)),
+            bugEyeOneName,
+            new Transform3d(new Translation3d(0.3, 0.3, 0.2955), new Rotation3d(0, -0.1655, 0.075)),
             0.2,
             0.0001,
             3,
             7);
 
-    public static final VisionPoseEstimatorConstants upperArducam =
+    public static final VisionPoseEstimatorConstants bugeye2 =
         new VisionPoseEstimatorConstants(
-            upperArducamName,
-            new Transform3d(new Translation3d(0.3, 0.3, 1.5), new Rotation3d(0, 0, 0)),
+            bugEyeTwoName,
+            new Transform3d(new Translation3d(0.3, -0.3, 0.655), new Rotation3d(0, -0.2105, -0.075)),
             0.2,
             0.0001,
             3,
