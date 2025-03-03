@@ -13,10 +13,12 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotionMagicIsRunningValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -24,6 +26,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -43,9 +46,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Constants.WristevatorConstants.Intermediate;
@@ -95,16 +100,19 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(0.5).per(Second),
+              Volts.of(2),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 
   private final SysIdRoutine _wristRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(1).per(Second),
-              Volts.of(4),
-              null,
+              Volts.of(0.3).per(Second),
+              Volts.of(0.8),
+              Seconds.of(4),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
@@ -165,6 +173,8 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Finished Latest Profiles")
   private boolean _finishedLatestProfiles = true;
 
+  private BooleanEntry dipshit = Tuning.entry("DIPSHIT", false);
+
   private Setpoint _latestSetpoint = HOME;
 
   private DIOSim _homeSwitchSim;
@@ -181,22 +191,44 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    // leftMotorConfigs.Slot0.kV =
-    // WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
-    // leftMotorConfigs.Slot0.kA =
-    //     WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // left motor configs
+    leftMotorConfigs.Slot0.kS = WristevatorConstants.elevatorkS.in(Volts);
+    leftMotorConfigs.Slot0.kG = WristevatorConstants.elevatorkG.in(Volts);
+    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kA =
+        WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+    leftMotorConfigs.Slot0.kP = WristevatorConstants.elevatorkP.in(Volts.per(Rotations));
 
-    // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+    leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
 
-    // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
-    // wristMotorConfigs.Slot0.kA =
-    //     WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+    leftMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
-    // wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+        WristevatorConstants.maxElevatorHeight.in(Rotations);
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        WristevatorConstants.minElevatorHeight.in(Rotations);
+
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+    // wrist motor configs
+    wristMotorConfigs.Slot0.kS = WristevatorConstants.wristkS.in(Volts);
+    wristMotorConfigs.Slot0.kG = WristevatorConstants.wristkG.in(Volts);
+    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
+    wristMotorConfigs.Slot0.kA =
+        WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+
+    wristMotorConfigs.Slot0.kP = WristevatorConstants.wristkP.in(Volts.per(Rotations));
+
+    wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+
+    wristMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    wristMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
@@ -209,6 +241,36 @@ public class Wristevator extends AdvancedSubsystem {
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+
+    CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
+    CTREUtil.attempt(() -> _wristMotor.optimizeBusUtilization(), _wristMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _leftMotor.getPosition(),
+                _leftMotor.getVelocity(),
+                _leftMotor.getClosedLoopReference(),
+                _leftMotor.getClosedLoopReferenceSlope(),
+                _leftMotor.getMotionMagicIsRunning(),
+                _leftMotor.getMotorVoltage()),
+        _leftMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _wristMotor.getPosition(),
+                _wristMotor.getVelocity(),
+                _wristMotor.getClosedLoopReference(),
+                _wristMotor.getClosedLoopReferenceSlope(),
+                _wristMotor.getMotionMagicIsRunning(),
+                _wristMotor.getMotorVoltage()),
+        _wristMotor);
+
+    CTREUtil.attempt(() -> _wristMotor.setPosition(Radians.of(0)), _wristMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -241,7 +303,19 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Intermediates", intermediates);
 
     SysId.displayRoutine("Elevator", _elevatorRoutine);
-    SysId.displayRoutine("Wrist", _wristRoutine);
+
+    SmartDashboard.putData(
+        "Wrist Forward Quasistatic",
+        _wristRoutine.quasistatic(Direction.kForward).until(() -> getAngle() >= 0.5));
+    SmartDashboard.putData(
+        "Wrist Reverse Quasistatic",
+        _wristRoutine.quasistatic(Direction.kReverse).until(() -> getAngle() <= -0.2));
+    SmartDashboard.putData(
+        "Wrist Forward Dynamic",
+        _wristRoutine.dynamic(Direction.kForward).until(() -> getAngle() >= 0.5));
+    SmartDashboard.putData(
+        "Wrist Reverse Dynamic",
+        _wristRoutine.dynamic(Direction.kReverse).until(() -> getAngle() <= -0.2));
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
@@ -354,7 +428,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    return _homeSwitch.get();
+    // return !_homeSwitch.get();
+    return dipshit.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
@@ -512,59 +587,60 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
-    return run(() -> {
-          // move towards the next setpoint
-          _leftMotor.setControl(_heightSetter.withPosition(_latestSetpoint.getHeight()));
-          _wristMotor.setControl(_angleSetter.withPosition(_latestSetpoint.getAngle()));
+    return Commands.none();
+    // return run(() -> {
+    //       // move towards the next setpoint
+    //       _leftMotor.setControl(_heightSetter.withPosition(_latestSetpoint.getHeight()));
+    //       _wristMotor.setControl(_angleSetter.withPosition(_latestSetpoint.getAngle()));
 
-          if (!_isMotionMagic) return;
+    //       if (!_isMotionMagic) return;
 
-          // once the next setpoint is reached, re-find the next one
-          if (_finishedLatestProfiles) {
-            findNextSetpoint(goal);
-            findProfileConstraints(_latestSetpoint);
-          }
+    //       // once the next setpoint is reached, re-find the next one
+    //       if (_finishedLatestProfiles) {
+    //         findNextSetpoint(goal);
+    //         findProfileConstraints(_latestSetpoint);
+    //       }
 
-          _finishedLatestProfiles =
-              (MathUtil.isNear(
-                      _latestSetpoint.getHeight().in(Rotations),
-                      _elevatorReference.getValueAsDouble(),
-                      0.001)
-                  && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
-                  && MathUtil.isNear(
-                      _latestSetpoint.getAngle().in(Rotations),
-                      _wristReference.getValueAsDouble(),
-                      0.001)
-                  && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.001));
+    //       _finishedLatestProfiles =
+    //           (MathUtil.isNear(
+    //                   _latestSetpoint.getHeight().in(Rotations),
+    //                   _elevatorReference.getValueAsDouble(),
+    //                   0.001)
+    //               && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
+    //               && MathUtil.isNear(
+    //                   _latestSetpoint.getAngle().in(Rotations),
+    //                   _wristReference.getValueAsDouble(),
+    //                   0.001)
+    //               && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.001));
 
-          // log what's generated by wpilib
-          DogLog.log(
-              "Wristevator/Non-Adjusted Desired Elevator Speed", _elevatorMaxSetpoint.velocity);
-          DogLog.log("Wristevator/Non-Adjusted Desired Wrist Speed", _wristMaxSetpoint.velocity);
+    //       // log what's generated by wpilib
+    //       DogLog.log(
+    //           "Wristevator/Non-Adjusted Desired Elevator Speed", _elevatorMaxSetpoint.velocity);
+    //       DogLog.log("Wristevator/Non-Adjusted Desired Wrist Speed", _wristMaxSetpoint.velocity);
 
-          _elevatorMaxSetpoint =
-              _elevatorMaxProfile.calculate(
-                  Robot.kDefaultPeriod, _elevatorMaxSetpoint, _elevatorMaxGoal);
-          _wristMaxSetpoint =
-              _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxSetpoint, _wristMaxGoal);
-        })
-        .beforeStarting(
-            setSpeeds(() -> 0, () -> 0)
-                .until(
-                    () ->
-                        MathUtil.isNear(0, getElevatorVelocity(), 0.01)
-                            && MathUtil.isNear(0, getWristVelocity(), 0.01))
-                .andThen(
-                    () -> {
-                      _isManual = false;
+    //       _elevatorMaxSetpoint =
+    //           _elevatorMaxProfile.calculate(
+    //               Robot.kDefaultPeriod, _elevatorMaxSetpoint, _elevatorMaxGoal);
+    //       _wristMaxSetpoint =
+    //           _wristMaxProfile.calculate(Robot.kDefaultPeriod, _wristMaxSetpoint, _wristMaxGoal);
+    //     })
+    //     .beforeStarting(
+    //         setSpeeds(() -> 0, () -> 0)
+    //             .until(
+    //                 () ->
+    //                     MathUtil.isNear(0, getElevatorVelocity(), 0.01)
+    //                         && MathUtil.isNear(0, getWristVelocity(), 0.01))
+    //             .andThen(
+    //                 () -> {
+    //                   _isManual = false;
 
-                      findNextSetpoint(goal);
-                      findProfileConstraints(_latestSetpoint);
+    //                   findNextSetpoint(goal);
+    //                   findProfileConstraints(_latestSetpoint);
 
-                      _finishedLatestProfiles = false;
-                    }))
-        .until(() -> _finishedLatestProfiles && _latestSetpoint == goal)
-        .withName("Set Goal");
+    //                   _finishedLatestProfiles = false;
+    //                 }))
+    //     .until(() -> _finishedLatestProfiles && _latestSetpoint == goal)
+    //     .withName("Set Goal");
   }
 
   /**
@@ -598,6 +674,10 @@ public class Wristevator extends AdvancedSubsystem {
     super.periodic();
 
     refreshProfileReferences();
+
+    // hard limits
+    _heightSetter.LimitReverseMotion = homeSwitch();
+    _elevatorVelocitySetter.LimitReverseMotion = homeSwitch();
 
     DogLog.log(
         "Wristevator/Elevator Reference",
