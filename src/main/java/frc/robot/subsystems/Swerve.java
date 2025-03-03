@@ -28,6 +28,7 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -42,6 +43,7 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -174,6 +176,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
   private final VisionSystemSim _visionSystemSim;
+
+  private final DoubleEntry _tx = Tuning.entry("Piece TX", 0.0);
+  private final DoubleEntry _ty = Tuning.entry("Piece TY", 0.0);
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -448,13 +453,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
 
-              double tx = -30;
-              double ty = 40;
+              double tx = _tx.getAsDouble();
+              double ty = _ty.getAsDouble();
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getZ()
                           + SwerveConstants.chassisHeight.in(Meters))
-                      * Math.tan(VisionConstants.robotToLimelight.getRotation().getY() - ty);
+                      * Math.tan(
+                          Math.abs(VisionConstants.robotToLimelight.getRotation().getY()) + ty);
               Rotation2d groundAngle =
                   Rotation2d.fromDegrees(
                       Math.atan2(
@@ -674,6 +680,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         _rejectedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
 
     DogLog.log("Swerve/Detected Tags", _detectedTags.toArray(Pose3d[]::new));
+
+    DogLog.log("Swerve/Piece Pose", _pieceAlignPose);
 
     if (!_ignoreVisionEstimates) {
       _acceptedEstimates.sort(VisionPoseEstimate.sorter);
