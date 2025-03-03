@@ -173,7 +173,7 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Finished Latest Profiles")
   private boolean _finishedLatestProfiles = true;
 
-  private BooleanEntry dipshit = Tuning.entry("DIPSHIT", false);
+  private BooleanEntry homeSwitch = Tuning.entry("Tuning/Home Switch", false);
 
   private Setpoint _latestSetpoint = HOME;
 
@@ -429,7 +429,7 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
     // return !_homeSwitch.get();
-    return dipshit.getAsBoolean();
+    return homeSwitch.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */

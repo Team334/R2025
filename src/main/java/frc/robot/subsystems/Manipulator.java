@@ -11,7 +11,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-import dev.doglog.DogLog;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -116,6 +116,8 @@ public class Manipulator extends AdvancedSubsystem {
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
+    leftMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
     rightMotorConfigs.Slot0.kS = ManipulatorConstants.rightFlywheelkS.in(Volts);
     rightMotorConfigs.Slot0.kV =
         ManipulatorConstants.rightFlywheelkV.in(Volts.per(RotationsPerSecond));
@@ -124,6 +126,8 @@ public class Manipulator extends AdvancedSubsystem {
         ManipulatorConstants.rightFlywheelkP.in(Volts.per(RotationsPerSecond));
 
     rightMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
+
+    rightMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
@@ -235,9 +239,9 @@ public class Manipulator extends AdvancedSubsystem {
           _leftMotor.setControl(_feedVelocitySetter);
           _rightMotor.setControl(_feedVelocitySetter);
 
-          DogLog.log("desired", speed);
-          DogLog.log("beam", getCoralBeam());
-          DogLog.log("volts", _leftMotor.getMotorVoltage().getValueAsDouble());
+          // DogLog.log("desired", speed);
+          // DogLog.log("beam", getCoralBeam());
+          // DogLog.log("volts", _leftMotor.getMotorVoltage().getValueAsDouble());
         });
   }
 

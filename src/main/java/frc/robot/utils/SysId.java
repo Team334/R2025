@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 /** Displays SysId routines on SmartDashboard. */
 public class SysId {
+  public static boolean displayRoutines = false;
+
   /**
    * Displays a single routine to SmartDashboard.
    *
@@ -17,6 +19,8 @@ public class SysId {
    * @param routine The SysId Routine.
    */
   public static void displayRoutine(String name, SysIdRoutine routine) {
+    if (!displayRoutines) return;
+
     SmartDashboard.putData(name + " Forward Quasistatic", routine.quasistatic(Direction.kForward));
     SmartDashboard.putData(name + " Reverse Quasistatic", routine.quasistatic(Direction.kReverse));
     SmartDashboard.putData(name + " Forward Dynamic", routine.dynamic(Direction.kForward));

@@ -115,7 +115,7 @@ public class Robot extends TimedRobot {
     Epilogue.bind(this);
     SignalLogger.start();
 
-    DriverStation.silenceJoystickConnectionWarning(isSimulation());
+    DriverStation.silenceJoystickConnectionWarning(true);
 
     FaultLogger.setup(_ntInst);
 
