@@ -317,6 +317,11 @@ public class Robot extends TimedRobot {
   }
 
   @Override
+  public void autonomousPeriodic() {
+    _autos.simpleTrajectory().poll();
+  }
+
+  @Override
   public void testInit() {
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();

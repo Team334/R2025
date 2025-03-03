@@ -9,12 +9,17 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
+import edu.wpi.first.networktables.BooleanEntry;
+import frc.lib.Tuning;
 import frc.robot.subsystems.Swerve;
 
 public class Autos {
   private final Swerve _swerve;
 
   private final AutoFactory _factory;
+
+  private final BooleanEntry _seesPiece = Tuning.entry("PieceVisable", false);
+  private final BooleanEntry _end = Tuning.entry("End", false);
 
   public Autos(Swerve swerve) {
     _swerve = swerve;
@@ -38,9 +43,16 @@ public class Autos {
 
   public AutoRoutine simpleTrajectory() {
     var routine = _factory.newRoutine("Simple Trajectory");
-    var trajectory = routine.trajectory("simpleTrajectory");
+    var start = routine.trajectory("Start-Reef-Human");
+    var humanToReef = routine.trajectory("Human-Reef");
+    var reefToHuman = routine.trajectory("Reef-Human");
 
-    routine.active().onTrue(sequence(trajectory.resetOdometry(), trajectory.cmd()));
+    routine.active().onTrue(sequence(start.resetOdometry(), start.cmd()));
+
+    start.done().onTrue(humanToReef.cmd());
+
+    humanToReef.done().onTrue(reefToHuman.cmd());
+    reefToHuman.active().and(_seesPiece).onTrue(_swerve.alignToPiece());
 
     return routine;
   }

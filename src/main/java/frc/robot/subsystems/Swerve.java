@@ -51,7 +51,6 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
-import frc.robot.utils.LimelightHelpers;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
@@ -446,8 +445,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public Command alignToPiece() {
     return runOnce(
             () -> {
-              double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
-              double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
+              // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
+              // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
+
+              double tx = -30;
+              double ty = 40;
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getY()
