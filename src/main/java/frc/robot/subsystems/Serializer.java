@@ -10,6 +10,8 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
@@ -120,18 +122,12 @@ public class Serializer extends AdvancedSubsystem {
     return run(
         () -> {
           _desiredSpeed = speed;
+
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
 
-          // check in the hoot log when desired speed changes to 0 (when the idle command is called)
-          // and check when the motor voltage changes, look at the timestamp difference to determine
-          // if the
-          // control request takes effect too late
-          // SignalLogger.writeDouble("Desired Speed", speed);
-
-          // check in the hoot log when this becomes true, and compare it to when desired speed
-          // becomes 0 to make
-          // sure it's not an issue in robot code
-          // SignalLogger.writeBoolean("Coral Beam", getFrontBeam());
+          DogLog.log("desired", speed);
+          DogLog.log("volts", _feedMotor.getMotorVoltage().getValueAsDouble());
+          DogLog.log("beam", getFrontBeam());
         });
   }
 

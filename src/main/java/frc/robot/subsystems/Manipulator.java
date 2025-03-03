@@ -11,6 +11,8 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -234,17 +236,9 @@ public class Manipulator extends AdvancedSubsystem {
           _leftMotor.setControl(_feedVelocitySetter);
           _rightMotor.setControl(_feedVelocitySetter);
 
-          // check in the hoot log when desired speed changes to 0 (when the hold coral command is
-          // called)
-          // and check when the motor voltage changes, look at the timestamp difference to determine
-          // if the
-          // control request takes effect too late
-          // SignalLogger.writeDouble("Desired Speed", speed);
-
-          // check in the hoot log when this becomes true, and compare it to when desired speed
-          // becomes 0 to make
-          // sure it's not an issue in robot code
-          // SignalLogger.writeBoolean("Front Beam", getCoralBeam());
+          DogLog.log("desired", speed);
+          DogLog.log("beam", getCoralBeam());
+          DogLog.log("volts", _leftMotor.getMotorVoltage().getValueAsDouble());
         });
   }
 

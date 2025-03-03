@@ -428,8 +428,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    return !_homeSwitch.get();
-    // return dipshit.getAsBoolean();
+    // return !_homeSwitch.get();
+    return dipshit.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
@@ -674,6 +674,10 @@ public class Wristevator extends AdvancedSubsystem {
     super.periodic();
 
     refreshProfileReferences();
+
+    // hard limits
+    _heightSetter.LimitReverseMotion = homeSwitch();
+    _elevatorVelocitySetter.LimitReverseMotion = homeSwitch();
 
     DogLog.log(
         "Wristevator/Elevator Reference",
