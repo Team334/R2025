@@ -8,7 +8,6 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -104,10 +103,15 @@ public class Manipulator extends AdvancedSubsystem {
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
+    rightMotorConfigs.Slot0.kS = 0;
+    rightMotorConfigs.Slot0.kV = 0;
+
+    rightMotorConfigs.Slot0.kP = 0;
+
+    rightMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
+
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
-
-    _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
 
     CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
@@ -118,9 +122,17 @@ public class Manipulator extends AdvancedSubsystem {
                 100,
                 _leftMotor.getPosition(),
                 _leftMotor.getVelocity(),
-                _leftMotor.getMotorVoltage(),
-                _leftMotor.getClosedLoopReference()),
+                _leftMotor.getMotorVoltage()),
         _leftMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _rightMotor.getPosition(),
+                _rightMotor.getVelocity(),
+                _rightMotor.getMotorVoltage()),
+        _rightMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -201,7 +213,23 @@ public class Manipulator extends AdvancedSubsystem {
     return run(
         () -> {
           _desiredSpeed = speed;
-          _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
+
+          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed);
+
+          _leftMotor.setControl(_feedVelocitySetter);
+          _rightMotor.setControl(_feedVelocitySetter);
+
+          // check in the hoot log when desired speed changes to 0 (when the hold coral command is
+          // called)
+          // and check when the motor voltage changes, look at the timestamp difference to determine
+          // if the
+          // control request takes effect too late
+          // SignalLogger.writeDouble("Desired Speed", speed);
+
+          // check in the hoot log when this becomes true, and compare it to when desired speed
+          // becomes 0 to make
+          // sure it's not an issue in robot code
+          // SignalLogger.writeBoolean("Front Beam", getCoralBeam());
         });
   }
 
@@ -232,11 +260,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Hold a coral in place. */
   public Command holdCoral() {
-    return run(() -> {
-          _leftMotor.setControl(_feedVoltageSetter.withOutput(0));
-        })
-        .alongWith(watchCoralBeam(Piece.NONE, false))
-        .withName("Hold Coral");
+    return idle().alongWith(watchCoralBeam(Piece.NONE, false)).withName("Hold Coral");
   }
 
   /** Hold an algae in place. */

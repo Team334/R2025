@@ -104,8 +104,7 @@ public class Serializer extends AdvancedSubsystem {
                 100,
                 _feedMotor.getPosition(),
                 _feedMotor.getVelocity(),
-                _feedMotor.getMotorVoltage(),
-                _feedMotor.getClosedLoopReference()),
+                _feedMotor.getMotorVoltage()),
         _feedMotor);
 
     FaultLogger.register(_feedMotor);
@@ -122,6 +121,17 @@ public class Serializer extends AdvancedSubsystem {
         () -> {
           _desiredSpeed = speed;
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
+
+          // check in the hoot log when desired speed changes to 0 (when the idle command is called)
+          // and check when the motor voltage changes, look at the timestamp difference to determine
+          // if the
+          // control request takes effect too late
+          // SignalLogger.writeDouble("Desired Speed", speed);
+
+          // check in the hoot log when this becomes true, and compare it to when desired speed
+          // becomes 0 to make
+          // sure it's not an issue in robot code
+          // SignalLogger.writeBoolean("Coral Beam", getFrontBeam());
         });
   }
 
