@@ -329,11 +329,17 @@ public final class Constants {
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(30);
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
-    public static final Voltage flywheelkS = Volts.of(0.2593);
-    public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkV =
+    public static final Voltage leftFlywheelkS = Volts.of(0.2593);
+    public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkV =
         Volts.per(RotationsPerSecond).ofNative(0.14628);
-    public static final Per<VoltageUnit, AngularVelocityUnit> flywheelkP =
+    public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkP =
         Volts.per(RotationsPerSecond).ofNative(0.16712);
+
+    public static final Voltage rightFlywheelkS = Volts.of(0);
+    public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkV =
+        Volts.per(RotationsPerSecond).ofNative(0);
+    public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkP =
+        Volts.per(RotationsPerSecond).ofNative(0);
 
     public static final double flywheelGearRatio = 36.0 / 30;
 

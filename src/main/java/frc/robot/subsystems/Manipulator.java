@@ -69,7 +69,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
-  private final SysIdRoutine _feedRoutine =
+  private final SysIdRoutine _leftRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null,
@@ -77,7 +77,17 @@ public class Manipulator extends AdvancedSubsystem {
               Seconds.of(5),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
-              (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
+              (Voltage volts) -> setFeedVoltage(volts.in(Volts), _leftMotor), null, this));
+
+  private final SysIdRoutine _rightRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setFeedVoltage(volts.in(Volts), _rightMotor), null, this));
 
   private DIOSim _coralBeamSim;
   private DIOSim _algaeBeamSim;
@@ -96,17 +106,21 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kS = ManipulatorConstants.flywheelkS.in(Volts);
-    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kS = ManipulatorConstants.leftFlywheelkS.in(Volts);
+    leftMotorConfigs.Slot0.kV =
+        ManipulatorConstants.leftFlywheelkV.in(Volts.per(RotationsPerSecond));
 
-    leftMotorConfigs.Slot0.kP = ManipulatorConstants.flywheelkP.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kP =
+        ManipulatorConstants.leftFlywheelkP.in(Volts.per(RotationsPerSecond));
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
-    rightMotorConfigs.Slot0.kS = 0;
-    rightMotorConfigs.Slot0.kV = 0;
+    rightMotorConfigs.Slot0.kS = ManipulatorConstants.rightFlywheelkS.in(Volts);
+    rightMotorConfigs.Slot0.kV =
+        ManipulatorConstants.rightFlywheelkV.in(Volts.per(RotationsPerSecond));
 
-    rightMotorConfigs.Slot0.kP = 0;
+    rightMotorConfigs.Slot0.kP =
+        ManipulatorConstants.rightFlywheelkP.in(Volts.per(RotationsPerSecond));
 
     rightMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
@@ -137,7 +151,8 @@ public class Manipulator extends AdvancedSubsystem {
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
 
-    SysId.displayRoutine("Manipulator Feed", _feedRoutine);
+    SysId.displayRoutine("Left Manipulator", _leftRoutine);
+    SysId.displayRoutine("Right Manipulator", _rightRoutine);
 
     if (Robot.isSimulation()) {
       _coralBeamSim = new DIOSim(_coralBeam);
@@ -311,8 +326,8 @@ public class Manipulator extends AdvancedSubsystem {
         .until(coralEventRising::getAsBoolean);
   }
 
-  private void setFeedVoltage(double volts) {
-    _leftMotor.setControl(_feedVoltageSetter.withOutput(volts));
+  private void setFeedVoltage(double volts, TalonFX motor) {
+    motor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
   @Override
