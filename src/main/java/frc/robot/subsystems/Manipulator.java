@@ -151,8 +151,8 @@ public class Manipulator extends AdvancedSubsystem {
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
 
-    SysId.displayRoutine("Left Manipulator", _leftRoutine);
-    SysId.displayRoutine("Right Manipulator", _rightRoutine);
+    SysId.displayRoutine("Manipulator Left Flywheel", _leftRoutine);
+    SysId.displayRoutine("Manipulator Right Flywheel", _rightRoutine);
 
     if (Robot.isSimulation()) {
       _coralBeamSim = new DIOSim(_coralBeam);
@@ -308,7 +308,9 @@ public class Manipulator extends AdvancedSubsystem {
 
     return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .until(coralEventFalling::getAsBoolean)
-        .andThen(pulse().alongWith(watchCoralBeam(Piece.CORAL, true)))
+        .andThen(
+            setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+                .alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
@@ -316,14 +318,6 @@ public class Manipulator extends AdvancedSubsystem {
   public Command inversePassoff() {
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .withName("Inverse Passoff");
-  }
-
-  /** Pulse the manipulator until coral triggers the beam. */
-  public Command pulse() {
-    BooleanEvent coralEventRising = _coralEvent.rising();
-
-    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .until(coralEventRising::getAsBoolean);
   }
 
   private void setFeedVoltage(double volts, TalonFX motor) {
