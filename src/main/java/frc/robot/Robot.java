@@ -115,7 +115,7 @@ public class Robot extends TimedRobot {
     Epilogue.bind(this);
     SignalLogger.start();
 
-    DriverStation.silenceJoystickConnectionWarning(true);
+    DriverStation.silenceJoystickConnectionWarning(isSimulation());
 
     FaultLogger.setup(_ntInst);
 
@@ -259,8 +259,11 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // ground outtake
-    _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+    // switch to fast manipulator feed mode
+    _operatorController
+        .leftBumper()
+        .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
+        .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
 
     // intake / inverse passoff
     _operatorController

@@ -10,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 
 /** Displays SysId routines on SmartDashboard. */
 public class SysId {
-  public static boolean displayRoutines = true;
+  public static boolean displayRoutines = false;
 
   /**
    * Displays a single routine to SmartDashboard.

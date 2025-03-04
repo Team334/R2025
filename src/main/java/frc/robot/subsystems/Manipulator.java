@@ -45,6 +45,8 @@ public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
   private final DigitalInput _algaeBeam = new DigitalInput(ManipulatorConstants.algaeBeam);
 
+  private BooleanEntry _algaeBeamFake = Tuning.entry("Tuning/Algae Beam", false);
+
   private final BooleanEvent _coralEvent =
       new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam);
   private final BooleanEvent _algaeEvent =
@@ -79,7 +81,7 @@ public class Manipulator extends AdvancedSubsystem {
               Seconds.of(5),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
-              (Voltage volts) -> setFeedVoltage(volts.in(Volts), _leftMotor), null, this));
+              (Voltage volts) -> setFlywheelVoltage(volts.in(Volts), _leftMotor), null, this));
 
   private final SysIdRoutine _rightRoutine =
       new SysIdRoutine(
@@ -89,7 +91,7 @@ public class Manipulator extends AdvancedSubsystem {
               Seconds.of(5),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
-              (Voltage volts) -> setFeedVoltage(volts.in(Volts), _rightMotor), null, this));
+              (Voltage volts) -> setFlywheelVoltage(volts.in(Volts), _rightMotor), null, this));
 
   private DIOSim _coralBeamSim;
   private DIOSim _algaeBeamSim;
@@ -97,14 +99,13 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanEntry _coralBeamSimValue;
   private BooleanEntry _algaeBeamSimValue;
 
-  // private BooleanEntry _FUCK;
+  @Logged(name = "Is Fast Feed")
+  private boolean _isFastFeed = false;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
 
     _currentPieceSetter = currentPieceSetter;
-
-    // _FUCK = Tuning.entry("Tuning/FUCKK", false);
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
@@ -219,6 +220,14 @@ public class Manipulator extends AdvancedSubsystem {
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
+  private void setFlywheelVoltage(double volts, TalonFX motor) {
+    motor.setControl(_feedVoltageSetter.withOutput(volts));
+  }
+
+  public void setFastFeed(boolean isFast) {
+    _isFastFeed = isFast;
+  }
+
   @Logged(name = "Coral Beam")
   public boolean getCoralBeam() {
     return !_coralBeam.get();
@@ -226,8 +235,8 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
-    return !_algaeBeam.get();
-    // return _FUCK.getAsBoolean();
+    // return !_algaeBeam.get();
+    return _algaeBeamFake.get();
   }
 
   @Logged(name = "Speed")
@@ -281,8 +290,10 @@ public class Manipulator extends AdvancedSubsystem {
   /** Hold an algae in place. */
   public Command holdAlgae() {
     return run(() -> {
-          _leftMotor.setControl(
-              _feedVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
+          _feedVoltageSetter.Output = ManipulatorConstants.holdAlgaeVoltage;
+
+          _leftMotor.setControl(_feedVoltageSetter);
+          _rightMotor.setControl(_feedVoltageSetter);
         })
         .alongWith(watchAlgaeBeam(Piece.NONE, false))
         .withName("Hold Algae");
@@ -290,14 +301,26 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** General intake. */
   public Command intake() {
-    return setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+    return defer(
+            () ->
+                setSpeed(
+                    (_isFastFeed
+                            ? ManipulatorConstants.fastFeedSpeed
+                            : ManipulatorConstants.slowFeedSpeed)
+                        .in(RadiansPerSecond)))
         .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true))
         .withName("Intake");
   }
 
   /** General outtake. */
   public Command outtake() {
-    return setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+    return defer(
+            () ->
+                setSpeed(
+                    -(_isFastFeed
+                            ? ManipulatorConstants.fastFeedSpeed
+                            : ManipulatorConstants.slowFeedSpeed)
+                        .in(RadiansPerSecond)))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }
@@ -318,10 +341,6 @@ public class Manipulator extends AdvancedSubsystem {
   public Command inversePassoff() {
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .withName("Inverse Passoff");
-  }
-
-  private void setFeedVoltage(double volts, TalonFX motor) {
-    motor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
   @Override
