@@ -44,6 +44,8 @@ public class Serializer extends AdvancedSubsystem {
   @Logged(name = "Desired Speed")
   private double _desiredSpeed;
 
+  private final BooleanEntry _backBeamFake = Tuning.entry("Tuning/Back Beam", false);
+
   private final TalonFX _feedMotor =
       new TalonFX(SerializerConstants.feedMotorId, Constants.canivore);
 
@@ -141,8 +143,8 @@ public class Serializer extends AdvancedSubsystem {
 
   @Logged(name = "Back Beam")
   public boolean getBackBeam() {
-    return false;
-    // return !_backBeam.get();
+    // return false;
+    return _backBeamFake.get();
   }
 
   public Command idle() {
