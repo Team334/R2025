@@ -52,7 +52,14 @@ public class Autos {
     start.done().onTrue(humanToReef.cmd());
 
     humanToReef.done().onTrue(reefToHuman.cmd());
-    reefToHuman.active().and(_seesPiece).onTrue(_swerve.alignToPiece());
+    reefToHuman
+        .active()
+        .and(_seesPiece)
+        .onTrue(
+            runOnce(() -> reefToHuman.cmd().cancel())
+                .andThen(_swerve.alignToPiece())
+                .andThen(humanToReef.cmd()));
+    reefToHuman.done().onTrue(humanToReef.cmd());
 
     return routine;
   }

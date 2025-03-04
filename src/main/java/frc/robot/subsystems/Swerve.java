@@ -453,14 +453,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
 
-              double tx = _tx.getAsDouble();
-              double ty = _ty.getAsDouble();
+              double tx = Degrees.of(_tx.getAsDouble()).in(Radians);
+              double ty = Degrees.of(_ty.getAsDouble()).in(Radians);
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getZ()
                           + SwerveConstants.chassisHeight.in(Meters))
-                      * Math.tan(
-                          Math.abs(VisionConstants.robotToLimelight.getRotation().getY()) + ty);
+                      * Math.tan(VisionConstants.robotToLimelight.getRotation().getY() - ty);
               Rotation2d groundAngle =
                   Rotation2d.fromDegrees(
                       Math.atan2(
