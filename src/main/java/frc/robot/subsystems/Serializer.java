@@ -10,7 +10,6 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.BooleanEntry;
@@ -123,10 +122,6 @@ public class Serializer extends AdvancedSubsystem {
           _desiredSpeed = speed;
 
           _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
-
-          DogLog.log("desired", speed);
-          DogLog.log("volts", _feedMotor.getMotorVoltage().getValueAsDouble());
-          DogLog.log("beam", getFrontBeam());
         });
   }
 

@@ -179,15 +179,17 @@ public class Robot extends TimedRobot {
 
     new Trigger(_wristevator::isManual)
         .onTrue(
-            _wristevator.setSpeeds(
-                InputStream.of(_operatorController::getRightY)
-                    .deadband(0.07, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
-                InputStream.of(_operatorController::getLeftY)
-                    .deadband(0.07, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+            _wristevator
+                .setSpeeds(
+                    InputStream.of(_operatorController::getRightY)
+                        .deadband(0.07, 1)
+                        .negate()
+                        .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
+                    InputStream.of(_operatorController::getLeftY)
+                        .deadband(0.07, 1)
+                        .negate()
+                        .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond)))
+                .ignoringDisable(true));
   }
 
   private void alignmentTriggers(Trigger button, AlignPoses poses) {

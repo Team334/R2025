@@ -11,6 +11,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -96,10 +97,14 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanEntry _coralBeamSimValue;
   private BooleanEntry _algaeBeamSimValue;
 
+  // private BooleanEntry _FUCK;
+
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
 
     _currentPieceSetter = currentPieceSetter;
+
+    // _FUCK = Tuning.entry("Tuning/FUCKK", false);
 
     new Trigger(() -> getCurrentPiece() == Piece.CORAL).whileTrue(holdCoral());
     new Trigger(() -> getCurrentPiece() == Piece.ALGAE).whileTrue(holdAlgae());
@@ -127,6 +132,7 @@ public class Manipulator extends AdvancedSubsystem {
 
     rightMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
 
+    rightMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     rightMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
@@ -221,6 +227,7 @@ public class Manipulator extends AdvancedSubsystem {
   @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
     return !_algaeBeam.get();
+    // return _FUCK.getAsBoolean();
   }
 
   @Logged(name = "Speed")
@@ -238,10 +245,6 @@ public class Manipulator extends AdvancedSubsystem {
 
           _leftMotor.setControl(_feedVelocitySetter);
           _rightMotor.setControl(_feedVelocitySetter);
-
-          // DogLog.log("desired", speed);
-          // DogLog.log("beam", getCoralBeam());
-          // DogLog.log("volts", _leftMotor.getMotorVoltage().getValueAsDouble());
         });
   }
 
