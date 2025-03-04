@@ -253,10 +253,11 @@ public final class Constants {
       // TODO: actually find setpoint map and put it here
     }
 
-    public static final AngularVelocity maxWristSpeed = RadiansPerSecond.of(1);
+    public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(4);
     public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(10);
 
-    public static final AngularAcceleration maxWristAcceleration = RadiansPerSecondPerSecond.of(20);
+    public static final AngularAcceleration maxWristAcceleration =
+        RotationsPerSecondPerSecond.of(6);
     public static final AngularAcceleration maxElevatorAcceleration =
         RadiansPerSecondPerSecond.of(90);
 
@@ -291,15 +292,15 @@ public final class Constants {
     public static final Per<VoltageUnit, AngleUnit> elevatorkP =
         Volts.per(Rotations).ofNative(0); // 15 from sysid
 
-    public static final Voltage wristkS = Volts.of(0.18699);
-    public static final Voltage wristkG = Volts.of(0.26339);
+    public static final Voltage wristkS = Volts.of(0.1);
+    public static final Voltage wristkG = Volts.of(0.21);
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
-        Volts.per(RotationsPerSecond).ofNative(3.8739);
+        Volts.per(RotationsPerSecond).ofNative(4.05);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0.13729);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.03);
 
     public static final Per<VoltageUnit, AngleUnit> wristkP =
-        Volts.per(Rotations).ofNative(0); // 17.221 from sysid
+        Volts.per(Rotations).ofNative(13.082); // 17.221 from sysid
   }
 
   public static class SerializerConstants {

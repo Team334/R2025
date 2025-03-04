@@ -18,6 +18,7 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -208,6 +209,8 @@ public class Robot extends TimedRobot {
   }
 
   private void configureDriverBindings() {
+    System.out.println(DCMotor.getKrakenX60(1).KvRadPerSecPerVolt);
+
     _driverController.a().whileTrue(_swerve.brake());
     _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
     _driverController.povDown().onTrue(_swerve.resetHeading());
