@@ -40,6 +40,7 @@ import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
 import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
 
 public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
@@ -245,12 +246,12 @@ public class Manipulator extends AdvancedSubsystem {
   }
 
   // set the speed of the back feed wheels in rad/s
-  private Command setSpeed(double speed) {
+  private Command setSpeed(DoubleSupplier speed) {
     return run(
         () -> {
-          _desiredSpeed = speed;
+          _desiredSpeed = speed.getAsDouble();
 
-          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed);
+          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed.getAsDouble());
 
           _leftMotor.setControl(_feedVelocitySetter);
           _rightMotor.setControl(_feedVelocitySetter);
@@ -279,7 +280,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Idle the manipulator. */
   public Command idle() {
-    return setSpeed(0).withName("Idle");
+    return setSpeed(() -> 0).withName("Idle");
   }
 
   /** Hold a coral in place. */
@@ -301,26 +302,24 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** General intake. */
   public Command intake() {
-    return defer(
+    return setSpeed(
             () ->
-                setSpeed(
-                    (_isFastFeed
-                            ? ManipulatorConstants.fastFeedSpeed
-                            : ManipulatorConstants.slowFeedSpeed)
-                        .in(RadiansPerSecond)))
+                (_isFastFeed
+                        ? ManipulatorConstants.fastFeedSpeed
+                        : ManipulatorConstants.slowFeedSpeed)
+                    .in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true))
         .withName("Intake");
   }
 
   /** General outtake. */
   public Command outtake() {
-    return defer(
+    return setSpeed(
             () ->
-                setSpeed(
-                    -(_isFastFeed
-                            ? ManipulatorConstants.fastFeedSpeed
-                            : ManipulatorConstants.slowFeedSpeed)
-                        .in(RadiansPerSecond)))
+                -(_isFastFeed
+                        ? ManipulatorConstants.fastFeedSpeed
+                        : ManipulatorConstants.slowFeedSpeed)
+                    .in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }
@@ -329,17 +328,17 @@ public class Manipulator extends AdvancedSubsystem {
   public Command passoff() {
     BooleanEvent coralEventFalling = _coralEvent.falling();
 
-    return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+    return setSpeed(() -> -ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .until(coralEventFalling::getAsBoolean)
         .andThen(
-            setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+            setSpeed(() -> ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
                 .alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
-    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+    return setSpeed(() -> ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .withName("Inverse Passoff");
   }
 
