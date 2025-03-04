@@ -453,7 +453,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
 
-              double tx = Degrees.of(_tx.getAsDouble()).in(Radians);
+              double tx = Degrees.of(_tx.getAsDouble() * -1).in(Radians);
               double ty = Degrees.of(_ty.getAsDouble()).in(Radians);
 
               double groundDistance =

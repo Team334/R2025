@@ -122,7 +122,7 @@ public final class Constants {
             7);
 
     public static final Transform3d robotToLimelight =
-        new Transform3d(0, 0, 0.5, new Rotation3d(0, -45, 0));
+        new Transform3d(0, 0, 0.5, new Rotation3d(0, Degrees.of(-45).in(Radians), 0));
   }
 
   public static class SwerveConstants {
