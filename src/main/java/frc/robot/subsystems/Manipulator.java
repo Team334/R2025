@@ -3,14 +3,16 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static frc.robot.Robot.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
-import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -38,10 +40,13 @@ import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
 import java.util.function.Consumer;
+import java.util.function.DoubleSupplier;
 
 public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
   private final DigitalInput _algaeBeam = new DigitalInput(ManipulatorConstants.algaeBeam);
+
+  private BooleanEntry _algaeBeamFake = Tuning.entry("Tuning/Algae Beam", false);
 
   private final BooleanEvent _coralEvent =
       new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam);
@@ -61,23 +66,42 @@ public class Manipulator extends AdvancedSubsystem {
 
   private double _lastSimTime;
 
+  @Logged(name = "Desired Speed")
+  private double _desiredSpeed;
+
   private final VelocityVoltage _feedVelocitySetter = new VelocityVoltage(0);
   private final VoltageOut _feedVoltageSetter = new VoltageOut(0);
 
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _leftMotor.getVelocity();
 
-  private final SysIdRoutine _feedRoutine =
+  private final SysIdRoutine _leftRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
-              (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
+              (Voltage volts) -> setFlywheelVoltage(volts.in(Volts), _leftMotor), null, this));
+
+  private final SysIdRoutine _rightRoutine =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
+          new SysIdRoutine.Mechanism(
+              (Voltage volts) -> setFlywheelVoltage(volts.in(Volts), _rightMotor), null, this));
 
   private DIOSim _coralBeamSim;
   private DIOSim _algaeBeamSim;
 
   private BooleanEntry _coralBeamSimValue;
   private BooleanEntry _algaeBeamSimValue;
+
+  @Logged(name = "Is Fast Feed")
+  private boolean _isFastFeed = false;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
@@ -90,20 +114,58 @@ public class Manipulator extends AdvancedSubsystem {
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
 
-    leftMotorConfigs.Slot0.kV = ManipulatorConstants.flywheelkV.in(Volts.per(RotationsPerSecond));
-    leftMotorConfigs.Slot0.kP = ManipulatorConstants.flywheelkP.in(Volts.per(RotationsPerSecond));
+    leftMotorConfigs.Slot0.kS = ManipulatorConstants.leftFlywheelkS.in(Volts);
+    leftMotorConfigs.Slot0.kV =
+        ManipulatorConstants.leftFlywheelkV.in(Volts.per(RotationsPerSecond));
+
+    leftMotorConfigs.Slot0.kP =
+        ManipulatorConstants.leftFlywheelkP.in(Volts.per(RotationsPerSecond));
 
     leftMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
+
+    leftMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+    rightMotorConfigs.Slot0.kS = ManipulatorConstants.rightFlywheelkS.in(Volts);
+    rightMotorConfigs.Slot0.kV =
+        ManipulatorConstants.rightFlywheelkV.in(Volts.per(RotationsPerSecond));
+
+    rightMotorConfigs.Slot0.kP =
+        ManipulatorConstants.rightFlywheelkP.in(Volts.per(RotationsPerSecond));
+
+    rightMotorConfigs.Feedback.SensorToMechanismRatio = ManipulatorConstants.flywheelGearRatio;
+
+    rightMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+    rightMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
 
-    _rightMotor.setControl(new Follower(ManipulatorConstants.leftMotorId, true));
+    CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _leftMotor.getPosition(),
+                _leftMotor.getVelocity(),
+                _leftMotor.getMotorVoltage()),
+        _leftMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _rightMotor.getPosition(),
+                _rightMotor.getVelocity(),
+                _rightMotor.getMotorVoltage()),
+        _rightMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
 
-    SysId.displayRoutine("Manipulator Feed", _feedRoutine);
+    SysId.displayRoutine("Manipulator Left Flywheel", _leftRoutine);
+    SysId.displayRoutine("Manipulator Right Flywheel", _rightRoutine);
 
     if (Robot.isSimulation()) {
       _coralBeamSim = new DIOSim(_coralBeam);
@@ -159,6 +221,14 @@ public class Manipulator extends AdvancedSubsystem {
     _simNotifier.startPeriodic(1 / Constants.simUpdateFrequency.in(Hertz));
   }
 
+  private void setFlywheelVoltage(double volts, TalonFX motor) {
+    motor.setControl(_feedVoltageSetter.withOutput(volts));
+  }
+
+  public void setFastFeed(boolean isFast) {
+    _isFastFeed = isFast;
+  }
+
   @Logged(name = "Coral Beam")
   public boolean getCoralBeam() {
     return !_coralBeam.get();
@@ -166,7 +236,8 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
-    return !_algaeBeam.get();
+    // return !_algaeBeam.get();
+    return _algaeBeamFake.get();
   }
 
   @Logged(name = "Speed")
@@ -175,11 +246,20 @@ public class Manipulator extends AdvancedSubsystem {
   }
 
   // set the speed of the back feed wheels in rad/s
-  private Command setSpeed(double speed) {
+  private Command setSpeed(DoubleSupplier speed) {
     return run(
         () -> {
-          _leftMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
+          _desiredSpeed = speed.getAsDouble();
+
+          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed.getAsDouble());
+
+          _leftMotor.setControl(_feedVelocitySetter);
+          _rightMotor.setControl(_feedVelocitySetter);
         });
+  }
+
+  private Command setSpeed(double speed) {
+    return setSpeed(() -> speed);
   }
 
   /** Sets the current piece when the coral beam changes state. */
@@ -209,18 +289,16 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Hold a coral in place. */
   public Command holdCoral() {
-    return run(() -> {
-          _leftMotor.setControl(_feedVoltageSetter.withOutput(0));
-        })
-        .alongWith(watchCoralBeam(Piece.NONE, false))
-        .withName("Hold Coral");
+    return idle().alongWith(watchCoralBeam(Piece.NONE, false)).withName("Hold Coral");
   }
 
   /** Hold an algae in place. */
   public Command holdAlgae() {
     return run(() -> {
-          _leftMotor.setControl(
-              _feedVoltageSetter.withOutput(ManipulatorConstants.holdAlgaeVoltage));
+          _feedVoltageSetter.Output = ManipulatorConstants.holdAlgaeVoltage;
+
+          _leftMotor.setControl(_feedVoltageSetter);
+          _rightMotor.setControl(_feedVoltageSetter);
         })
         .alongWith(watchAlgaeBeam(Piece.NONE, false))
         .withName("Hold Algae");
@@ -228,40 +306,44 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** General intake. */
   public Command intake() {
-    return setSpeed(ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+    return setSpeed(
+            () ->
+                (_isFastFeed
+                        ? ManipulatorConstants.fastFeedSpeed
+                        : ManipulatorConstants.slowFeedSpeed)
+                    .in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true))
         .withName("Intake");
   }
 
   /** General outtake. */
   public Command outtake() {
-    return setSpeed(-ManipulatorConstants.feedSpeed.in(RadiansPerSecond))
+    return setSpeed(
+            () ->
+                -(_isFastFeed
+                        ? ManipulatorConstants.fastFeedSpeed
+                        : ManipulatorConstants.slowFeedSpeed)
+                    .in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }
 
   /** Passoff from the serializer. */
   public Command passoff() {
+    BooleanEvent coralEventFalling = _coralEvent.falling();
+
     return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .alongWith(watchCoralBeam(Piece.CORAL, false))
-        .until(() -> getCurrentPiece() == Piece.CORAL)
-        .finallyDo(this::pulse)
+        .until(coralEventFalling::getAsBoolean)
+        .andThen(
+            setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+                .alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
-    return setSpeed(0).withName("Inverse Passoff");
-  }
-
-  /** Pulse the manipulator until coral triggers the beam */
-  public Command pulse() {
     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-        .until(() -> _coralEvent.rising().getAsBoolean());
-  }
-
-  private void setFeedVoltage(double volts) {
-    _leftMotor.setControl(_feedVoltageSetter.withOutput(volts));
+        .withName("Inverse Passoff");
   }
 
   @Override
