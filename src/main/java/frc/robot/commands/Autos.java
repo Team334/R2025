@@ -52,10 +52,11 @@ public class Autos {
     start.done().onTrue(humanToReef.cmd());
 
     humanToReef.done().onTrue(reefToHuman.cmd());
-    reefToHuman.active().and(_seesPiece).onTrue(runOnce(() -> reefToHuman.cmd().cancel()));
 
-    reefToHuman.cmd().handleInterrupt(() -> _swerve.alignToPiece().andThen(humanToReef.cmd()));
-    reefToHuman.done().onTrue(humanToReef.cmd());
+    reefToHuman
+        .active()
+        .and(_seesPiece)
+        .onTrue(_swerve.alignToPiece().asProxy().andThen(() -> humanToReef.cmd().schedule()));
 
     return routine;
   }
