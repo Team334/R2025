@@ -214,6 +214,9 @@ public class Robot extends TimedRobot {
     alignmentTriggers(_driverController.y(), FieldConstants.human);
     alignmentTriggers(_driverController.b(), FieldConstants.processor);
     alignmentTriggers(_driverController.start(), FieldConstants.cage);
+
+    // align to piece
+    _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
   }
 
   private void configureOperatorBindings() {
@@ -311,6 +314,11 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
+  }
+
+  @Override
+  public void autonomousPeriodic() {
+    _autos.simpleTrajectory().poll();
   }
 
   @Override

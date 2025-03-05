@@ -103,6 +103,7 @@ public final class Constants {
 
   public static class VisionConstants {
     public static final String arducamOneName = "arducam-1";
+    public static final String limelightName = "limelight-main";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
@@ -119,10 +120,15 @@ public final class Constants {
             0.0001,
             3,
             7);
+
+    public static final Transform3d robotToLimelight =
+        new Transform3d(0, 0, -0.5, new Rotation3d(0, Degrees.of(-45).in(Radians), 0));
   }
 
   public static class SwerveConstants {
     public static final Frequency odometryFrequency = Hertz.of(250);
+
+    public static final Distance chassisHeight = Inches.of(0.615);
 
     public static final Distance driveRadius =
         Meters.of(
