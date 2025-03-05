@@ -50,7 +50,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
@@ -61,6 +60,7 @@ import frc.robot.Constants.WristevatorConstants.Intermediate;
 import frc.robot.Constants.WristevatorConstants.Preset;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
+import frc.robot.utils.SysId;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -314,31 +314,9 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Presets", presets);
     DogLog.log("Wristevator/Intermediates", intermediates);
 
-    SmartDashboard.putData(
-        "Elevator Forward Quasistatic",
-        _elevatorRoutine.quasistatic(Direction.kForward).until(() -> getHeight() >= 29));
-    SmartDashboard.putData(
-        "Elevator Reverse Quasistatic",
-        _elevatorRoutine.quasistatic(Direction.kReverse).until(() -> getHeight() <= 0.5));
-    SmartDashboard.putData(
-        "Elevator Forward Dynamic",
-        _elevatorRoutine.dynamic(Direction.kForward).until(() -> getHeight() >= 29));
-    SmartDashboard.putData(
-        "Elevator Reverse Dynamic",
-        _elevatorRoutine.dynamic(Direction.kReverse).until(() -> getHeight() <= 0.5));
-
-    SmartDashboard.putData(
-        "Wrist Forward Quasistatic",
-        _wristRoutine.quasistatic(Direction.kForward).until(() -> getAngle() >= 0.5));
-    SmartDashboard.putData(
-        "Wrist Reverse Quasistatic",
-        _wristRoutine.quasistatic(Direction.kReverse).until(() -> getAngle() <= -0.2));
-    SmartDashboard.putData(
-        "Wrist Forward Dynamic",
-        _wristRoutine.dynamic(Direction.kForward).until(() -> getAngle() >= 0.5));
-    SmartDashboard.putData(
-        "Wrist Reverse Dynamic",
-        _wristRoutine.dynamic(Direction.kReverse).until(() -> getAngle() <= -0.2));
+    SysId.displayRoutine(
+        "Elevator", _elevatorRoutine, () -> getHeight() >= 29, () -> getHeight() <= 0.5);
+    SysId.displayRoutine("Wrist", _wristRoutine, () -> getAngle() >= 0.5, () -> getAngle() <= -0.2);
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
