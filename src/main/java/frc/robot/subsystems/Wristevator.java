@@ -544,6 +544,15 @@ public class Wristevator extends AdvancedSubsystem {
         .withName("Set Speeds");
   }
 
+  public boolean atGoal(Setpoint goal) {
+    return Math.abs(getHeight() - goal.getHeight().in(Radians)) < 0.01
+        && Math.abs(getAngle() - goal.getAngle().in(Radians)) < 0.01;
+  }
+
+  public Command moveToPosition(Setpoint goal) {
+    return run(() -> setGoal(goal)).until(() -> atGoal(goal)).withName("MoveToPosition");
+  }
+
   @Override
   public void periodic() {
     super.periodic();

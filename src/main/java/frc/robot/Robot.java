@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final Autos _autos = new Autos(_swerve);
+  private final Autos _autos = new Autos(_swerve, _wristevator);
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
@@ -137,7 +137,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(runOnce(FaultLogger::clear).withName("Clear Faults"));
 
     // set up auto chooser
-    _autoChooser.addRoutine("Simple Trajectory", _autos::simpleTrajectory);
+    _autoChooser.addRoutine("3 Piece Auton", _autos::ThreePieceAuton);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 

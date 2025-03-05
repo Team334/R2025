@@ -5,19 +5,24 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
+import static frc.robot.Constants.WristevatorConstants.Preset.L4;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Wristevator;
 
 public class Autos {
   private final Swerve _swerve;
+  private final Wristevator _wristevator;
 
   private final AutoFactory _factory;
 
-  public Autos(Swerve swerve) {
+  public Autos(Swerve swerve, Wristevator wristevator) {
     _swerve = swerve;
+    _wristevator = wristevator;
 
     _factory =
         new AutoFactory(
@@ -36,12 +41,23 @@ public class Autos {
             });
   }
 
-  public AutoRoutine simpleTrajectory() {
-    var routine = _factory.newRoutine("Simple Trajectory");
-    var trajectory = routine.trajectory("simpleTrajectory");
+  public AutoRoutine ThreePieceAuton() {
+    var routine = _factory.newRoutine("Command Test");
+    var A = routine.trajectory("3PieceAuton-A");
+    var B = routine.trajectory("3PieceAuton-B");
+    var C = routine.trajectory("3PieceAuton-C");
+    var D = routine.trajectory("3PieceAuton-D");
+    var E = routine.trajectory("3PieceAuton-E");
 
-    routine.active().onTrue(sequence(trajectory.resetOdometry(), trajectory.cmd()));
+    routine.active().onTrue(sequence(A.resetOdometry(), A.cmd()));
+
+    routine.anyActive(A, C, E).onTrue(_wristevator.setGoal(L4).andThen(waitUntil(() -> _wristevator.atGoal(L4))));
+    routine.anyActive(B, D).onTrue(_wristevator.setGoal(HUMAN).andThen(waitUntil(() -> _wristevator.atGoal(HUMAN))));
+
+    A.atTime("placeL4").onTrue(sequence(B.resetOdometry(), waitSeconds(1.5), B.cmd().andThen(C.resetOdometry(), waitSeconds(1.5), C.cmd())));
+    C.atTime("placeL4").onTrue(sequence(D.resetOdometry(), waitSeconds(1.5), D.cmd().andThen(E.resetOdometry(), waitSeconds(1.5), E.cmd())));
 
     return routine;
   }
 }
+
