@@ -255,6 +255,9 @@ public final class Constants {
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(4);
     public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(10);
 
+    public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
+    public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
+
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(6);
     public static final AngularAcceleration maxElevatorAcceleration =

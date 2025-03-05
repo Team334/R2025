@@ -184,11 +184,11 @@ public class Robot extends TimedRobot {
                     InputStream.of(_operatorController::getRightY)
                         .deadband(0.07, 1)
                         .negate()
-                        .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
+                        .scale(WristevatorConstants.manualElevatorSpeed.in(RadiansPerSecond)),
                     InputStream.of(_operatorController::getLeftY)
                         .deadband(0.07, 1)
                         .negate()
-                        .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond)))
+                        .scale(WristevatorConstants.manualWristSpeed.in(RadiansPerSecond)))
                 .ignoringDisable(true));
   }
 
