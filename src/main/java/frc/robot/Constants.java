@@ -192,16 +192,16 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(0), Radians.of(0)),
-      HUMAN(Radians.of(1), Radians.of(20)),
-      PROCESSOR(Radians.of(-1), Radians.of(30)),
+      HUMAN(Radians.of(-0.1), Radians.of(5)),
+      PROCESSOR(Radians.of(-0.1), Radians.of(5)),
 
-      L1(Radians.of(-0.5), Radians.of(5)),
-      L2(Radians.of(-0.7), Radians.of(20)),
-      L3(Radians.of(-0.7), Radians.of(40)),
-      L4(Radians.of(-1), Radians.of(90)),
+      L1(Radians.of(-0.2), Radians.of(5)),
+      L2(Radians.of(-0.1), Radians.of(5)),
+      L3(Radians.of(-0.1), Radians.of(5)),
+      L4(Radians.of(-0.1), Radians.of(5)),
 
-      LOWER_ALGAE(Radians.of(-1), Radians.of(50)),
-      UPPER_ALGAE(Radians.of(-1), Radians.of(60));
+      LOWER_ALGAE(Radians.of(-0.1), Radians.of(5)),
+      UPPER_ALGAE(Radians.of(-0.1), Radians.of(5));
 
       private final Angle _angle;
       private final Angle _height;
@@ -225,8 +225,7 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(0), Radians.of(50)),
-      I2(Radians.of(0), Radians.of(20));
+      I1(Radians.of(0), Radians.of(5));
 
       private final Angle _angle;
       private final Angle _height;
@@ -254,12 +253,12 @@ public final class Constants {
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(4);
-    public static final AngularVelocity maxElevatorSpeed = RadiansPerSecond.of(10);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(10);
 
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(6);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RadiansPerSecondPerSecond.of(90);
+        RotationsPerSecondPerSecond.of(8);
 
     public static final int homeSwitch = 6;
 
@@ -282,15 +281,15 @@ public final class Constants {
 
     public static final double wristGearRatio = 33.75;
 
-    public static final Voltage elevatorkS = Volts.of(0.045022);
-    public static final Voltage elevatorkG = Volts.of(0.2);
+    public static final Voltage elevatorkS = Volts.of(0.023571);
+    public static final Voltage elevatorkG = Volts.of(0.29129);
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
-        Volts.per(RotationsPerSecond).ofNative(1.1062);
+        Volts.per(RotationsPerSecond).ofNative(1.1142);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0.019435);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.0275);
 
     public static final Per<VoltageUnit, AngleUnit> elevatorkP =
-        Volts.per(Rotations).ofNative(0); // 15 from sysid
+        Volts.per(Rotations).ofNative(12.705); // 15 from sysid
 
     public static final Voltage wristkS = Volts.of(0.1);
     public static final Voltage wristkG = Volts.of(0.21);
