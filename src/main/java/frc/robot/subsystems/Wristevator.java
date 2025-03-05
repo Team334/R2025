@@ -585,6 +585,14 @@ public class Wristevator extends AdvancedSubsystem {
         .withName("Set Speeds");
   }
 
+  private void setElevatorVoltage(double volts) {
+    _leftMotor.setControl(_elevatorVoltageSetter.withOutput(volts));
+  }
+
+  private void setWristVoltage(double volts) {
+    _wristMotor.setControl(_wristVoltageSetter.withOutput(volts));
+  }
+
   @Override
   public void periodic() {
     super.periodic();

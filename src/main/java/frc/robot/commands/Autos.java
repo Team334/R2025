@@ -54,10 +54,19 @@ public class Autos {
     routine.anyActive(A, C, E).onTrue(_wristevator.setGoal(L4));
     routine.anyActive(B, D).onTrue(_wristevator.setGoal(HUMAN));
 
-    A.atTime("placeL4").onTrue(sequence(B.resetOdometry(), waitSeconds(1.5), B.cmd().andThen(C.resetOdometry(), waitSeconds(1.5), C.cmd())));
-    C.atTime("placeL4").onTrue(sequence(D.resetOdometry(), waitSeconds(1.5), D.cmd().andThen(E.resetOdometry(), waitSeconds(1.5), E.cmd())));
+    A.atTime("placeL4")
+        .onTrue(
+            sequence(
+                B.resetOdometry(),
+                waitSeconds(1.5),
+                B.cmd().andThen(C.resetOdometry(), waitSeconds(1.5), C.cmd())));
+    C.atTime("placeL4")
+        .onTrue(
+            sequence(
+                D.resetOdometry(),
+                waitSeconds(1.5),
+                D.cmd().andThen(E.resetOdometry(), waitSeconds(1.5), E.cmd())));
 
     return routine;
   }
 }
-
