@@ -258,6 +258,10 @@ public class Manipulator extends AdvancedSubsystem {
         });
   }
 
+  private Command setSpeed(double speed) {
+    return setSpeed(() -> speed);
+  }
+
   /** Sets the current piece when the coral beam changes state. */
   private Command watchCoralBeam(Piece piece, boolean onTrue) {
     BooleanEvent coralEvent = onTrue ? _coralEvent.rising() : _coralEvent.falling();
@@ -280,7 +284,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Idle the manipulator. */
   public Command idle() {
-    return setSpeed(() -> 0).withName("Idle");
+    return setSpeed(0).withName("Idle");
   }
 
   /** Hold a coral in place. */
@@ -328,17 +332,17 @@ public class Manipulator extends AdvancedSubsystem {
   public Command passoff() {
     BooleanEvent coralEventFalling = _coralEvent.falling();
 
-    return setSpeed(() -> -ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+    return setSpeed(-ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .until(coralEventFalling::getAsBoolean)
         .andThen(
-            setSpeed(() -> ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+            setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
                 .alongWith(watchCoralBeam(Piece.CORAL, true)))
         .withName("Passoff");
   }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
-    return setSpeed(() -> ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
+    return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
         .withName("Inverse Passoff");
   }
 

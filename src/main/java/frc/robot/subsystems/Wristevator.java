@@ -7,6 +7,9 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
@@ -136,8 +139,8 @@ public class Wristevator extends AdvancedSubsystem {
   private final StatusSignal<AngularVelocity> _elevatorVelocityGetter = _leftMotor.getVelocity();
   private final StatusSignal<AngularVelocity> _wristVelocityGetter = _wristMotor.getVelocity();
 
-  private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
-  private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
+  private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0).withSlot(1);
+  private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0).withSlot(1);
 
   // elevator profile
   private final Constraints _elevatorMaxConstraints =
@@ -192,15 +195,19 @@ public class Wristevator extends AdvancedSubsystem {
     var wristMotorConfigs = new TalonFXConfiguration();
 
     // left motor configs
-    leftMotorConfigs.Slot0.kS = WristevatorConstants.elevatorkS.in(Volts);
-    leftMotorConfigs.Slot0.kG = WristevatorConstants.elevatorkG.in(Volts);
-    leftMotorConfigs.Slot0.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
-    leftMotorConfigs.Slot0.kA =
-        WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    var leftMotorSlot = new SlotConfigs();
 
-    leftMotorConfigs.Slot0.kP = WristevatorConstants.elevatorkP.in(Volts.per(Rotations));
+    leftMotorSlot.kS = WristevatorConstants.elevatorkS.in(Volts);
+    leftMotorSlot.kG = WristevatorConstants.elevatorkG.in(Volts);
+    leftMotorSlot.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorSlot.kA = WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+    leftMotorSlot.kP = WristevatorConstants.elevatorkP.in(Volts.per(Rotations));
+
+    leftMotorSlot.GravityType = GravityTypeValue.Elevator_Static;
+
+    leftMotorConfigs.Slot0 = Slot0Configs.from(leftMotorSlot);
+    leftMotorConfigs.Slot1 = Slot1Configs.from(leftMotorSlot).withKP(0);
 
     leftMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
@@ -215,15 +222,19 @@ public class Wristevator extends AdvancedSubsystem {
     leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // wrist motor configs
-    wristMotorConfigs.Slot0.kS = WristevatorConstants.wristkS.in(Volts);
-    wristMotorConfigs.Slot0.kG = WristevatorConstants.wristkG.in(Volts);
-    wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
-    wristMotorConfigs.Slot0.kA =
-        WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+    var wristMotorSlot = new SlotConfigs();
 
-    wristMotorConfigs.Slot0.kP = WristevatorConstants.wristkP.in(Volts.per(Rotations));
+    wristMotorSlot.kS = WristevatorConstants.wristkS.in(Volts);
+    wristMotorSlot.kG = WristevatorConstants.wristkG.in(Volts);
+    wristMotorSlot.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
+    wristMotorSlot.kA = WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    wristMotorSlot.kP = WristevatorConstants.wristkP.in(Volts.per(Rotations));
+
+    wristMotorSlot.GravityType = GravityTypeValue.Arm_Cosine;
+
+    wristMotorConfigs.Slot0 = Slot0Configs.from(wristMotorSlot);
+    wristMotorConfigs.Slot1 = Slot1Configs.from(wristMotorSlot).withKP(0);
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
