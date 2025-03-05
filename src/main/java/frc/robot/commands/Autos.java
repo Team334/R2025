@@ -51,8 +51,8 @@ public class Autos {
 
     routine.active().onTrue(sequence(A.resetOdometry(), A.cmd()));
 
-    routine.anyActive(A, C, E).onTrue(_wristevator.setGoal(L4).andThen(waitUntil(() -> _wristevator.atGoal(L4))));
-    routine.anyActive(B, D).onTrue(_wristevator.setGoal(HUMAN).andThen(waitUntil(() -> _wristevator.atGoal(HUMAN))));
+    routine.anyActive(A, C, E).onTrue(_wristevator.setGoal(L4));
+    routine.anyActive(B, D).onTrue(_wristevator.setGoal(HUMAN));
 
     A.atTime("placeL4").onTrue(sequence(B.resetOdometry(), waitSeconds(1.5), B.cmd().andThen(C.resetOdometry(), waitSeconds(1.5), C.cmd())));
     C.atTime("placeL4").onTrue(sequence(D.resetOdometry(), waitSeconds(1.5), D.cmd().andThen(E.resetOdometry(), waitSeconds(1.5), E.cmd())));
