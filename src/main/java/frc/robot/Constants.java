@@ -192,16 +192,16 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(0), Radians.of(0)),
-      HUMAN(Radians.of(-0.1), Radians.of(5)),
+      HUMAN(Radians.of(0.476), Radians.of(18.27)),
       PROCESSOR(Radians.of(-0.1), Radians.of(5)),
 
-      L1(Radians.of(-0.2), Radians.of(5)),
-      L2(Radians.of(-0.1), Radians.of(5)),
-      L3(Radians.of(-0.1), Radians.of(5)),
+      L1(Radians.of(0.436), Radians.of(6)),
+      L2(Radians.of(-0.3), Radians.of(19)),
+      L3(Radians.of(-0.3), Radians.of(28)),
       L4(Radians.of(-0.1), Radians.of(5)),
 
-      LOWER_ALGAE(Radians.of(-0.1), Radians.of(5)),
-      UPPER_ALGAE(Radians.of(-0.1), Radians.of(5));
+      LOWER_ALGAE(Radians.of(0.051), Radians.of(19)),
+      UPPER_ALGAE(Radians.of(0.023), Radians.of(30));
 
       private final Angle _angle;
       private final Angle _height;
@@ -225,7 +225,8 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(0), Radians.of(5));
+      I1(Radians.of(0), Radians.of(14.6)),
+      I2(Radians.of(0), Radians.of(12.2));
 
       private final Angle _angle;
       private final Angle _height;
@@ -275,11 +276,11 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(30);
+    public static final Angle maxElevatorHeight = Radians.of(35);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-0.28);
+    public static final Angle minWristAngle = Radians.of(-0.32);
     public static final Angle maxWristAngle = Radians.of(0.67);
 
     public static final double wristGearRatio = 33.75;
@@ -329,7 +330,7 @@ public final class Constants {
     public static final int coralBeam = 8;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(26);
+    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(35);
     public static final AngularVelocity slowFeedSpeed = RadiansPerSecond.of(16);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
