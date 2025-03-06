@@ -179,15 +179,17 @@ public class Robot extends TimedRobot {
 
     new Trigger(_wristevator::isManual)
         .onTrue(
-            _wristevator.setSpeeds(
-                InputStream.of(_operatorController::getRightY)
-                    .deadband(0.05, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
-                InputStream.of(_operatorController::getLeftY)
-                    .deadband(0.05, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+            _wristevator
+                .setSpeeds(
+                    InputStream.of(_operatorController::getRightY)
+                        .deadband(0.07, 1)
+                        .negate()
+                        .scale(WristevatorConstants.manualElevatorSpeed.in(RadiansPerSecond)),
+                    InputStream.of(_operatorController::getLeftY)
+                        .deadband(0.07, 1)
+                        .negate()
+                        .scale(WristevatorConstants.manualWristSpeed.in(RadiansPerSecond)))
+                .ignoringDisable(true));
   }
 
   private void alignmentTriggers(Trigger button, AlignPoses poses) {
@@ -257,8 +259,11 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // ground outtake
-    _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+    // switch to fast manipulator feed mode
+    _operatorController
+        .leftBumper()
+        .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
+        .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
 
     // intake / inverse passoff
     _operatorController

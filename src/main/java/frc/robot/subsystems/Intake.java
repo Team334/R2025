@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -66,7 +67,10 @@ public class Intake extends AdvancedSubsystem {
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -82,16 +86,18 @@ public class Intake extends AdvancedSubsystem {
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
+    feedMotorConfigs.Slot0.kS = IntakeConstants.feedkS.in(Volts);
     feedMotorConfigs.Slot0.kV = IntakeConstants.feedkV.in(Volts.per(RotationsPerSecond));
+
     feedMotorConfigs.Slot0.kP = IntakeConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.feedGearRatio;
 
-    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
-    actuatorMotorConfigs.Slot0.kA =
-        IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
+    // actuatorMotorConfigs.Slot0.kA =
+    //     IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
+    // actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
 
     actuatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
@@ -116,6 +122,18 @@ public class Intake extends AdvancedSubsystem {
         () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
     CTREUtil.attempt(
         () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
+
+    CTREUtil.attempt(() -> _feedMotor.optimizeBusUtilization(), _feedMotor);
+    CTREUtil.attempt(() -> _actuatorMotor.optimizeBusUtilization(), _actuatorMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _feedMotor.getPosition(),
+                _feedMotor.getVelocity(),
+                _feedMotor.getMotorVoltage()),
+        _feedMotor);
 
     FaultLogger.register(_feedMotor);
     FaultLogger.register(_actuatorMotor);

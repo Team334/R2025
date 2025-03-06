@@ -7,13 +7,19 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.Slot0Configs;
+import com.ctre.phoenix6.configs.Slot1Configs;
+import com.ctre.phoenix6.configs.SlotConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.DynamicMotionMagicVoltage;
 import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotionMagicIsRunningValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.MathUtil;
@@ -24,6 +30,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.State;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
@@ -46,6 +53,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.WristevatorConstants;
 import frc.robot.Constants.WristevatorConstants.Intermediate;
@@ -95,16 +103,19 @@ public class Wristevator extends AdvancedSubsystem {
   private final SysIdRoutine _elevatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.of(0.5).per(Second),
+              Volts.of(2),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setElevatorVoltage(volts.in(Volts)), null, this));
 
   private final SysIdRoutine _wristRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              Volts.of(1).per(Second),
-              Volts.of(4),
-              null,
+              Volts.of(0.3).per(Second),
+              Volts.of(0.8),
+              Seconds.of(4),
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
@@ -128,8 +139,8 @@ public class Wristevator extends AdvancedSubsystem {
   private final StatusSignal<AngularVelocity> _elevatorVelocityGetter = _leftMotor.getVelocity();
   private final StatusSignal<AngularVelocity> _wristVelocityGetter = _wristMotor.getVelocity();
 
-  private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0);
-  private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0);
+  private final VelocityVoltage _elevatorVelocitySetter = new VelocityVoltage(0).withSlot(1);
+  private final VelocityVoltage _wristVelocitySetter = new VelocityVoltage(0).withSlot(1);
 
   // elevator profile
   private final Constraints _elevatorMaxConstraints =
@@ -165,6 +176,8 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Finished Latest Profiles")
   private boolean _finishedLatestProfiles = true;
 
+  private final BooleanEntry _homeSwitchFake = Tuning.entry("Tuning/Home Switch", false);
+
   private Setpoint _latestSetpoint = HOME;
 
   private DIOSim _homeSwitchSim;
@@ -181,22 +194,52 @@ public class Wristevator extends AdvancedSubsystem {
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
 
-    // leftMotorConfigs.Slot0.kV =
-    // WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
-    // leftMotorConfigs.Slot0.kA =
-    //     WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // left motor configs
+    var leftMotorSlot = new SlotConfigs();
 
-    // leftMotorConfigs.Slot0.GravityType = GravityTypeValue.Elevator_Static;
+    leftMotorSlot.kS = WristevatorConstants.elevatorkS.in(Volts);
+    leftMotorSlot.kG = WristevatorConstants.elevatorkG.in(Volts);
+    leftMotorSlot.kV = WristevatorConstants.elevatorkV.in(Volts.per(RotationsPerSecond));
+    leftMotorSlot.kA = WristevatorConstants.elevatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+    leftMotorSlot.kP = WristevatorConstants.elevatorkP.in(Volts.per(Rotations));
 
-    // wristMotorConfigs.Slot0.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
-    // wristMotorConfigs.Slot0.kA =
-    //     WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+    leftMotorSlot.GravityType = GravityTypeValue.Elevator_Static;
 
-    // wristMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    leftMotorConfigs.Slot0 = Slot0Configs.from(leftMotorSlot);
+    leftMotorConfigs.Slot1 = Slot1Configs.from(leftMotorSlot).withKP(0);
+
+    leftMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
+    leftMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.elevatorGearRatio;
+
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
+        WristevatorConstants.maxElevatorHeight.in(Rotations);
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        WristevatorConstants.minElevatorHeight.in(Rotations);
+
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
+    leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
+
+    // wrist motor configs
+    var wristMotorSlot = new SlotConfigs();
+
+    wristMotorSlot.kS = WristevatorConstants.wristkS.in(Volts);
+    wristMotorSlot.kG = WristevatorConstants.wristkG.in(Volts);
+    wristMotorSlot.kV = WristevatorConstants.wristkV.in(Volts.per(RotationsPerSecond));
+    wristMotorSlot.kA = WristevatorConstants.wristkA.in(Volts.per(RotationsPerSecondPerSecond));
+
+    wristMotorSlot.kP = WristevatorConstants.wristkP.in(Volts.per(Rotations));
+
+    wristMotorSlot.GravityType = GravityTypeValue.Arm_Cosine;
+
+    wristMotorConfigs.Slot0 = Slot0Configs.from(wristMotorSlot);
+    wristMotorConfigs.Slot1 = Slot1Configs.from(wristMotorSlot).withKP(0);
 
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
+
+    wristMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    wristMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
@@ -209,6 +252,37 @@ public class Wristevator extends AdvancedSubsystem {
     CTREUtil.attempt(() -> _leftMotor.getConfigurator().apply(leftMotorConfigs), _leftMotor);
     CTREUtil.attempt(() -> _rightMotor.getConfigurator().apply(rightMotorConfigs), _rightMotor);
     CTREUtil.attempt(() -> _wristMotor.getConfigurator().apply(wristMotorConfigs), _wristMotor);
+
+    CTREUtil.attempt(() -> _leftMotor.optimizeBusUtilization(), _leftMotor);
+    CTREUtil.attempt(() -> _rightMotor.optimizeBusUtilization(), _rightMotor);
+    CTREUtil.attempt(() -> _wristMotor.optimizeBusUtilization(), _wristMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _leftMotor.getPosition(),
+                _leftMotor.getVelocity(),
+                _leftMotor.getClosedLoopReference(),
+                _leftMotor.getClosedLoopReferenceSlope(),
+                _leftMotor.getMotionMagicIsRunning(),
+                _leftMotor.getMotorVoltage()),
+        _leftMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _wristMotor.getPosition(),
+                _wristMotor.getVelocity(),
+                _wristMotor.getClosedLoopReference(),
+                _wristMotor.getClosedLoopReferenceSlope(),
+                _wristMotor.getMotionMagicIsRunning(),
+                _wristMotor.getMotorVoltage()),
+        _wristMotor);
+
+    CTREUtil.attempt(() -> _wristMotor.setPosition(Radians.of(0)), _wristMotor);
+    CTREUtil.attempt(() -> _leftMotor.setPosition(Radians.of(0)), _leftMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -240,8 +314,9 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Presets", presets);
     DogLog.log("Wristevator/Intermediates", intermediates);
 
-    SysId.displayRoutine("Elevator", _elevatorRoutine);
-    SysId.displayRoutine("Wrist", _wristRoutine);
+    SysId.displayRoutine(
+        "Elevator", _elevatorRoutine, () -> getHeight() >= 29, () -> getHeight() <= 0.5);
+    SysId.displayRoutine("Wrist", _wristRoutine, () -> getAngle() >= 0.5, () -> getAngle() <= -0.2);
 
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
@@ -354,7 +429,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    return _homeSwitch.get();
+    return !_homeSwitch.get();
+    // return _homeSwitchFake.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
@@ -598,6 +674,10 @@ public class Wristevator extends AdvancedSubsystem {
     super.periodic();
 
     refreshProfileReferences();
+
+    // hard limits
+    _heightSetter.LimitReverseMotion = homeSwitch();
+    _elevatorVelocitySetter.LimitReverseMotion = homeSwitch();
 
     DogLog.log(
         "Wristevator/Elevator Reference",
