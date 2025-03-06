@@ -156,17 +156,20 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
         Volts.per(RotationsPerSecond).ofNative(0.34897);
 
-    // kv is the voltage necessary to spin the pivot 1 rad/s
-    // ka is the voltage necessary to accel the pivot 1 rad/s^2
+    public static final Voltage actuatorkG = Volts.of(0.18859);
+    public static final Voltage actuatorkS = Volts.of(0.070134);
+
     public static final Per<VoltageUnit, AngularVelocityUnit> actuatorkV =
-        VoltsPerRadianPerSecond.ofNative(0.9497114636959001);
+        Volts.per(RotationsPerSecond).ofNative(5.7349);
     public static final Per<VoltageUnit, AngularAccelerationUnit> actuatorkA =
-        VoltsPerRadianPerSecondSquared.ofNative(0.1);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.057226);
 
-    public static final Per<VoltageUnit, AngleUnit> actuatorkP = Volts.per(Radians).ofNative(0);
+    public static final Per<VoltageUnit, AngleUnit> actuatorkP =
+        Volts.per(Rotations).ofNative(12.934);
 
-    public static final AngularVelocity actuatorVelocity = RadiansPerSecond.of(12.63541660674576);
-    public static final AngularAcceleration actuatorAcceleration = RadiansPerSecondPerSecond.of(24);
+    public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(5);
+    public static final AngularAcceleration actuatorAcceleration =
+        RotationsPerSecondPerSecond.of(5);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
@@ -174,7 +177,7 @@ public final class Constants {
     public static final Distance intakeLength = Inches.of(15);
 
     public static final Angle actuatorStowed = Radians.of(2.33874);
-    public static final Angle actuatorOut = Radians.of(-1.382);
+    public static final Angle actuatorOut = Radians.of(-0.736);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }
@@ -262,7 +265,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(6);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(15);
+        RotationsPerSecondPerSecond.of(8);
 
     public static final int homeSwitch = 6;
 

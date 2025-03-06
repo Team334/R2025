@@ -60,7 +60,10 @@ public class Intake extends AdvancedSubsystem {
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.per(Second).of(0.5),
+              Volts.of(3),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setActuatorVoltage(volts.in(Volts)), null, this));
 
@@ -86,6 +89,7 @@ public class Intake extends AdvancedSubsystem {
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
+    // feed configs
     feedMotorConfigs.Slot0.kS = IntakeConstants.feedkS.in(Volts);
     feedMotorConfigs.Slot0.kV = IntakeConstants.feedkV.in(Volts.per(RotationsPerSecond));
 
@@ -93,20 +97,23 @@ public class Intake extends AdvancedSubsystem {
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.feedGearRatio;
 
-    // actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
-    // actuatorMotorConfigs.Slot0.kA =
-    //     IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
+    // actuator configs
+    actuatorMotorConfigs.Slot0.kS = IntakeConstants.actuatorkS.in(Volts);
+    actuatorMotorConfigs.Slot0.kG = IntakeConstants.actuatorkG.in(Volts);
+    actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
+    actuatorMotorConfigs.Slot0.kA =
+        IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
 
-    // actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
+    actuatorMotorConfigs.Slot0.kP = IntakeConstants.actuatorkP.in(Volts.per(Rotations));
 
     actuatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        IntakeConstants.actuatorOut.in(Rotations);
-    actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
         IntakeConstants.actuatorStowed.in(Rotations);
+    actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
+        IntakeConstants.actuatorOut.in(Rotations);
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
@@ -135,10 +142,20 @@ public class Intake extends AdvancedSubsystem {
                 _feedMotor.getMotorVoltage()),
         _feedMotor);
 
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _actuatorMotor.getPosition(),
+                _actuatorMotor.getVelocity(),
+                _actuatorMotor.getMotorVoltage()),
+        _actuatorMotor);
+
     FaultLogger.register(_feedMotor);
     FaultLogger.register(_actuatorMotor);
 
-    SysId.displayRoutine("Actuator", _actuatorRoutine);
+    SysId.displayRoutine(
+        "Actuator", _actuatorRoutine, () -> getAngle() >= 1.95, () -> getAngle() <= -0.5);
     SysId.displayRoutine("Intake Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
