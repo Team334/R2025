@@ -254,7 +254,7 @@ public final class Constants {
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(4);
-    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(10);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(12);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
@@ -262,7 +262,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(6);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(8);
+        RotationsPerSecondPerSecond.of(15);
 
     public static final int homeSwitch = 6;
 
@@ -330,7 +330,7 @@ public final class Constants {
     public static final int coralBeam = 8;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(35);
+    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(50);
     public static final AngularVelocity slowFeedSpeed = RadiansPerSecond.of(16);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
