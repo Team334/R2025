@@ -274,20 +274,34 @@ public class Intake extends AdvancedSubsystem {
   /** Holds an algae in the intake. */
   public Command holdAlgae() {
     return run(() -> {
-          _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(0));
-          _feedMotor.setControl(_feedVoltageSetter.withOutput(0));
+          _actuatorMotor.setControl(
+              _actuatorPositionSetter.withPosition(
+                  Units.radiansToRotations(IntakeConstants.intakeAlgae.in(Radians))));
+          _feedMotor.setControl(
+              _feedVoltageSetter.withOutput(IntakeConstants.algaeStallVolts.in(Volts)));
         })
         .alongWith(watchAlgaeBeam(false, false));
   }
 
   /** Intakes algae of the ground. */
   public Command intakeAlgae() {
-    return set(0, 0).alongWith(watchAlgaeBeam(true, true));
+    return set(
+            IntakeConstants.intakeAlgae.in(Radians),
+            -IntakeConstants.feedSpeed.in(RadiansPerSecond))
+        .alongWith(watchAlgaeBeam(true, true));
   }
 
   /** Outtakes algae into the processor. */
   public Command outtakeAlgae() {
-    return Commands.sequence(set(0, 0).until(() -> MathUtil.isNear(0, 0, 0)), set(0, 0))
+    return Commands.sequence(
+            set(
+                    IntakeConstants.scoreAlgae.in(Radians),
+                    -IntakeConstants.feedSpeed.in(RadiansPerSecond))
+                .until(
+                    () -> MathUtil.isNear(IntakeConstants.scoreAlgae.in(Radians), getAngle(), 0.1)),
+            set(
+                IntakeConstants.scoreAlgae.in(Radians),
+                IntakeConstants.feedSpeed.in(RadiansPerSecond)))
         .alongWith(watchAlgaeBeam(false, false));
   }
 
