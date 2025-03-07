@@ -13,13 +13,17 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -28,10 +32,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.IntakeConstants;
 import frc.robot.Robot;
@@ -56,6 +64,16 @@ public class Intake extends AdvancedSubsystem {
 
   private final StatusSignal<Angle> _actuatorPositionGetter = _actuatorMotor.getPosition();
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
+
+  @Logged(name = "Has Algae")
+  private boolean _hasAlgae = false;
+
+  private final DigitalInput _algaeBeam = new DigitalInput(0);
+
+  private final BooleanEntry _algaeBeamFake = Tuning.entry("Tuning/Algae Beam Intake", false);
+
+  private final BooleanEvent _algaeEvent =
+      new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getAlgaeBeam);
 
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
@@ -154,6 +172,8 @@ public class Intake extends AdvancedSubsystem {
     FaultLogger.register(_feedMotor);
     FaultLogger.register(_actuatorMotor);
 
+    new Trigger(() -> _hasAlgae).whileTrue(holdAlgae());
+
     SysId.displayRoutine(
         "Actuator", _actuatorRoutine, () -> getAngle() >= 1.95, () -> getAngle() <= -0.5);
     SysId.displayRoutine("Intake Feed", _feedRoutine);
@@ -220,6 +240,16 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
+  @Logged(name = "Algae Beam")
+  public boolean getAlgaeBeam() {
+    // return !_algaeBeam.get();
+    return _algaeBeamFake.get();
+  }
+
+  public boolean hasAlgae() {
+    return _hasAlgae;
+  }
+
   // set the actuator angle and feed speed.
   private Command set(double actuatorAngle, double feedSpeed) {
     return run(
@@ -229,6 +259,36 @@ public class Intake extends AdvancedSubsystem {
           _feedMotor.setControl(
               _feedVelocitySetter.withVelocity(Units.radiansToRotations(feedSpeed)));
         });
+  }
+
+  // Sets the current piece when the coral beam changes state.
+  private Command watchAlgaeBeam(boolean hasAlgae, boolean onTrue) {
+    BooleanEvent algaeEvent = onTrue ? _algaeEvent.rising() : _algaeEvent.falling();
+
+    return Commands.run(
+        () -> {
+          if (algaeEvent.getAsBoolean()) _hasAlgae = hasAlgae;
+        });
+  }
+
+  /** Holds an algae in the intake. */
+  public Command holdAlgae() {
+    return run(() -> {
+          _actuatorMotor.setControl(_actuatorPositionSetter.withPosition(0));
+          _feedMotor.setControl(_feedVoltageSetter.withOutput(0));
+        })
+        .alongWith(watchAlgaeBeam(false, false));
+  }
+
+  /** Intakes algae of the ground. */
+  public Command intakeAlgae() {
+    return set(0, 0).alongWith(watchAlgaeBeam(true, true));
+  }
+
+  /** Outtakes algae into the processor. */
+  public Command outtakeAlgae() {
+    return Commands.sequence(set(0, 0).until(() -> MathUtil.isNear(0, 0, 0)), set(0, 0))
+        .alongWith(watchAlgaeBeam(false, false));
   }
 
   /** Stow the intake into the robot. */
