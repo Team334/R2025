@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -39,7 +40,7 @@ import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
-import frc.robot.subsystems.LED_Lights;
+import frc.robot.subsystems.LED;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
@@ -75,7 +76,9 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  LED_Lights led = new LED_Lights();
+  private final LED led = new LED(9, 60, _wristevator);
+  private static final SendableChooser<Piece> pieceChooser = new SendableChooser<>();
+
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
@@ -89,7 +92,7 @@ public class Robot extends TimedRobot {
 
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
-    return _currentPiece;
+    return pieceChooser.getSelected();
   }
 
   /**
@@ -98,6 +101,12 @@ public class Robot extends TimedRobot {
    */
   public Robot() {
     this(NetworkTableInstance.getDefault());
+
+    pieceChooser.setDefaultOption("None", Piece.NONE);
+    pieceChooser.addOption("Coral", Piece.CORAL);
+    pieceChooser.addOption("Algae", Piece.ALGAE);
+    
+    SmartDashboard.putData("Piece Selector", pieceChooser);
   }
 
   /**
@@ -194,38 +203,37 @@ public class Robot extends TimedRobot {
     _driverController.a().whileTrue(_swerve.brake());
     _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
     _driverController.povDown().onTrue(_swerve.resetHeading());
-
-    _driverController.x().whileTrue(led.align("Reef"));
-    _driverController.y().whileTrue(led.align("Human"));
-    _driverController.b().whileTrue(led.align("Processor"));
-    _driverController.start().whileTrue(led.align("Cage"));
   }
 
   private void configureOperatorBindings() {
     // wristevator setpoint control
-    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
-    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
-    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
+    _operatorController.back().onTrue(deadline(_wristevator.setGoal(PROCESSOR), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+    _operatorController.start().onTrue(deadline(_wristevator.setGoal(HUMAN), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+    _operatorController.rightStick().onTrue(deadline(_wristevator.setGoal(HOME), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
 
-    _operatorController.a().onTrue(_wristevator.setGoal(L1));
+    _operatorController.a().onTrue(deadline(_wristevator.setGoal(L1), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
 
     _operatorController
         .b()
         .onTrue(
+          deadline(
             either(
                 _wristevator.setGoal(L2),
                 _wristevator.setGoal(LOWER_ALGAE),
-                () -> getCurrentPiece() == Piece.CORAL));
+                () -> getCurrentPiece() == Piece.CORAL),
+            led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
 
     _operatorController
         .y()
         .onTrue(
+          deadline(
             either(
                 _wristevator.setGoal(L3),
                 _wristevator.setGoal(UPPER_ALGAE),
-                () -> getCurrentPiece() == Piece.CORAL));
+                () -> getCurrentPiece() == Piece.CORAL),
+            led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
 
-    _operatorController.x().onTrue(_wristevator.setGoal(L4));
+    _operatorController.x().onTrue(deadline(_wristevator.setGoal(L4), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
 
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
@@ -295,7 +303,7 @@ public class Robot extends TimedRobot {
       _fileOnlySet = true;
     }
 
-    DogLog.log("Manipulator Current Piece", _currentPiece);
+    DogLog.log("Manipulator Current Piece", pieceChooser.getSelected());
   }
 
   @Override
