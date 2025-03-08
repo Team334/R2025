@@ -144,7 +144,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
 
   @Logged(name = "Is Field Oriented")
-  private boolean _isFieldOriented = false;
+  private boolean _isFieldOriented = true;
 
   @Logged(name = "Is Open Loop")
   private boolean _isOpenLoop = true;
@@ -158,15 +158,24 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private boolean _hasAppliedDriverPerspective;
 
-  @Logged(name = VisionConstants.bugEyeOneName)
-  private final VisionPoseEstimator _BugEyeOne =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.bugeye1, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.lowerArducamName)
+  private final VisionPoseEstimator _lowerArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.lowerArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.bugEyeTwoName)
-  private final VisionPoseEstimator _BugEyeTwo =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.bugeye2, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.middleArducamName)
+  private final VisionPoseEstimator _middleArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.middleArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_BugEyeOne, _BugEyeTwo);
+  @Logged(name = VisionConstants.upperArducamName)
+  private final VisionPoseEstimator _upperArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.upperArducam, this::getHeadingAtTime);
+
+  @Logged(name = VisionConstants.backArducamName)
+  private final VisionPoseEstimator _backArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.backArducam, this::getHeadingAtTime);
+
+  private final List<VisionPoseEstimator> _cameras =
+      List.of(_lowerArducam, _middleArducam, _upperArducam, _backArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -227,7 +236,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     registerFallibles();
 
-    resetPose(new Pose2d(1.439, 1.566, new Rotation2d(-2.203)));
+    // resetPose(new Pose2d(1.439, 1.566, new Rotation2d(-2.203)));
 
     if (Robot.isSimulation()) {
       startSimThread();
@@ -235,11 +244,23 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _BugEyeOne.getCameraSim()
+      _lowerArducam
+          .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _BugEyeTwo.getCameraSim()
+      _middleArducam
+          .getCameraSim()
+          .prop
+          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
+
+      _upperArducam
+          .getCameraSim()
+          .prop
+          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
+
+      _backArducam
+          .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
