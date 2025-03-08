@@ -113,8 +113,8 @@ public final class Constants {
 
     public static final VisionPoseEstimatorConstants bugeye1 =
         new VisionPoseEstimatorConstants(
-            bugEyeOneName,
-            new Transform3d(new Translation3d(0.3, 0.25, 0.4), new Rotation3d(0, 0.3, -0.3)),
+            bugEyeOneName, 
+            new Transform3d(new Translation3d(0.3, 0.30, 0.2), new Rotation3d(0, -0.2, -0.35)),
             0.2,
             0.0001,
             3,
@@ -123,7 +123,7 @@ public final class Constants {
     public static final VisionPoseEstimatorConstants bugeye2 =
         new VisionPoseEstimatorConstants(
             bugEyeTwoName,
-            new Transform3d(new Translation3d(0.35, 0.25, 0.8), new Rotation3d(0, -0.5, -0.3)),
+            new Transform3d(new Translation3d(0.3, 0.3, 1), new Rotation3d(0, -0.2, -0.35)),
             0.2,
             0.0001,
             3,

@@ -227,7 +227,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     registerFallibles();
 
-    resetPose(new Pose2d(3.798, 2.852, new Rotation2d(1.033)));
+    resetPose(new Pose2d(1.439, 1.566, new Rotation2d(-2.203)));
 
     if (Robot.isSimulation()) {
       startSimThread();
