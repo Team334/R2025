@@ -75,7 +75,7 @@ public final class FaultLogger {
     newFaults.clear();
 
     // log to doglog as well
-    activeFaults.forEach(f -> DogLog.logFault(f.toString()));
+    //activeFaults.forEach(f -> DogLog.logFault(f.toString()));
 
     totalFaults.addAll(activeFaults);
 

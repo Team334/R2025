@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
 
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
 
@@ -26,6 +27,7 @@ public class LED extends SubsystemBase {
     private final AddressableLEDBuffer _ledBuffer;
 
     private Color _allianceColor;
+    private Color _algaeColor = new Color("#0acc82");
     private LEDPattern _patternState;
 
     public LED(int pwmPort, int ledCount, Wristevator wristevator) {
@@ -51,7 +53,7 @@ public class LED extends SubsystemBase {
         Piece currPiece = Robot.getCurrentPiece();
 
         if (currPiece == Piece.ALGAE) {
-            LEDPattern base = LEDPattern.steps(Map.of(0, _allianceColor, 0.25, Color.kCyan, 0.5, _allianceColor, 0.75, Color.kCyan));
+            LEDPattern base = LEDPattern.steps(Map.of(0, _allianceColor, 0.25, _algaeColor, 0.5, _allianceColor, 0.75, _algaeColor));
             _patternState = base.scrollAtRelativeSpeed(Percent.per(Second).of(50));
         } else if (currPiece == Piece.CORAL) {
             LEDPattern base = LEDPattern.steps(Map.of(0, _allianceColor, 0.25, Color.kWhite, 0.5, _allianceColor, 0.75, Color.kWhite));
@@ -60,24 +62,15 @@ public class LED extends SubsystemBase {
             _patternState = LEDPattern.solid(_allianceColor);
         }
 
-        _patternState.applyTo(_ledBuffer);
-    }
+        if (_wristevator.getHeight() > 0) {
+            LEDPattern mask = LEDPattern.progressMaskLayer(() -> _wristevator.getHeight() / Constants.WristevatorConstants.maxElevatorHeight.in(Radians));
+            _patternState = _patternState.mask(mask);
+        }
 
-    public void elevator() {
-        LEDPattern mask = LEDPattern.progressMaskLayer(() -> _wristevator.getHeight() / Constants.WristevatorConstants.maxElevatorHeight.in(Radians));
-        _patternState = _patternState.mask(mask);
         _patternState.applyTo(_ledBuffer);
-    }
-
-    public void elevatorSet() {
-        
     }
 
     public Command runPattern(LEDPattern pattern) {
         return run(() -> stateLogic());
-    }
-
-    public Command runElevatorLED() {
-        return run(() -> elevator());
     }
 }

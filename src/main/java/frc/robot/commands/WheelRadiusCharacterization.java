@@ -76,9 +76,9 @@ public class WheelRadiusCharacterization extends Command {
         Math.abs(MathUtil.angleModulus(_swerve.getHeading().getRadians() - _lastGyroYaw));
     _lastGyroYaw = _swerve.getHeading().getRadians();
 
-    DogLog.log(
-        "Wheel Radius Characterization/Meters Turned",
-        SwerveConstants.driveRadius.in(Meters) * _accumGyroYaw);
+    //DogLog.log(
+       // "Wheel Radius Characterization/Meters Turned",
+       // SwerveConstants.driveRadius.in(Meters) * _accumGyroYaw);
 
     double averageWheelDistance = 0;
     double[] wheelDistances = getWheelDistancesRadians();
@@ -93,8 +93,8 @@ public class WheelRadiusCharacterization extends Command {
 
     _wheelRadius = (SwerveConstants.driveRadius.in(Meters) * _accumGyroYaw) / averageWheelDistance;
 
-    DogLog.log(
-        "Wheel Radius Characterization/Estimated Wheel Radius", Units.metersToInches(_wheelRadius));
+   // DogLog.log(
+       // "Wheel Radius Characterization/Estimated Wheel Radius", Units.metersToInches(_wheelRadius));
   }
 
   // Called once the command ends or is interrupted.

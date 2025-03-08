@@ -226,13 +226,13 @@ public class VisionPoseEstimator implements AutoCloseable {
 
   // appends a new estimate to the log file
   private void logNewEstimate(VisionPoseEstimate estimate) {
-    DogLog.log(_logPath + "Pose", estimate.pose);
-    DogLog.log(_logPath + "Timestamp", estimate.timestamp);
-    DogLog.log(_logPath + "Ambiguity", estimate.ambiguity);
-    DogLog.log(_logPath + "Detected Tags", estimate.detectedTags);
-    DogLog.log(_logPath + "Average Tag Distance", estimate.avgTagDistance);
-    DogLog.log(_logPath + "Std Devs", estimate.stdDevs);
-    DogLog.log(_logPath + "Is Valid", estimate.isValid);
+    // DogLog.log(_logPath + "Pose", estimate.pose);
+    // DogLog.log(_logPath + "Timestamp", estimate.timestamp);
+    // DogLog.log(_logPath + "Ambiguity", estimate.ambiguity);
+    // DogLog.log(_logPath + "Detected Tags", estimate.detectedTags);
+    // DogLog.log(_logPath + "Average Tag Distance", estimate.avgTagDistance);
+    // DogLog.log(_logPath + "Std Devs", estimate.stdDevs);
+    // DogLog.log(_logPath + "Is Valid", estimate.isValid);
   }
 
   /**
@@ -337,9 +337,9 @@ public class VisionPoseEstimator implements AutoCloseable {
 
     var results = _camera.getAllUnreadResults();
 
-    DogLog.log(
-        "Swerve/" + camName + "/Camera Result #",
-        results.size()); // also to check if cam's connected
+    // DogLog.log(
+    //     "Swerve/" + camName + "/Camera Result #",
+    //     results.size()); // also to check if cam's connected
 
     for (var result : results) {
       var est = _poseEstimator.update(result);

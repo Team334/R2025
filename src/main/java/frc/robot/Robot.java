@@ -11,7 +11,7 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
-import dev.doglog.DogLog;
+//import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.lib.Tuning;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -117,9 +118,10 @@ public class Robot extends TimedRobot {
     _ntInst = ntInst;
 
     // set up loggers
-    DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+   // DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+    // DogLog.setEnabled(false);
 
-    setFileOnly(false); // file-only once connected to fms
+    // setFileOnly(false); // file-only once connected to fms
 
     Epilogue.bind(this);
     SignalLogger.start();
@@ -156,19 +158,19 @@ public class Robot extends TimedRobot {
   }
 
   // set logging to be file only or not
-  private void setFileOnly(boolean fileOnly) {
-    DogLog.setOptions(DogLog.getOptions().withNtPublish(!fileOnly));
+  // private void setFileOnly(boolean fileOnly) {
+  //   DogLog.setOptions(DogLog.getOptions().withNtPublish(!fileOnly));
 
-    if (fileOnly) {
-      Epilogue.getConfig().backend = new FileBackend(DataLogManager.getLog());
-      return;
-    }
+  //   if (fileOnly) {
+  //     Epilogue.getConfig().backend = new FileBackend(DataLogManager.getLog());
+  //     return;
+  //   }
 
-    // if doing both file and nt logging, use the datalogger multilogger setup
-    Epilogue.getConfig().backend =
-        EpilogueBackend.multi(
-            new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
-  }
+  //   // if doing both file and nt logging, use the datalogger multilogger setup
+  //   Epilogue.getConfig().backend =
+  //       EpilogueBackend.multi(
+  //           new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
+  // }
 
   private void configureDefaultCommands() {
     _swerve.setDefaultCommand(
@@ -207,33 +209,29 @@ public class Robot extends TimedRobot {
 
   private void configureOperatorBindings() {
     // wristevator setpoint control
-    _operatorController.back().onTrue(deadline(_wristevator.setGoal(PROCESSOR), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
-    _operatorController.start().onTrue(deadline(_wristevator.setGoal(HUMAN), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
-    _operatorController.rightStick().onTrue(deadline(_wristevator.setGoal(HOME), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
+    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
 
-    _operatorController.a().onTrue(deadline(_wristevator.setGoal(L1), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+    _operatorController.a().onTrue(_wristevator.setGoal(L1));
 
     _operatorController
         .b()
         .onTrue(
-          deadline(
             either(
                 _wristevator.setGoal(L2),
                 _wristevator.setGoal(LOWER_ALGAE),
-                () -> getCurrentPiece() == Piece.CORAL),
-            led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+                () -> getCurrentPiece() == Piece.CORAL));
 
     _operatorController
         .y()
         .onTrue(
-          deadline(
             either(
                 _wristevator.setGoal(L3),
                 _wristevator.setGoal(UPPER_ALGAE),
-                () -> getCurrentPiece() == Piece.CORAL),
-            led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+                () -> getCurrentPiece() == Piece.CORAL));
 
-    _operatorController.x().onTrue(deadline(_wristevator.setGoal(L4), led.runElevatorLED()).finallyDo(() -> led.stateLogic()));
+    _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
@@ -298,12 +296,12 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
-      setFileOnly(true);
+    //  setFileOnly(true);
 
       _fileOnlySet = true;
     }
 
-    DogLog.log("Manipulator Current Piece", pieceChooser.getSelected());
+    // DogLog.log("Manipulator Current Piece", pieceChooser.getSelected());
   }
 
   @Override
