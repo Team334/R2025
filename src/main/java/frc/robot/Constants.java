@@ -101,10 +101,10 @@ public final class Constants {
   }
 
   public static class VisionConstants {
-    public static final String lowerArducamName = "lower-arducam";
-    public static final String middleArducamName = "middle-arducam";
-    public static final String upperArducamName = "upper-arducam";
-    public static final String backArducamName = "back-arducam";
+    public static final String lowerLeftArducamName = "lower-left-arducam";
+    public static final String lowerRightArducamName = "lower-right-arducam";
+    public static final String upperLeftArducamName = "upper-left-arducam";
+    public static final String upperRightArducamName = "upper-right-arducam";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
@@ -113,37 +113,37 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final VisionPoseEstimatorConstants lowerArducam =
+    public static final VisionPoseEstimatorConstants lowerLeftArducam =
         new VisionPoseEstimatorConstants(
-            lowerArducamName,
-            new Transform3d(new Translation3d(0.3, 0.3, 0.2), new Rotation3d(0, -0.2, -0.35)),
+            lowerLeftArducamName,
+            new Transform3d(new Translation3d(0.35, 0.3, 0.3), new Rotation3d(0, -0.2, -0.2)),
             0.2,
             0.0001,
             3,
             7);
 
-    public static final VisionPoseEstimatorConstants middleArducam =
+    public static final VisionPoseEstimatorConstants lowerRightArducam =
         new VisionPoseEstimatorConstants(
-            middleArducamName,
-            new Transform3d(new Translation3d(0.3, -0.3, 0.6), new Rotation3d(0, -0.2, 0.35)),
+            lowerRightArducamName,
+            new Transform3d(new Translation3d(0.35, -0.3, 0.3), new Rotation3d(0, -0.2, 0.2)),
             0.2,
             0.0001,
             3,
             7);
 
-    public static final VisionPoseEstimatorConstants upperArducam =
+    public static final VisionPoseEstimatorConstants upperLeftArducam =
         new VisionPoseEstimatorConstants(
-            upperArducamName,
-            new Transform3d(new Translation3d(0.3, 0.3, 1), new Rotation3d(0, -0.2, -0.35)),
+            upperLeftArducamName,
+            new Transform3d(new Translation3d(0.15, 0.3, 0.6), new Rotation3d(0, -0.05, Math.PI)),
             0.2,
             0.0001,
             3,
             7);
 
-    public static final VisionPoseEstimatorConstants backArducam =
+    public static final VisionPoseEstimatorConstants upperRightArducam =
         new VisionPoseEstimatorConstants(
-            backArducamName,
-            new Transform3d(new Translation3d(-0.1, 0, 0.72), new Rotation3d(0, -0.1, Math.PI)),
+            upperRightArducamName,
+            new Transform3d(new Translation3d(0.15, -0.3, 0.6), new Rotation3d(0, -0.05, Math.PI)),
             0.2,
             0.0001,
             3,

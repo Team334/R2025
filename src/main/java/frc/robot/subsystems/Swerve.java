@@ -144,7 +144,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
 
   @Logged(name = "Is Field Oriented")
-  private boolean _isFieldOriented = true;
+  private boolean _isFieldOriented = false;
 
   @Logged(name = "Is Open Loop")
   private boolean _isOpenLoop = true;
@@ -158,21 +158,25 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private boolean _hasAppliedDriverPerspective;
 
-  @Logged(name = VisionConstants.lowerArducamName)
+  @Logged(name = VisionConstants.lowerLeftArducamName)
   private final VisionPoseEstimator _lowerArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.lowerArducam, this::getHeadingAtTime);
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.middleArducamName)
+  @Logged(name = VisionConstants.lowerRightArducamName)
   private final VisionPoseEstimator _middleArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.middleArducam, this::getHeadingAtTime);
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.lowerRightArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.upperArducamName)
+  @Logged(name = VisionConstants.upperLeftArducamName)
   private final VisionPoseEstimator _upperArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.upperArducam, this::getHeadingAtTime);
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.upperLeftArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.backArducamName)
+  @Logged(name = VisionConstants.upperRightArducamName)
   private final VisionPoseEstimator _backArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.backArducam, this::getHeadingAtTime);
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.upperRightArducam, this::getHeadingAtTime);
 
   private final List<VisionPoseEstimator> _cameras =
       List.of(_lowerArducam, _middleArducam, _upperArducam, _backArducam);
