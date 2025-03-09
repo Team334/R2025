@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
@@ -122,7 +123,7 @@ public final class Constants {
             7);
 
     public static final Transform3d robotToLimelight =
-        new Transform3d(0, 0, -0.5, new Rotation3d(0, Degrees.of(-45).in(Radians), 0));
+        new Transform3d(-0.5, 0, -0.5, new Rotation3d(0, Units.degreesToRadians(-45), Math.PI));
   }
 
   public static class SwerveConstants {

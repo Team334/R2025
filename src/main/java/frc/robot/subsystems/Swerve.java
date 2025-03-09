@@ -30,6 +30,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -453,26 +454,30 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
 
-              double tx = Degrees.of(-_tx.getAsDouble()).in(Radians);
-              double ty = Degrees.of(_ty.getAsDouble()).in(Radians);
+              Angle tx = Degrees.of(_tx.getAsDouble());
+              Angle ty = Degrees.of(_ty.getAsDouble());
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getZ()
                           + SwerveConstants.chassisHeight.in(Meters))
-                      * Math.tan(90 - (VisionConstants.robotToLimelight.getRotation().getY() + ty));
+                      * Math.tan(
+                          (Math.PI / 2)
+                              - (VisionConstants.robotToLimelight.getRotation().getY()
+                                  + ty.in(Radians)));
+
               Rotation2d groundAngle =
-                  Rotation2d.fromDegrees(
+                  new Rotation2d(
                       Math.atan2(
-                          groundDistance * Math.sin(tx),
+                          groundDistance * Math.sin(tx.in(Radians)),
                           (groundDistance - VisionConstants.robotToLimelight.getX())
-                              * Math.cos(tx)));
+                              * Math.cos(tx.in(Radians))));
 
               _pieceAlignPose =
                   getPose()
                       .transformBy(
                           new Transform2d(
-                              groundDistance * groundAngle.getCos(),
-                              groundDistance * groundAngle.getSin(),
+                              -groundDistance * groundAngle.getCos(),
+                              -groundDistance * groundAngle.getSin(),
                               groundAngle));
             })
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
