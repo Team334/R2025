@@ -11,7 +11,9 @@ import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.networktables.BooleanEntry;
 import frc.lib.Tuning;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.Swerve;
+import frc.robot.utils.AlignPoses.AlignSide;
 
 public class Autos {
   private final Swerve _swerve;
@@ -49,14 +51,13 @@ public class Autos {
 
     routine.active().onTrue(sequence(start.resetOdometry(), start.cmd()));
 
-    start.done().onTrue(humanToReef.cmd());
-
-    humanToReef.done().onTrue(reefToHuman.cmd());
-
-    reefToHuman
-        .active()
-        .and(_seesPiece)
-        .onTrue(_swerve.alignToPiece().asProxy().andThen(() -> humanToReef.cmd().schedule()));
+    start
+        .done()
+        .onTrue(
+            sequence(
+                _swerve.alignToPiece(),
+                _swerve.alignTo(FieldConstants.reef, AlignSide.RIGHT),
+                reefToHuman.cmd()));
 
     return routine;
   }

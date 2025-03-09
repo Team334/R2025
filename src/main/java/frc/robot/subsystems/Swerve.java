@@ -222,7 +222,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
-    _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
+    _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(5));
 
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
@@ -454,8 +454,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
 
-              Angle tx = Degrees.of(_tx.getAsDouble());
-              Angle ty = Degrees.of(_ty.getAsDouble());
+              // Angle tx = Degrees.of(_tx.getAsDouble());
+              // Angle ty = Degrees.of(_ty.getAsDouble());
+
+              Angle tx = Degrees.of(10);
+              Angle ty = Degrees.of(25);
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getZ()
@@ -481,6 +484,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                               groundAngle));
             })
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
+        .finallyDo(() -> System.out.println("FINISED COMMAND"))
         .withName("Align To Piece");
   }
 
