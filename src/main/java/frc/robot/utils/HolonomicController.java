@@ -109,7 +109,7 @@ public class HolonomicController {
     Vector<N2> vel = difference.unit().times(_translationProfiled.getSetpoint().velocity);
     Vector<N2> pidVel = difference.unit().times(velMag);
 
-    DogLog.log("Auto/Drive To Goal Pose", goalPose);
+    DogLog.log("Auto/Goal Pose", goalPose);
 
     double pidOmega =
         _headingProfiled.calculate(
@@ -142,6 +142,8 @@ public class HolonomicController {
     // this is so velocity is pointing in the right direction
     Vector<N2> vel =
         difference.unit().times(_translationController.calculate(difference.norm(), 0));
+
+    DogLog.log("Auto/Setpoint Pose", desiredPose);
 
     return currentSpeeds.plus(
         new ChassisSpeeds(
