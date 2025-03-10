@@ -9,12 +9,17 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
+import edu.wpi.first.networktables.BooleanEntry;
+import frc.lib.Tuning;
 import frc.robot.subsystems.Swerve;
 
 public class Autos {
   private final Swerve _swerve;
 
   private final AutoFactory _factory;
+
+  private final BooleanEntry _seesPiece = Tuning.entry("PieceVisable", false);
+  private final BooleanEntry _end = Tuning.entry("End", false);
 
   public Autos(Swerve swerve) {
     _swerve = swerve;
@@ -38,9 +43,36 @@ public class Autos {
 
   public AutoRoutine simpleTrajectory() {
     var routine = _factory.newRoutine("Simple Trajectory");
-    var trajectory = routine.trajectory("simpleTrajectory");
+    var start = routine.trajectory("Start-Reef");
+    var humanToReef1 = routine.trajectory("Human-Reef1");
+    var reefToHuman1 = routine.trajectory("Reef-Human1");
+    var humanToReef2 = routine.trajectory("Human-Reef2");
+    var reefToHuman2 = routine.trajectory("Reef-Human2");
 
-    routine.active().onTrue(sequence(trajectory.resetOdometry(), trajectory.cmd()));
+    routine.active().onTrue(sequence(start.resetOdometry(), start.cmd()));
+
+    start.done().onTrue(reefToHuman1.cmd());
+
+    reefToHuman1
+        .active()
+        .and(_seesPiece)
+        .onTrue(
+            sequence(
+                _swerve.alignToPiece(),
+                _swerve.driveTo(humanToReef1.getFinalPose().get()),
+                reefToHuman2.cmd()));
+    reefToHuman1.done().onTrue(humanToReef1.cmd());
+    humanToReef1.done().onTrue(reefToHuman2.cmd());
+
+    reefToHuman2
+        .active()
+        .and(_seesPiece)
+        .onTrue(
+            sequence(
+                _swerve.alignToPiece(),
+                _swerve.driveTo(humanToReef2.getFinalPose().get()),
+                reefToHuman2.cmd()));
+    reefToHuman2.done().onTrue(humanToReef2.cmd());
 
     return routine;
   }
