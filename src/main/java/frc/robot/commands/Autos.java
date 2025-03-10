@@ -11,9 +11,7 @@ import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.networktables.BooleanEntry;
 import frc.lib.Tuning;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.Swerve;
-import frc.robot.utils.AlignPoses.AlignSide;
 
 public class Autos {
   private final Swerve _swerve;
@@ -45,19 +43,36 @@ public class Autos {
 
   public AutoRoutine simpleTrajectory() {
     var routine = _factory.newRoutine("Simple Trajectory");
-    var start = routine.trajectory("Start-Reef-Human");
-    var humanToReef = routine.trajectory("Human-Reef");
-    var reefToHuman = routine.trajectory("Reef-Human");
+    var start = routine.trajectory("Start-Reef");
+    var humanToReef1 = routine.trajectory("Human-Reef1");
+    var reefToHuman1 = routine.trajectory("Reef-Human1");
+    var humanToReef2 = routine.trajectory("Human-Reef2");
+    var reefToHuman2 = routine.trajectory("Reef-Human2");
 
     routine.active().onTrue(sequence(start.resetOdometry(), start.cmd()));
 
-    start
-        .done()
+    start.done().onTrue(reefToHuman1.cmd());
+
+    reefToHuman1
+        .active()
+        .and(_seesPiece)
         .onTrue(
             sequence(
                 _swerve.alignToPiece(),
-                _swerve.alignTo(FieldConstants.reef, AlignSide.RIGHT),
-                reefToHuman.cmd()));
+                _swerve.driveTo(humanToReef1.getFinalPose().get()),
+                reefToHuman2.cmd()));
+    reefToHuman1.done().onTrue(humanToReef1.cmd());
+    humanToReef1.done().onTrue(reefToHuman2.cmd());
+
+    reefToHuman2
+        .active()
+        .and(_seesPiece)
+        .onTrue(
+            sequence(
+                _swerve.alignToPiece(),
+                _swerve.driveTo(humanToReef2.getFinalPose().get()),
+                reefToHuman2.cmd()));
+    reefToHuman2.done().onTrue(humanToReef2.cmd());
 
     return routine;
   }

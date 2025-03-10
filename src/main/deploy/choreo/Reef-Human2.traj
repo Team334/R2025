@@ -1,10 +1,10 @@
 {
- "name":"Reef-Human",
+ "name":"Reef-Human2",
  "version":1,
  "snapshot":{
   "waypoints":[
     {"x":5.396432399749756, "y":5.611739635467529, "heading":4.1887902047863905, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":1.571928858757019, "y":7.071657180786133, "heading":2.231839600492228, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":1.571928858757019, "y":7.071657180786133, "heading":2.231839600492228, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
@@ -14,7 +14,7 @@
  "params":{
   "waypoints":[
     {"x":{"exp":"5.396432399749756 m", "val":5.396432399749756}, "y":{"exp":"5.611739635467529 m", "val":5.611739635467529}, "heading":{"exp":"240 deg", "val":4.1887902047863905}, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false},
-    {"x":{"exp":"1.571928858757019 m", "val":1.571928858757019}, "y":{"exp":"7.071657180786133 m", "val":7.071657180786133}, "heading":{"exp":"2.231839600492228 rad", "val":2.231839600492228}, "intervals":27, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
+    {"x":{"exp":"1.571928858757019 m", "val":1.571928858757019}, "y":{"exp":"7.071657180786133 m", "val":7.071657180786133}, "heading":{"exp":"2.231839600492228 rad", "val":2.231839600492228}, "intervals":31, "split":false, "fixTranslation":true, "fixHeading":true, "overrideIntervals":false}],
   "constraints":[
     {"from":"first", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
     {"from":"last", "to":null, "data":{"type":"StopPoint", "props":{}}, "enabled":true},
