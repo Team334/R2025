@@ -47,6 +47,7 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
@@ -457,6 +458,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                       : alignGoal;
 
               _alignGoal = rotated;
+
+              if (alignGoal == FieldConstants.processor && Robot.getCurrentPiece() != Piece.ALGAE)
+                _alignGoal =
+                    _alignGoal.rotateAround(
+                        _alignGoal.getCenter().getTranslation(), Rotation2d.k180deg);
 
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;

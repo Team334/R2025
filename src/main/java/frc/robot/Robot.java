@@ -89,7 +89,7 @@ public class Robot extends TimedRobot {
 
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
-    return _currentPiece;
+    return Piece.ALGAE;
   }
 
   /**
