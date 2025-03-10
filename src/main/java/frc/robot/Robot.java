@@ -158,19 +158,19 @@ public class Robot extends TimedRobot {
   }
 
   // set logging to be file only or not
-  // private void setFileOnly(boolean fileOnly) {
-  //   DogLog.setOptions(DogLog.getOptions().withNtPublish(!fileOnly));
+  private void setFileOnly(boolean fileOnly) {
+    DogLog.setOptions(DogLog.getOptions().withNtPublish(!fileOnly));
 
-  //   if (fileOnly) {
-  //     Epilogue.getConfig().backend = new FileBackend(DataLogManager.getLog());
-  //     return;
-  //   }
+    if (fileOnly) {
+      Epilogue.getConfig().backend = new FileBackend(DataLogManager.getLog());
+      return;
+    }
 
-  //   // if doing both file and nt logging, use the datalogger multilogger setup
-  //   Epilogue.getConfig().backend =
-  //       EpilogueBackend.multi(
-  //           new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
-  // }
+    // if doing both file and nt logging, use the datalogger multilogger setup
+    Epilogue.getConfig().backend =
+        EpilogueBackend.multi(
+            new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
+  }
 
   private void configureDefaultCommands() {
     _swerve.setDefaultCommand(
@@ -296,8 +296,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
-    //  setFileOnly(true);
-
+      setFileOnly(true);
       _fileOnlySet = true;
     }
 
