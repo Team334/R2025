@@ -109,7 +109,7 @@ public class HolonomicController {
     Vector<N2> vel = difference.unit().times(_translationProfiled.getSetpoint().velocity);
     Vector<N2> pidVel = difference.unit().times(velMag);
 
-    //DogLog.log("Auto/Drive To Goal Pose", goalPose);
+    DogLog.log("Auto/Drive To Goal Pose", goalPose);
 
     double pidOmega =
         _headingProfiled.calculate(

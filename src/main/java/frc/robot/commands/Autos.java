@@ -29,10 +29,10 @@ public class Autos {
             (traj, isActive) -> {
               traj = traj.flipped();
 
-              //DogLog.log("Auto/Current Trajectory", traj.getPoses());
-              //DogLog.log("Auto/Current Trajectory Name", traj.name());
-              //DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
-              //DogLog.log("Auto/Current Trajectory Is Active", isActive);
+              DogLog.log("Auto/Current Trajectory", traj.getPoses());
+              DogLog.log("Auto/Current Trajectory Name", traj.name());
+              DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
+              DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
   }
 

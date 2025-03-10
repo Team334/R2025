@@ -196,18 +196,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     registerTelemetry(
         state -> {
-          //DogLog.log("Swerve/Pose", state.Pose);
-          //DogLog.log("Swerve/Raw Heading", state.RawHeading);
-          //DogLog.log("Swerve/Speeds", state.Speeds);
-          //DogLog.log("Swerve/Desired Speeds", getKinematics().toChassisSpeeds(state.ModuleTargets));
-          //DogLog.log("Swerve/Module States", state.ModuleStates);
-          //DogLog.log("Swerve/Desired Module States", state.ModuleTargets);
+          DogLog.log("Swerve/Pose", state.Pose);
+          DogLog.log("Swerve/Raw Heading", state.RawHeading);
+          DogLog.log("Swerve/Speeds", state.Speeds);
+          DogLog.log("Swerve/Desired Speeds", getKinematics().toChassisSpeeds(state.ModuleTargets));
+          DogLog.log("Swerve/Module States", state.ModuleStates);
+          DogLog.log("Swerve/Desired Module States", state.ModuleTargets);
 
           double totalDaqs = state.SuccessfulDaqs + state.FailedDaqs;
           totalDaqs = totalDaqs == 0 ? 1 : totalDaqs;
 
-          //DogLog.log("Swerve/Odometry Success %", state.SuccessfulDaqs / totalDaqs * 100);
-          //DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
+          DogLog.log("Swerve/Odometry Success %", state.SuccessfulDaqs / totalDaqs * 100);
+          DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
     _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
@@ -252,7 +252,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     Fault fault = new Fault(description, faultType);
 
-    //DogLog.logFault(fault.toString());
+    DogLog.logFault(fault.toString());
 
     _faults.add(fault);
     _faultsTable.set(_faults);
@@ -423,7 +423,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     desiredSpeeds = _poseController.calculate(desiredSpeeds, desiredPose, getPose());
 
-    //DogLog.log("Auto/Current Trajectory Desired Pose", desiredPose);
+    DogLog.log("Auto/Current Trajectory Desired Pose", desiredPose);
 
     setControl(
         _fieldSpeedsRequest
@@ -519,14 +519,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               });
     }
 
-    // DogLog.log(
-    //     "Swerve/Accepted Estimates",
-    //     _acceptedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
-    // DogLog.log(
-    //     "Swerve/Rejected Estimates",
-    //     _rejectedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
+    DogLog.log(
+         "Swerve/Accepted Estimates",
+         _acceptedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
+    DogLog.log(
+         "Swerve/Rejected Estimates",
+         _rejectedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
 
-    // DogLog.log("Swerve/Detected Tags", _detectedTags.toArray(Pose3d[]::new));
+    DogLog.log("Swerve/Detected Tags", _detectedTags.toArray(Pose3d[]::new));
 
     if (!_ignoreVisionEstimates) {
       _acceptedEstimates.sort(VisionPoseEstimate.sorter);

@@ -11,7 +11,7 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
-//import dev.doglog.DogLog;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
@@ -118,8 +118,8 @@ public class Robot extends TimedRobot {
     _ntInst = ntInst;
 
     // set up loggers
-   // DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
-    // DogLog.setEnabled(false);
+    DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+    DogLog.setEnabled(false);
 
     // setFileOnly(false); // file-only once connected to fms
 
@@ -301,7 +301,7 @@ public class Robot extends TimedRobot {
       _fileOnlySet = true;
     }
 
-    // DogLog.log("Manipulator Current Piece", pieceChooser.getSelected());
+    DogLog.log("Manipulator Current Piece", pieceChooser.getSelected());
   }
 
   @Override

@@ -48,7 +48,7 @@ public abstract class AdvancedSubsystem extends SubsystemBase
 
     Fault fault = new Fault(description, faultType);
 
-    //DogLog.logFault(fault.toString());
+    DogLog.logFault(fault.toString());
 
     _faults.add(fault);
     _faultsTable.set(_faults);
@@ -88,8 +88,8 @@ public abstract class AdvancedSubsystem extends SubsystemBase
 
   @Override
   public void periodic() {
-    //DogLog.log(getName() + "/Current Command", currentCommandName());
-    //DogLog.log(getName() + "/Has Error", _hasError);
+    DogLog.log(getName() + "/Current Command", currentCommandName());
+    DogLog.log(getName() + "/Has Error", _hasError);
   }
 
   @Override
