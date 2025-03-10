@@ -520,11 +520,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     }
 
     DogLog.log(
-         "Swerve/Accepted Estimates",
-         _acceptedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
+        "Swerve/Accepted Estimates",
+        _acceptedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
     DogLog.log(
-         "Swerve/Rejected Estimates",
-         _rejectedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
+        "Swerve/Rejected Estimates",
+        _rejectedEstimates.stream().map(VisionPoseEstimate::pose).toArray(Pose3d[]::new));
 
     DogLog.log("Swerve/Detected Tags", _detectedTags.toArray(Pose3d[]::new));
 

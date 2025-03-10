@@ -267,5 +267,7 @@ public final class Constants {
 
   public static class LEDConstants {
     public static final Color errorColor = Color.kViolet;
+
+    public static final int ledPort = 0;
   }
 }

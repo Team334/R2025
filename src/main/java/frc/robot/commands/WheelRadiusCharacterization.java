@@ -93,7 +93,7 @@ public class WheelRadiusCharacterization extends Command {
 
     _wheelRadius = (SwerveConstants.driveRadius.in(Meters) * _accumGyroYaw) / averageWheelDistance;
 
-   DogLog.log(
+    DogLog.log(
         "Wheel Radius Characterization/Estimated Wheel Radius", Units.metersToInches(_wheelRadius));
   }
 

@@ -338,8 +338,8 @@ public class VisionPoseEstimator implements AutoCloseable {
     var results = _camera.getAllUnreadResults();
 
     DogLog.log(
-         "Swerve/" + camName + "/Camera Result #",
-         results.size()); // also to check if cam's connected
+        "Swerve/" + camName + "/Camera Result #",
+        results.size()); // also to check if cam's connected
 
     for (var result : results) {
       var est = _poseEstimator.update(result);

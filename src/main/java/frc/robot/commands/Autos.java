@@ -9,7 +9,6 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
-import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.Swerve;
 
 public class Autos {
@@ -43,5 +42,5 @@ public class Autos {
     routine.active().onTrue(sequence(trajectory.resetOdometry(), trajectory.cmd()));
 
     return routine;
-  } 
+  }
 }

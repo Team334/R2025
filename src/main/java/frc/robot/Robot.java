@@ -32,7 +32,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.lib.Tuning;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -77,9 +76,8 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final LED led = new LED(9, 60, _wristevator, _swerve);
+  private final LED led = new LED(_wristevator::getHeight, _wristevator::homeSwitch);
   private static final SendableChooser<Piece> pieceChooser = new SendableChooser<>();
-
 
   private final Autos _autos = new Autos(_swerve);
   private final AutoChooser _autoChooser = new AutoChooser();
@@ -106,7 +104,7 @@ public class Robot extends TimedRobot {
     pieceChooser.setDefaultOption("None", Piece.NONE);
     pieceChooser.addOption("Coral", Piece.CORAL);
     pieceChooser.addOption("Algae", Piece.ALGAE);
-    
+
     SmartDashboard.putData("Piece Selector", pieceChooser);
   }
 
@@ -119,9 +117,8 @@ public class Robot extends TimedRobot {
 
     // set up loggers
     DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
-    DogLog.setEnabled(false);
 
-    // setFileOnly(false); // file-only once connected to fms
+    setFileOnly(false); // file-only once connected to fms
 
     Epilogue.bind(this);
     SignalLogger.start();
