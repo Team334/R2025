@@ -27,6 +27,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -41,6 +42,7 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -71,6 +73,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // teleop requests
   private final RobotCentric _robotCentricRequest = new RobotCentric();
   private final FieldCentric _fieldCentricRequest = new FieldCentric();
+
+  private final BooleanEntry _fakePieceAlign = Tuning.entry("/Tuning/Piece ALign", false);
+  private final BooleanEntry _fakeAlignToPose = Tuning.entry("/Tuning/Align to Pose", false);
 
   private final SwerveDriveBrake _brakeRequest = new SwerveDriveBrake();
 
@@ -489,6 +494,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             else _rejectedEstimates.add(estimate);
           });
     }
+  }
+
+  public boolean aligningTo() {
+    return _fakePieceAlign.getAsBoolean();
+  }
+
+  public boolean aligningToPose() {
+    return _fakeAlignToPose.getAsBoolean();
   }
 
   @Override

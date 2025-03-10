@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final LED led = new LED(9, 60, _wristevator);
+  private final LED led = new LED(9, 60, _wristevator, _swerve);
   private static final SendableChooser<Piece> pieceChooser = new SendableChooser<>();
 
 

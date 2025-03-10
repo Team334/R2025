@@ -3,6 +3,7 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.Percent;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
 
 import java.util.HexFormat;
 import java.util.Map;
@@ -22,6 +23,7 @@ import edu.wpi.first.wpilibj.util.Color;
 
 public class LED extends SubsystemBase {
     private final Wristevator _wristevator;
+    private final Swerve _swerve;
 
     private final AddressableLED _led;
     private final AddressableLEDBuffer _ledBuffer;
@@ -30,8 +32,9 @@ public class LED extends SubsystemBase {
     private Color _algaeColor = new Color("#0acc82");
     private LEDPattern _patternState;
 
-    public LED(int pwmPort, int ledCount, Wristevator wristevator) {
+    public LED(int pwmPort, int ledCount, Wristevator wristevator, Swerve swerve) {
         _wristevator = wristevator;
+        _swerve = swerve;
 
         _led = new AddressableLED(pwmPort);
         _ledBuffer = new AddressableLEDBuffer(ledCount);
@@ -52,7 +55,12 @@ public class LED extends SubsystemBase {
     public void stateLogic() {
         Piece currPiece = Robot.getCurrentPiece();
 
-        if (currPiece == Piece.ALGAE) {
+        if (_swerve.aligningTo()) {
+            LEDPattern base = LEDPattern.solid(Color.kOrange);
+            _patternState = base.blink(Seconds.of(0.15));
+        } else if (_swerve.aligningToPose()) {
+            _patternState = LEDPattern.solid(Color.kOrange);
+        } else if (currPiece == Piece.ALGAE) {
             LEDPattern base = LEDPattern.steps(Map.of(0, _allianceColor, 0.25, _algaeColor, 0.5, _allianceColor, 0.75, _algaeColor));
             _patternState = base.scrollAtRelativeSpeed(Percent.per(Second).of(50));
         } else if (currPiece == Piece.CORAL) {
