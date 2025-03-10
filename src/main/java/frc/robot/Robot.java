@@ -276,6 +276,11 @@ public class Robot extends TimedRobot {
         .and(() -> !_wristevator.homeSwitch())
         .whileTrue(_manipulator.intake());
 
+    // intake / outtake algae
+    _operatorController
+        .leftStick()
+        .whileTrue(either(_intake.outtakeAlgae(), _intake.intakeAlgae(), _intake::hasAlgae));
+
     // outtake
     _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
   }
