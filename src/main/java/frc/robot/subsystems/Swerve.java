@@ -549,9 +549,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     double distance = visionEstimate.avgTagDistance();
 
-    double tx = visionEstimate.tx();
-    double ty = visionEstimate.ty();
-
     // TODO: trig over here using the above values
     Pose2d trigPose = Pose2d.kZero;
 

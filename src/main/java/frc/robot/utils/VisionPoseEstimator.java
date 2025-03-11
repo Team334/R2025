@@ -8,10 +8,13 @@ import dev.doglog.DogLog;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.lib.FaultLogger;
 import frc.robot.Constants.FieldConstants;
@@ -27,6 +30,7 @@ import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 /** Handles pose estimation coming from a single PhotonVision camera. */
 @Logged(strategy = Strategy.OPT_IN)
@@ -97,6 +101,16 @@ public class VisionPoseEstimator implements AutoCloseable {
       /** Maximum allowed distance for multi-tag estimates. */
       double multiTagMaxDistance) {}
 
+  public record SingleTagEstimate(
+      /** The pose calculated from the trig estimation. */
+      Pose3d pose,
+
+      /** The detected tag id. */
+      int tag,
+
+      /** The distance from this tag. */
+      double distance) {}
+
   /** Represents a single vision pose estimate. */
   public record VisionPoseEstimate(
       /** The disambiguated pose to add into the estimator. */
@@ -116,6 +130,7 @@ public class VisionPoseEstimator implements AutoCloseable {
 
       /** The detected tag ids in this measurement. */
       int[] detectedTags,
+      SingleTagEstimate[] singleTagEstimates,
 
       /** The average distance from the tag(s) in 3D space (-1 when no tags). */
       double avgTagDistance,
@@ -127,13 +142,7 @@ public class VisionPoseEstimator implements AutoCloseable {
       double[] stdDevs,
 
       /** Whether this estimate passed the filter or not. */
-      boolean isValid,
-
-      /** The yaw to the center of the tag when there is one tag. */
-      double tx,
-
-      /** The pitch to the center of the tag when there is one tag. */
-      double ty) {
+      boolean isValid) {
     /**
      * Used for sorting a list of vision pose estimates, first the timestamps are sorted (from
      * smallest to highest), then the standard deviations at the same timestamp are sorted if
@@ -247,17 +256,51 @@ public class VisionPoseEstimator implements AutoCloseable {
 
   // appends a new estimate to the log file
   private void logNewEstimate(VisionPoseEstimate estimate) {
+    Pose3d[] trigPoses = new Pose3d[estimate.singleTagEstimates.length];
+
+    for (int i = 0; i < estimate.singleTagEstimates.length; i++) {
+      trigPoses[i] = estimate.singleTagEstimates[i].pose;
+    }
+
     DogLog.log(_estimateLogPath + "Pose", estimate.pose);
     DogLog.log(_estimateLogPath + "Timestamp", estimate.timestamp);
     DogLog.log(_estimateLogPath + "Ambiguity", estimate.ambiguity);
     DogLog.log(_estimateLogPath + "Alternate Pose", estimate.altPose);
     DogLog.log(_estimateLogPath + "Detected Corners", estimate.detectedCorners);
     DogLog.log(_estimateLogPath + "Detected Tags", estimate.detectedTags);
+    DogLog.log(_estimateLogPath + "Trig Poses", trigPoses);
     DogLog.log(_estimateLogPath + "Average Tag Distance", estimate.avgTagDistance);
     DogLog.log(_estimateLogPath + "Std Devs", estimate.stdDevs);
     DogLog.log(_estimateLogPath + "Is Valid", estimate.isValid);
-    DogLog.log(_estimateLogPath + "TX", estimate.tx);
-    DogLog.log(_estimateLogPath + "TY", estimate.ty);
+  }
+
+  /** Gives a single tag estimate using trig. */
+  private SingleTagEstimate getSingleTagEstimate(
+      PhotonTrackedTarget target, Rotation2d gyroHeading) {
+    Translation2d camToTagVector =
+        new Translation3d(
+                target.getBestCameraToTarget().getTranslation().getNorm(),
+                new Rotation3d(
+                    0, -Math.toRadians(target.getPitch()), -Math.toRadians(target.getYaw())))
+            .rotateBy(robotToCam.getRotation())
+            .toTranslation2d()
+            .rotateBy(gyroHeading);
+
+    var tagPose = FieldConstants.tagLayout.getTagPose(target.getFiducialId()).get().toPose2d();
+
+    Translation2d fieldToCameraTranslation =
+        tagPose.getTranslation().plus(camToTagVector.unaryMinus());
+
+    Translation2d camToRobotTranslation =
+        robotToCam.getTranslation().toTranslation2d().unaryMinus().rotateBy(gyroHeading);
+
+    Pose2d robotPose =
+        new Pose2d(fieldToCameraTranslation.plus(camToRobotTranslation), gyroHeading);
+
+    return new SingleTagEstimate(
+        new Pose3d(robotPose),
+        target.getFiducialId(),
+        robotPose.getTranslation().getDistance(tagPose.getTranslation()));
   }
 
   /**
@@ -278,11 +321,10 @@ public class VisionPoseEstimator implements AutoCloseable {
     double ambiguity = -1;
     int tagAmount = estimate.targetsUsed.size();
     int[] detectedTags = new int[tagAmount];
+    SingleTagEstimate[] singleTagEstimates = new SingleTagEstimate[tagAmount];
     double avgTagDistance = 0;
     double[] stdDevs = new double[] {-1, -1, -1};
     boolean isValid = false;
-    double tx = -10000;
-    double ty = -10000;
 
     estimate.targetsUsed.forEach(
         t -> t.getDetectedCorners().forEach(c -> detectedCorners.add(new Translation2d(c.x, c.y))));
@@ -295,9 +337,6 @@ public class VisionPoseEstimator implements AutoCloseable {
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
 
       ambiguity = target.getPoseAmbiguity();
-
-      tx = target.getYaw();
-      ty = target.getPitch();
 
       Pose3d betterReprojPose = tagPose.transformBy(target.getBestCameraToTarget().inverse());
       Pose3d worseReprojPose = tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
@@ -319,8 +358,13 @@ public class VisionPoseEstimator implements AutoCloseable {
     // ---- FILTER ----
     // get tag distance
     for (int i = 0; i < tagAmount; i++) {
-      int tagId = estimate.targetsUsed.get(i).getFiducialId();
+      PhotonTrackedTarget target = estimate.targetsUsed.get(i);
+
+      int tagId = target.getFiducialId();
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
+
+      singleTagEstimates[i] = getSingleTagEstimate(target, gyroHeading);
+
       detectedTags[i] = tagId;
       avgTagDistance += tagPose.getTranslation().getDistance(estimatedPose.getTranslation());
     }
@@ -371,11 +415,10 @@ public class VisionPoseEstimator implements AutoCloseable {
         altPose,
         detectedCorners.toArray(Translation2d[]::new),
         detectedTags,
+        singleTagEstimates,
         avgTagDistance,
         stdDevs,
-        isValid,
-        tx,
-        ty);
+        isValid);
   }
 
   /** Reads from the camera and generates an array of new latest {@link VisionPoseEstimate}(s). */
