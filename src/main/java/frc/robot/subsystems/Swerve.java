@@ -25,6 +25,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -54,6 +55,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
+import frc.robot.utils.LimelightHelpers;
+import frc.robot.utils.LimelightHelpers.RawDetection;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
@@ -453,6 +456,25 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             () -> {
               // double tx = LimelightHelpers.getTX(VisionConstants.limelightName);
               // double ty = LimelightHelpers.getTY(VisionConstants.limelightName);
+
+              RawDetection[] rawDetections =
+                  LimelightHelpers.getRawDetections(VisionConstants.limelightName);
+              double sideProportions = 0;
+
+              if (rawDetections.length != 0) {
+                double topLength =
+                    new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y)
+                        .getDistance(
+                            new Translation2d(
+                                rawDetections[0].corner1_X, rawDetections[0].corner1_Y));
+                double sideLength =
+                    new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y)
+                        .getDistance(
+                            new Translation2d(
+                                rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
+
+                sideProportions = sideLength / topLength;
+              }
 
               // Angle tx = Degrees.of(_tx.getAsDouble());
               // Angle ty = Degrees.of(_ty.getAsDouble());
