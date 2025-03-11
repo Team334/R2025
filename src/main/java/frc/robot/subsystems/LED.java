@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.lib.AdvancedSubsystem;
 import frc.robot.Constants.LEDConstants;
-import frc.robot.Robot;
 import frc.robot.subsystems.Manipulator.Piece;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
@@ -25,8 +24,6 @@ public class LED extends AdvancedSubsystem {
   private Color _allianceColor;
   private Color _algaeColor = new Color("#0acc82");
   private LEDPattern _patternState;
-
-  private Alliance _currentAlliance;
 
   private final LEDPattern _elevatorHeightMask;
 
@@ -44,25 +41,30 @@ public class LED extends AdvancedSubsystem {
         run(
             () -> {
               LEDPattern pattern =
-                  getCurrentPiece() == Piece.NONE
-                      ? LEDPattern.solid(
-                          _currentAlliance == Alliance.Red ? Color.kRed : Color.kBlue)
-                      : scroll();
+                  getCurrentPiece() == Piece.NONE ? LEDPattern.solid(_allianceColor) : scroll();
 
-              pattern.mask(_elevatorHeightMask).applyTo(_ledBuffer);
+              runPattern(pattern, true);
             }));
   }
 
   /** Set the leds to a pattern with the elevator mask overlayed. */
   public Command runPattern(LEDPattern pattern, boolean elevatorMask) {
-    return run(() -> pattern.mask(_elevatorHeightMask).applyTo(_ledBuffer));
+    return run(
+        () -> {
+          if (elevatorMask) pattern.mask(_elevatorHeightMask);
+
+          pattern.applyTo(_ledBuffer);
+        });
   }
 
   @Override
   public void periodic() {
     _led.setData(_ledBuffer);
 
-    _currentAlliance = DriverStation.getAlliance().get();
+    _allianceColor =
+        DriverStation.getAlliance()
+            .map(alliance -> alliance == Alliance.Red ? Color.kRed : Color.kBlue)
+            .orElse(Color.kLavender);
   }
 
   public LEDPattern scroll() {
@@ -79,7 +81,7 @@ public class LED extends AdvancedSubsystem {
   }
 
   public void stateLogic() {
-    Piece currPiece = Robot.getCurrentPiece();
+    // Piece currPiece = Robot.getCurrentPiece();
 
     // if (_swerve.aligningTo()) {
     //     LEDPattern base = LEDPattern.solid(Color.kOrange);
