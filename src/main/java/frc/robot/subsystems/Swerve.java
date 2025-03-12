@@ -538,10 +538,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getState().Pose;
   }
 
-  public Pose2d getTrigPose() {
-    return _acceptedEstimates.get(0).singleTagEstimates()[0].pose().toPose2d();
-  }
-
   /** Wrapper for getting estimated heading. */
   public Rotation2d getHeading() {
     return getPose().getRotation();
