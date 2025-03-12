@@ -634,11 +634,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       var estimates = cam.getNewEstimates();
 
       // TEMPORARY CAMERA PLACEMENT VISUALIZATION:
-      DogLog.log(
-          "Swerve/" + cam.camName + " Position",
-          new Pose3d(getPose())
-              .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
-              .transformBy(cam.robotToCam));
+      // DogLog.log(
+      //     "Swerve/" + cam.camName + " Position",
+      //     new Pose3d(getPose())
+      //         .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
+      //         .transformBy(cam.robotToCam));
 
       // process estimates
       estimates.forEach(
