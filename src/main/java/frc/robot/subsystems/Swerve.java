@@ -23,6 +23,7 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -462,18 +463,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               double sideProportions = 0;
 
               if (rawDetections.length != 0) {
-                double topLength =
-                    new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y)
-                        .getDistance(
-                            new Translation2d(
-                                rawDetections[0].corner1_X, rawDetections[0].corner1_Y));
-                double sideLength =
-                    new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y)
-                        .getDistance(
-                            new Translation2d(
-                                rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
+                Rectangle2d coralBox =
+                    new Rectangle2d(
+                        new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y),
+                        new Translation2d(rawDetections[0].corner3_X, rawDetections[0].corner3_Y));
 
-                sideProportions = sideLength / topLength;
+                sideProportions = coralBox.getYWidth() / coralBox.getXWidth();
               }
 
               // Angle tx = Degrees.of(_tx.getAsDouble());
