@@ -148,13 +148,13 @@ public final class Constants {
     public static final int feedMotorId = 15;
     public static final int actuatorMotorId = 8;
 
-    public static final Voltage feedkS = Volts.of(0);
+    public static final Voltage feedkS = Volts.of(0.32749);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.22873);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.16921);
 
     public static final Voltage actuatorkG = Volts.of(0);
     public static final Voltage actuatorkS = Volts.of(0);
@@ -266,7 +266,7 @@ public final class Constants {
     public static final AngularAcceleration maxElevatorAcceleration =
         RotationsPerSecondPerSecond.of(8);
 
-    public static final int homeSwitch = 6;
+    public static final int homeSwitch = 7;
 
     public static final int leftMotorId = 12;
     public static final int rightMotorId = 9;
@@ -309,14 +309,16 @@ public final class Constants {
   }
 
   public static class SerializerConstants {
-    public static final int frontBeamPort = 9;
+    public static final int frontBeamPort = 6;
     public static final int backBeamPort = 2;
 
-    public static final Voltage feedkS = Volts.of(0);
+    public static final Voltage feedkS = Volts.of(0.30489);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.28324);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.0082739);
+
+    // ka = 0.0091039
 
     public static final double feedGearRatio = 70.0 / 30;
 
@@ -326,8 +328,8 @@ public final class Constants {
   }
 
   public static class ManipulatorConstants {
-    public static final int leftMotorId = 11;
-    public static final int rightMotorId = 14;
+    public static final int leftMotorId = 14;
+    public static final int rightMotorId = 11;
 
     public static final int coralBeam = 8;
     public static final int algaeBeam = 4;
@@ -337,17 +339,21 @@ public final class Constants {
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
-    public static final Voltage leftFlywheelkS = Volts.of(0);
+    public static final Voltage leftFlywheelkS = Volts.of(0.44229);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.12915);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkP =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.013687);
 
-    public static final Voltage rightFlywheelkS = Volts.of(0);
+    // left wheel ka = 0.009767
+
+    public static final Voltage rightFlywheelkS = Volts.of(0.24209);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.11962);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkP =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(0.0020434);
+
+    // right wheel meow ka = 0.0096618
 
     public static final double flywheelGearRatio = 36.0 / 30;
 
