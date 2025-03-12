@@ -54,7 +54,6 @@ import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -502,12 +501,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
-        .andThen(defer(() -> driveTo(_alignGoal.getPose(side))))
+        .andThen(defer(() -> driveTo(_alignGoal.getPose(side), true)))
         .withName("Align To");
   }
 
-  /** Drives the robot in a straight line to some given goal pose. */
+  /** Drives the robot in a straight line to some given goal pose. Uses the global pose estimate. */
   public Command driveTo(Pose2d goalPose) {
+    return driveTo(goalPose, false);
+  }
+
+  /**
+   * Drives the robot in a straight line to some given goal pose.
+   *
+   * @param useTrigPose Whether to use the trig pose estimate.
+   * @return
+   */
+  public Command driveTo(Pose2d goalPose, boolean useTrigPose) {
     return run(() -> {
           ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose);
 
@@ -521,41 +530,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
         .withName("Drive To");
-  }
-
-  /**
-   * Returns the robot's field-relative pose using trig. This estimate uses the side-view and
-   * top-view right triangles formed between the robot and the specified tag to estimate the robot's
-   * pose. For this to work, a tag must by in view of one of the {@link VisionPoseEstimator}s.
-   *
-   * @param tagId The tag id to use for the trig estimate.
-   * @return The trig estimate (which also gets latency compensated). If the tag doesn't exist or
-   *     isn't in view of any of the cameras, the normal pose estimator pose is returned as a
-   *     default.
-   */
-  public Pose2d getTrigPose(int tagId) {
-    if (FieldConstants.tagLayout.getTagPose(tagId).isEmpty()) return getPose();
-
-    VisionPoseEstimate[] tagIsVisible =
-        _allEstimates.stream()
-            .filter(e -> Arrays.asList(e.detectedTags()).contains((Object) tagId))
-            .toArray(VisionPoseEstimate[]::new);
-
-    if (tagIsVisible.length == 0) return getPose();
-
-    VisionPoseEstimate visionEstimate = tagIsVisible[0];
-
-    Pose3d tagPose = FieldConstants.tagLayout.getTagPose(tagId).get();
-
-    double distance = visionEstimate.avgTagDistance();
-
-    // TODO: trig over here using the above values
-    Pose2d trigPose = Pose2d.kZero;
-
-    Pose2d oldPose =
-        samplePoseAt(Utils.fpgaToCurrentTime(visionEstimate.timestamp())).orElse(getPose());
-
-    return trigPose.transformBy(getPose().minus(oldPose));
   }
 
   /** Wrapper for getting estimated pose. */
