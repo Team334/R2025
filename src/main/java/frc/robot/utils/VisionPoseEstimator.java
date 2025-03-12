@@ -21,6 +21,7 @@ import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -130,6 +131,8 @@ public class VisionPoseEstimator implements AutoCloseable {
 
       /** The detected tag ids in this measurement. */
       int[] detectedTags,
+
+      /** The array of SingleTagEstimtes recived from trig calulcations */
       SingleTagEstimate[] singleTagEstimates,
 
       /** The average distance from the tag(s) in 3D space (-1 when no tags). */
@@ -256,19 +259,15 @@ public class VisionPoseEstimator implements AutoCloseable {
 
   // appends a new estimate to the log file
   private void logNewEstimate(VisionPoseEstimate estimate) {
-    Pose3d[] trigPoses = new Pose3d[estimate.singleTagEstimates.length];
-
-    for (int i = 0; i < estimate.singleTagEstimates.length; i++) {
-      trigPoses[i] = estimate.singleTagEstimates[i].pose;
-    }
-
     DogLog.log(_estimateLogPath + "Pose", estimate.pose);
     DogLog.log(_estimateLogPath + "Timestamp", estimate.timestamp);
     DogLog.log(_estimateLogPath + "Ambiguity", estimate.ambiguity);
     DogLog.log(_estimateLogPath + "Alternate Pose", estimate.altPose);
     DogLog.log(_estimateLogPath + "Detected Corners", estimate.detectedCorners);
     DogLog.log(_estimateLogPath + "Detected Tags", estimate.detectedTags);
-    DogLog.log(_estimateLogPath + "Trig Poses", trigPoses);
+    DogLog.log(
+        _estimateLogPath + "Trig Poses",
+        Arrays.stream(estimate.singleTagEstimates).map(e -> e.pose).toArray(Pose3d[]::new));
     DogLog.log(_estimateLogPath + "Average Tag Distance", estimate.avgTagDistance);
     DogLog.log(_estimateLogPath + "Std Devs", estimate.stdDevs);
     DogLog.log(_estimateLogPath + "Is Valid", estimate.isValid);

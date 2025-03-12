@@ -518,14 +518,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
    */
   public Command driveTo(Pose2d goalPose, boolean useTrigPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(getPose(), goalPose);
+          ChassisSpeeds speeds =
+              _poseController.calculate(useTrigPose ? getPose() : getPose(), goalPose);
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
         .beforeStarting(
             () ->
                 _poseController.reset(
-                    getPose(),
+                    useTrigPose ? getPose() : getPose(),
                     goalPose,
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
@@ -535,6 +536,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /** Wrapper for getting estimated pose. */
   public Pose2d getPose() {
     return getState().Pose;
+  }
+
+  public Pose2d getTrigPose() {
+    return _acceptedEstimates.get(0).singleTagEstimates()[0].pose().toPose2d();
   }
 
   /** Wrapper for getting estimated heading. */
