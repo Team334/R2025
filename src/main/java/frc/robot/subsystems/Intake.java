@@ -128,7 +128,7 @@ public class Intake extends AdvancedSubsystem {
     CTREUtil.attempt(
         () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
     CTREUtil.attempt(
-        () -> _actuatorMotor.setPosition(IntakeConstants.actuatorOut), _actuatorMotor);
+        () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
 
     CTREUtil.attempt(() -> _feedMotor.optimizeBusUtilization(), _feedMotor);
     CTREUtil.attempt(() -> _actuatorMotor.optimizeBusUtilization(), _actuatorMotor);
@@ -145,7 +145,7 @@ public class Intake extends AdvancedSubsystem {
     CTREUtil.attempt(
         () ->
             BaseStatusSignal.setUpdateFrequencyForAll(
-                250,
+                100,
                 _actuatorMotor.getPosition(),
                 _actuatorMotor.getVelocity(),
                 _actuatorMotor.getMotorVoltage()),
@@ -155,7 +155,7 @@ public class Intake extends AdvancedSubsystem {
     FaultLogger.register(_actuatorMotor);
 
     SysId.displayRoutine(
-        "Actuator", _actuatorRoutine, () -> getAngle() >= 2, () -> getAngle() <= -0.25);
+        "Actuator", _actuatorRoutine, () -> getAngle() >= 1.8, () -> getAngle() <= -0.4);
     SysId.displayRoutine("Intake Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {

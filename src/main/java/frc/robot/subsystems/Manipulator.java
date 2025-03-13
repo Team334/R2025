@@ -236,8 +236,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
-    // return !_algaeBeam.get();
-    return _algaeBeamFake.get();
+    return !_algaeBeam.get();
   }
 
   @Logged(name = "Speed")

@@ -156,27 +156,28 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
         Volts.per(RotationsPerSecond).ofNative(0.62406);
 
-    public static final Voltage actuatorkG = Volts.of(0);
-    public static final Voltage actuatorkS = Volts.of(0);
+    public static final Voltage actuatorkG = Volts.of(0.2127);
+    public static final Voltage actuatorkS = Volts.of(0.14445);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> actuatorkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(5.8131);
     public static final Per<VoltageUnit, AngularAccelerationUnit> actuatorkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.10315);
 
-    public static final Per<VoltageUnit, AngleUnit> actuatorkP = Volts.per(Rotations).ofNative(0);
+    public static final Per<VoltageUnit, AngleUnit> actuatorkP =
+        Volts.per(Rotations).ofNative(2.804);
 
-    public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(5);
+    public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(2);
     public static final AngularAcceleration actuatorAcceleration =
-        RotationsPerSecondPerSecond.of(5);
+        RotationsPerSecondPerSecond.of(4);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle actuatorStowed = Radians.of(2.33874);
-    public static final Angle actuatorOut = Radians.of(-0.736);
+    public static final Angle actuatorStowed = Radians.of(2.3067);
+    public static final Angle actuatorOut = Radians.of(-0.307);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }
@@ -331,7 +332,7 @@ public final class Constants {
     public static final int leftMotorId = 14;
     public static final int rightMotorId = 11;
 
-    public static final int coralBeam = 8;
+    public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(50);
