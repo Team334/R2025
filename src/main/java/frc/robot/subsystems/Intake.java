@@ -155,7 +155,7 @@ public class Intake extends AdvancedSubsystem {
     FaultLogger.register(_actuatorMotor);
 
     SysId.displayRoutine(
-        "Actuator", _actuatorRoutine, () -> getAngle() >= 1.95, () -> getAngle() <= -0.5);
+        "Actuator", _actuatorRoutine, () -> getAngle() >= 2, () -> getAngle() <= -0.25);
     SysId.displayRoutine("Intake Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
