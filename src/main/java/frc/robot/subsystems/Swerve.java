@@ -24,6 +24,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -52,6 +53,7 @@ import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
+import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -151,6 +153,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private boolean _ignoreVisionEstimates = true; // for sim for now
 
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
+
+  @Logged(name = "Align Tag")
+  private int _alignTag = -1;
+
+  private SingleTagEstimate _alignEstimate = null;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -446,6 +453,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
    * @return Drive to the correct pose.
    */
   public Command alignTo(AlignPoses alignGoal, AlignSide side) {
+    return alignTo(alignGoal, side, false);
+  }
+
+  /**
+   * Aligns to a {@link AlignPoses} to the correct side.
+   *
+   * @return Drive to the correct pose.
+   */
+  public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
     return runOnce(
             () -> {
               Pose2d pose = getPose();
@@ -481,7 +497,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 double minDistance = Double.MAX_VALUE;
 
                 for (int i = 0; i < 2; i++) {
-                  AlignPoses offset = alignGoal.offset(0, -6.26 * i);
+                  AlignPoses offset =
+                      alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
 
                   offset =
                       alliance.get() == Alliance.Red
@@ -502,7 +519,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
-        .andThen(defer(() -> driveTo(_alignGoal.getPose(side), this::getPose)))
+        .andThen(
+            defer(
+                () ->
+                    sequence(
+                        driveTo(
+                            startReversed
+                                ? _alignGoal
+                                    .transform(Translation2d.kZero, Rotation2d.k180deg)
+                                    .getPose(side)
+                                : _alignGoal.getPose(side),
+                            () -> getPose()),
+                        driveTo(_alignGoal.getPose(side), () -> getPose()))))
+        .finallyDo(() -> _alignTag = -1)
         .withName("Align To");
   }
 
