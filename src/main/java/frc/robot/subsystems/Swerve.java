@@ -56,6 +56,7 @@ import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -517,21 +518,39 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 }
               }
 
+              _alignTag = 10;
+
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
         .andThen(
             defer(
                 () ->
                     sequence(
-                        driveTo(
-                            startReversed
-                                ? _alignGoal
-                                    .transform(Translation2d.kZero, Rotation2d.k180deg)
-                                    .getPose(side)
-                                : _alignGoal.getPose(side),
-                            () -> getPose()),
-                        driveTo(_alignGoal.getPose(side), () -> getPose()))))
-        .finallyDo(() -> _alignTag = -1)
+                            driveTo(
+                                startReversed
+                                    ? _alignGoal
+                                        .transform(Translation2d.kZero, Rotation2d.k180deg)
+                                        .getPose(side)
+                                    : _alignGoal.getPose(side),
+                                () -> getPose()),
+                            driveTo(
+                                _alignGoal.getPose(side),
+                                () -> {
+                                  return _alignEstimate
+                                      .pose()
+                                      .toPose2d()
+                                      .transformBy(
+                                          getPose()
+                                              .minus(
+                                                  samplePoseAt(_alignEstimate.timestamp())
+                                                      .orElse(getPose())));
+                                }))
+                        .beforeStarting(() -> _ignoreVisionEstimates = true)))
+        .finallyDo(
+            () -> {
+              _alignTag = -1;
+              _ignoreVisionEstimates = false;
+            })
         .withName("Align To");
   }
 
@@ -584,6 +603,27 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getState().Speeds;
   }
 
+  private void updateAlignEstimate() {
+    if (_alignTag == -1) _alignEstimate = null;
+
+    _allEstimates.stream()
+        .map(e -> e.singleTagEstimates())
+        .flatMap(e -> Arrays.stream(e))
+        .forEach(
+            e -> {
+              if (e.tag() != _alignTag) return;
+
+              if (_alignEstimate == null) {
+                _alignEstimate = e;
+                return;
+              }
+
+              if (e.distance() < _alignEstimate.distance()) {
+                _alignEstimate = e;
+              }
+            });
+  }
+
   // updates pose estimator with vision
   private void updateVisionPoseEstimates() {
     _acceptedEstimates.clear();
@@ -622,6 +662,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Override
   public void periodic() {
     updateVisionPoseEstimates();
+    updateAlignEstimate();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()

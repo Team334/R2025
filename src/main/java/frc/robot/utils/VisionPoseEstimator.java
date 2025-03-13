@@ -109,6 +109,9 @@ public class VisionPoseEstimator implements AutoCloseable {
       /** The detected tag id. */
       int tag,
 
+      /** The timestamp of when the frame was made. */
+      double timestamp,
+
       /** The distance from this tag. */
       double distance) {}
 
@@ -275,7 +278,7 @@ public class VisionPoseEstimator implements AutoCloseable {
 
   /** Gives a single tag estimate using trig. */
   private SingleTagEstimate getSingleTagEstimate(
-      PhotonTrackedTarget target, Rotation2d gyroHeading) {
+      PhotonTrackedTarget target, Rotation2d gyroHeading, double timestamp) {
     Translation2d camToTagVector =
         new Translation3d(
                 target.getBestCameraToTarget().getTranslation().getNorm(),
@@ -299,6 +302,7 @@ public class VisionPoseEstimator implements AutoCloseable {
     return new SingleTagEstimate(
         new Pose3d(robotPose),
         target.getFiducialId(),
+        timestamp,
         robotPose.getTranslation().getDistance(tagPose.getTranslation()));
   }
 
@@ -362,7 +366,7 @@ public class VisionPoseEstimator implements AutoCloseable {
       int tagId = target.getFiducialId();
       Pose3d tagPose = _poseEstimator.getFieldTags().getTagPose(tagId).get();
 
-      singleTagEstimates[i] = getSingleTagEstimate(target, gyroHeading);
+      singleTagEstimates[i] = getSingleTagEstimate(target, gyroHeading, timestamp);
 
       detectedTags[i] = tagId;
       avgTagDistance += tagPose.getTranslation().getDistance(estimatedPose.getTranslation());
