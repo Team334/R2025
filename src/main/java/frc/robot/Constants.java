@@ -154,7 +154,7 @@ public final class Constants {
         Volts.per(RotationsPerSecond).ofNative(0.22873);
 
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        Volts.per(RotationsPerSecond).ofNative(0.16921);
+        Volts.per(RotationsPerSecond).ofNative(0.62406);
 
     public static final Voltage actuatorkG = Volts.of(0);
     public static final Voltage actuatorkS = Volts.of(0);
