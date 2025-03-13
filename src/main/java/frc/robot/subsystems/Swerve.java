@@ -58,6 +58,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
 
 @Logged(strategy = Strategy.OPT_IN)
@@ -501,32 +502,30 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
-        .andThen(defer(() -> driveTo(_alignGoal.getPose(side), true)))
+        .andThen(defer(() -> driveTo(_alignGoal.getPose(side), this::getPose)))
         .withName("Align To");
   }
 
   /** Drives the robot in a straight line to some given goal pose. Uses the global pose estimate. */
   public Command driveTo(Pose2d goalPose) {
-    return driveTo(goalPose, false);
+    return driveTo(goalPose, this::getPose);
   }
 
   /**
    * Drives the robot in a straight line to some given goal pose.
    *
    * @param useTrigPose Whether to use the trig pose estimate.
-   * @return
    */
-  public Command driveTo(Pose2d goalPose, boolean useTrigPose) {
+  private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
     return run(() -> {
-          ChassisSpeeds speeds =
-              _poseController.calculate(useTrigPose ? getPose() : getPose(), goalPose);
+          ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
         .beforeStarting(
             () ->
                 _poseController.reset(
-                    useTrigPose ? getPose() : getPose(),
+                    robotPose.get(),
                     goalPose,
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::atGoal)
