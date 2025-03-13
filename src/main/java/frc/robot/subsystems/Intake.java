@@ -128,7 +128,7 @@ public class Intake extends AdvancedSubsystem {
     CTREUtil.attempt(
         () -> _actuatorMotor.getConfigurator().apply(actuatorMotorConfigs), _actuatorMotor);
     CTREUtil.attempt(
-        () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
+        () -> _actuatorMotor.setPosition(IntakeConstants.actuatorOut), _actuatorMotor);
 
     CTREUtil.attempt(() -> _feedMotor.optimizeBusUtilization(), _feedMotor);
     CTREUtil.attempt(() -> _actuatorMotor.optimizeBusUtilization(), _actuatorMotor);
@@ -145,7 +145,7 @@ public class Intake extends AdvancedSubsystem {
     CTREUtil.attempt(
         () ->
             BaseStatusSignal.setUpdateFrequencyForAll(
-                100,
+                250,
                 _actuatorMotor.getPosition(),
                 _actuatorMotor.getVelocity(),
                 _actuatorMotor.getMotorVoltage()),
