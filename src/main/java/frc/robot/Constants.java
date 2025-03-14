@@ -256,16 +256,16 @@ public final class Constants {
       setpointMap.put(Pair.of(HOME, L4), I1);
     }
 
-    public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(4);
+    public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(12);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
 
     public static final AngularAcceleration maxWristAcceleration =
-        RotationsPerSecondPerSecond.of(6);
+        RotationsPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(8);
+        RotationsPerSecondPerSecond.of(15);
 
     public static final int homeSwitch = 7;
 
@@ -279,34 +279,34 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(35);
+    public static final Angle maxElevatorHeight = Radians.of(37.5);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-0.32);
-    public static final Angle maxWristAngle = Radians.of(0.67);
+    public static final Angle minWristAngle = Radians.of(0);
+    public static final Angle maxWristAngle = Radians.of(2.14);
 
     public static final double wristGearRatio = 33.75;
 
-    public static final Voltage elevatorkS = Volts.of(0);
-    public static final Voltage elevatorkG = Volts.of(0);
+    public static final Voltage elevatorkS = Volts.of(0.057311);
+    public static final Voltage elevatorkG = Volts.of(0.32228);
     public static final Per<VoltageUnit, AngularVelocityUnit> elevatorkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(1.1185);
     public static final Per<VoltageUnit, AngularAccelerationUnit> elevatorkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.026679);
 
     public static final Per<VoltageUnit, AngleUnit> elevatorkP =
-        Volts.per(Rotations).ofNative(0); // 15 from sysid
+        Volts.per(Rotations).ofNative(6.7372); // 15 from sysid
 
-    public static final Voltage wristkS = Volts.of(0);
-    public static final Voltage wristkG = Volts.of(0);
+    public static final Voltage wristkS = Volts.of(0.1);
+    public static final Voltage wristkG = Volts.of(0.17);
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
-        Volts.per(RotationsPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecond).ofNative(4.05);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.02);
 
     public static final Per<VoltageUnit, AngleUnit> wristkP =
-        Volts.per(Rotations).ofNative(0); // 17.221 from sysid
+        Volts.per(Rotations).ofNative(13.082); // 17.221 from sysid
   }
 
   public static class SerializerConstants {
@@ -317,7 +317,7 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
         Volts.per(RotationsPerSecond).ofNative(0.28324);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
-        Volts.per(RotationsPerSecond).ofNative(0.0082739);
+        Volts.per(RotationsPerSecond).ofNative(0.41102);
 
     // ka = 0.0091039
 

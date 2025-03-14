@@ -239,7 +239,6 @@ public class Wristevator extends AdvancedSubsystem {
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
     wristMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    wristMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
@@ -290,7 +289,7 @@ public class Wristevator extends AdvancedSubsystem {
 
     _rightMotor.setControl(new Follower(WristevatorConstants.leftMotorId, true));
 
-    setDefaultCommand(holdInPlace());
+    //setDefaultCommand(holdInPlace());
 
     Translation2d[] presets = new Translation2d[Preset.values().length];
     Translation2d[] intermediates = new Translation2d[Intermediate.values().length];
@@ -315,7 +314,7 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Intermediates", intermediates);
 
     SysId.displayRoutine(
-        "Elevator", _elevatorRoutine, () -> getHeight() >= 29, () -> getHeight() <= 0.5);
+        "Elevator", _elevatorRoutine, () -> getHeight() >= 35, () -> getHeight() <= 0.5);
     SysId.displayRoutine("Wrist", _wristRoutine, () -> getAngle() >= 0.5, () -> getAngle() <= -0.2);
 
     if (Robot.isSimulation()) {
@@ -429,8 +428,7 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    // return !_homeSwitch.get();
-    return _homeSwitchFake.getAsBoolean();
+    return !_homeSwitch.get();
   }
 
   /** Whether the wristevator is open for manual control or not. */
