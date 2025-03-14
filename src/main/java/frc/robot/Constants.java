@@ -335,7 +335,7 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(50);
+    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(60);
     public static final AngularVelocity slowFeedSpeed = RadiansPerSecond.of(16);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
@@ -358,6 +358,6 @@ public final class Constants {
 
     public static final double flywheelGearRatio = 36.0 / 30;
 
-    public static final double holdAlgaeVoltage = 0.6;
+    public static final double holdAlgaeVoltage = 1.5;
   }
 }

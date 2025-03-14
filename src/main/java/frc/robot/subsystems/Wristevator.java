@@ -429,8 +429,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
-    return !_homeSwitch.get();
-    // return _homeSwitchFake.getAsBoolean();
+    // return !_homeSwitch.get();
+    return _homeSwitchFake.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
