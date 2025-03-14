@@ -66,11 +66,17 @@ public final class Constants {
     public static final Translation2d humanCenter =
         new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));
 
+    public static final int blueReefTag = 18;
+    public static final int redReefTag = 7;
+
     public static final AlignPoses reef =
         new AlignPoses(
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
             new Pose2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero));
+
+    public static final int blueHumanTag = 13;
+    public static final int redHumanTag = 1;
 
     public static final AlignPoses human =
         new AlignPoses(
@@ -86,6 +92,9 @@ public final class Constants {
                 Inches.of(64.61).in(Meters),
                 Inches.of(294.86).in(Meters),
                 new Rotation2d(Degrees.of(126))));
+
+    public static final int blueProcessorTag = 16;
+    public static final int redProcessorTag = 3;
 
     public static final AlignPoses processor =
         new AlignPoses(

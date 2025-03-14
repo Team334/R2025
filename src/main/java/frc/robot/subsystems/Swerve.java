@@ -448,11 +448,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
-  /**
-   * Aligns to a {@link AlignPoses} to the correct side.
-   *
-   * @return Drive to the correct pose.
-   */
+  /** Aligns to a {@link AlignPoses} to the correct side. */
   public Command alignTo(AlignPoses alignGoal, AlignSide side) {
     return alignTo(alignGoal, side, false);
   }
@@ -460,7 +456,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /**
    * Aligns to a {@link AlignPoses} to the correct side.
    *
-   * @return Drive to the correct pose.
+   * @param side The side to align to.
+   * @param startReversed Whether to start driving towards the goal pose in reverse, needed if the
+   *     required camera is on the opposite side of the alignment heading.
    */
   public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
     return runOnce(
@@ -518,34 +516,61 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 }
               }
 
-              _alignTag = 10;
+              // dummy value
+              _alignTag = FieldConstants.blueReefTag;
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
+
+              DogLog.log(
+                  "FUCKK",
+                  _alignGoal.transform(Translation2d.kZero, Rotation2d.k180deg).getPose(side));
             })
         .andThen(
             defer(
                 () ->
                     sequence(
-                            driveTo(
+                        // first drive towards the goal pose using the global pose estimate
+                        // the goal pose is reversed if the alignment is started as reversed
+                        // this command ends when the alignment tag comes in view at the right
+                        // distance
+                        // or if that doesn't happen, it's until the robot is close to the alignment
+                        // pose
+                        driveTo(
                                 startReversed
                                     ? _alignGoal
                                         .transform(Translation2d.kZero, Rotation2d.k180deg)
                                         .getPose(side)
                                     : _alignGoal.getPose(side),
-                                () -> getPose()),
-                            driveTo(
-                                _alignGoal.getPose(side),
-                                () -> {
-                                  return _alignEstimate
-                                      .pose()
-                                      .toPose2d()
-                                      .transformBy(
-                                          getPose()
-                                              .minus(
-                                                  samplePoseAt(_alignEstimate.timestamp())
-                                                      .orElse(getPose())));
-                                }))
-                        .beforeStarting(() -> _ignoreVisionEstimates = true)))
+                                this::getPose)
+                            .until(
+                                () ->
+                                    _alignEstimate != null
+                                        || getPose()
+                                                .getTranslation()
+                                                .getDistance(
+                                                    _alignGoal.getPose(side).getTranslation())
+                                            < 1.5),
+
+                        // then, drive towards the goal pose (not reversed) using the alignment tag
+                        // or the global pose estimate if the alignment tag was never seen
+                        driveTo(
+                            _alignGoal.getPose(side),
+                            () -> {
+                              if (_alignEstimate == null) return getPose();
+
+                              _ignoreVisionEstimates = true;
+
+                              return _alignEstimate
+                                  .pose()
+                                  .toPose2d()
+                                  .transformBy(
+                                      getPose()
+                                          .minus(
+                                              samplePoseAt(
+                                                      Utils.fpgaToCurrentTime(
+                                                          _alignEstimate.timestamp()))
+                                                  .orElse(getPose())));
+                            }))))
         .finallyDo(
             () -> {
               _alignTag = -1;
@@ -559,11 +584,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return driveTo(goalPose, this::getPose);
   }
 
-  /**
-   * Drives the robot in a straight line to some given goal pose.
-   *
-   * @param useTrigPose Whether to use the trig pose estimate.
-   */
+  /** Drives the robot in a straight line to some given goal pose. */
   private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
     return run(() -> {
           ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
@@ -613,10 +634,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             e -> {
               if (e.tag() != _alignTag) return;
 
-              if (_alignEstimate == null) {
+              if (e.distance() < 3) {
                 _alignEstimate = e;
                 return;
               }
+
+              if (_alignEstimate == null) return;
 
               if (e.distance() < _alignEstimate.distance()) {
                 _alignEstimate = e;
