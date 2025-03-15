@@ -195,11 +195,11 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(-1.06), Radians.of(0)),
-      HUMAN(Radians.of(-1.06), Radians.of(0)),
+      HUMAN(Radians.of(-0.457), Radians.of(17.984)),
       PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
-      L1(Radians.of(-0.268), Radians.of(5.6)),
-      L2(Radians.of(-1.06), Radians.of(16.63)),
+      L1(Radians.of(-0.233), Radians.of(7.708)),
+      L2(Radians.of(-1.1), Radians.of(18.043)),
       L3(Radians.of(-1.06), Radians.of(26.4)),
       L4(Radians.of(1.282), Radians.of(37.49)),
 
@@ -229,7 +229,7 @@ public final class Constants {
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
       I1(Radians.of(-1.06), Radians.of(3)),
-      I2(Radians.of(0.385), Radians.of(36.92)),
+      I2(Radians.of(-1.06), Radians.of(36.92)),
       I3(Radians.of(-1.06), Radians.of(30));
 
       private final Angle _angle;
