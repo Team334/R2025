@@ -32,9 +32,11 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
@@ -61,6 +63,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -152,6 +155,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
+  
+  private boolean _prevIgnoreVisionEstimates = _ignoreVisionEstimates;
+
+  private BooleanEvent _ignoreVisionEstimatesEvent = new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), () -> _ignoreVisionEstimates);
 
   @Logged(name = "Align Tag")
   private int _alignTag = -1;
@@ -248,7 +255,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     registerFallibles();
 
-    // resetPose(new Pose2d(1.439, 1.566, new Rotation2d(-2.203)));
+    _ignoreVisionEstimatesEvent.rising().ifHigh(() -> _prevIgnoreVisionEstimates = false);
+    _ignoreVisionEstimatesEvent.falling().ifHigh(() -> _prevIgnoreVisionEstimates = true);
 
     if (Robot.isSimulation()) {
       startSimThread();
@@ -691,7 +699,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // alignment tag is wanted
   private void updateAlignEstimate() {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = false; // TODO: need a way to not do this
+      _ignoreVisionEstimates = _prevIgnoreVisionEstimates;
       _alignEstimate = null;
       _alignOdomCompensation = null;
 
