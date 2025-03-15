@@ -55,7 +55,7 @@ public final class Constants {
 
   public static class FieldConstants {
     public static final AprilTagFieldLayout tagLayout =
-        AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+        AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
@@ -121,6 +121,8 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
+    public static final Distance trigMaxDistance = Meters.of(1.5);
+
     public static final VisionPoseEstimatorConstants arducamOne =
         new VisionPoseEstimatorConstants(
             arducamOneName,
@@ -151,6 +153,8 @@ public final class Constants {
 
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.1);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.1);
+
+    public static final Distance pathingThreshold = Meters.of(1.5);
   }
 
   public static class IntakeConstants {

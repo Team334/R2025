@@ -269,7 +269,7 @@ public class VisionPoseEstimator implements AutoCloseable {
     DogLog.log(_estimateLogPath + "Detected Corners", estimate.detectedCorners);
     DogLog.log(_estimateLogPath + "Detected Tags", estimate.detectedTags);
     DogLog.log(
-        _estimateLogPath + "Trig Poses",
+        _estimateLogPath + "Single Tag Trig Estimates",
         Arrays.stream(estimate.singleTagEstimates).map(e -> e.pose).toArray(Pose3d[]::new));
     DogLog.log(_estimateLogPath + "Average Tag Distance", estimate.avgTagDistance);
     DogLog.log(_estimateLogPath + "Std Devs", estimate.stdDevs);

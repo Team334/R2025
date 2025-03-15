@@ -24,6 +24,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -59,7 +60,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
@@ -153,12 +153,14 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
 
-  private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
-
   @Logged(name = "Align Tag")
   private int _alignTag = -1;
 
+  private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
+
   private SingleTagEstimate _alignEstimate = null;
+
+  private Transform2d _alignOdomCompensation = null;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -174,7 +176,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
 
-  private final List<VisionPoseEstimate> _allEstimates = new ArrayList<>();
+  private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
 
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
@@ -347,7 +349,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
-  /** Resets the heading to zero */
+  /** Resets the heading to zero. */
   public Command resetHeading() {
     return runOnce(
         () -> {
@@ -463,67 +465,73 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
     return runOnce(
             () -> {
-              Pose2d pose = getPose();
-              Optional<Alliance> alliance = DriverStation.getAlliance();
+              Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
 
-              AlignPoses rotated =
-                  alliance.get() == Alliance.Red
-                      ? alignGoal.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                      : alignGoal;
-
-              _alignGoal = rotated;
+              Pose2d pose =
+                  getPose()
+                      .rotateAround(
+                          FieldConstants.fieldCenter,
+                          alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
 
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;
 
-                var reefCenter =
-                    alliance.get() == Alliance.Red
-                        ? FieldConstants.reefCenter.rotateAround(
-                            FieldConstants.fieldCenter, Rotation2d.k180deg)
-                        : FieldConstants.reefCenter;
+                int baseTag =
+                    alliance == Alliance.Blue
+                        ? FieldConstants.blueReefTag
+                        : FieldConstants.redReefTag;
+                int rotateDirection = alliance == Alliance.Blue ? -1 : 1;
 
                 for (int i = 0; i < 6; i++) {
-                  var goal = rotated.rotateAround(reefCenter, Rotation2d.fromDegrees(60).times(i));
+                  AlignPoses goal =
+                      FieldConstants.reef.rotateAround(
+                          FieldConstants.reefCenter,
+                          Rotation2d.fromDegrees(rotateDirection * 60).times(i));
 
                   if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
                     _alignGoal = goal;
                     minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+
+                    _alignTag = baseTag + i;
                   }
                 }
-              }
-
-              if (alignGoal == FieldConstants.human) {
+              } else if (alignGoal == FieldConstants.human) {
                 double minDistance = Double.MAX_VALUE;
 
+                int baseTag =
+                    alliance == Alliance.Blue
+                        ? FieldConstants.blueHumanTag
+                        : FieldConstants.redHumanTag;
+                int rotateDirection = alliance == Alliance.Blue ? 1 : -1;
+
                 for (int i = 0; i < 2; i++) {
-                  AlignPoses offset =
-                      alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+                  AlignPoses goal =
+                      alignGoal
+                          .transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero)
+                          .rotateAround(
+                              alignGoal.getCenter().getTranslation(),
+                              Rotation2d.fromDegrees(rotateDirection * 106).times(i));
 
-                  offset =
-                      alliance.get() == Alliance.Red
-                          ? offset.rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-                          : offset;
+                  if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+                    _alignGoal = goal;
+                    minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
 
-                  offset =
-                      offset.rotateAround(
-                          offset.getCenter().getTranslation(),
-                          Rotation2d.fromDegrees(106).times(i));
-
-                  if (pose.minus(offset.getCenter()).getTranslation().getNorm() < minDistance) {
-                    _alignGoal = offset;
-                    minDistance = pose.minus(offset.getCenter()).getTranslation().getNorm();
+                    _alignTag = baseTag + i;
                   }
                 }
+              } else if (alignGoal == FieldConstants.processor) {
+                _alignTag =
+                    alliance == Alliance.Blue
+                        ? FieldConstants.blueProcessorTag
+                        : FieldConstants.redProcessorTag;
               }
 
-              // dummy value
-              _alignTag = FieldConstants.blueReefTag;
+              _alignGoal =
+                  _alignGoal.rotateAround(
+                      FieldConstants.fieldCenter,
+                      alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
-
-              DogLog.log(
-                  "FUCKK",
-                  _alignGoal.transform(Translation2d.kZero, Rotation2d.k180deg).getPose(side));
             })
         .andThen(
             defer(
@@ -549,33 +557,24 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                                                 .getTranslation()
                                                 .getDistance(
                                                     _alignGoal.getPose(side).getTranslation())
-                                            < 1.5),
+                                            < SwerveConstants.pathingThreshold.in(Meters)),
 
-                        // then, drive towards the goal pose (not reversed) using the alignment tag
+                        // then, drive towards the goal pose (not reversed) using the alignment
+                        // estimate
                         // or the global pose estimate if the alignment tag was never seen
                         driveTo(
                             _alignGoal.getPose(side),
                             () -> {
                               if (_alignEstimate == null) return getPose();
 
-                              _ignoreVisionEstimates = true;
-
                               return _alignEstimate
                                   .pose()
                                   .toPose2d()
-                                  .transformBy(
-                                      getPose()
-                                          .minus(
-                                              samplePoseAt(
-                                                      Utils.fpgaToCurrentTime(
-                                                          _alignEstimate.timestamp()))
-                                                  .orElse(getPose())));
+                                  .transformBy(_alignOdomCompensation);
                             }))))
         .finallyDo(
-            () -> {
-              _alignTag = -1;
-              _ignoreVisionEstimates = false;
-            })
+            () -> _alignTag = -1 // clear alignment tag
+            )
         .withName("Align To");
   }
 
@@ -624,35 +623,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getState().Speeds;
   }
 
-  private void updateAlignEstimate() {
-    if (_alignTag == -1) _alignEstimate = null;
-
-    _allEstimates.stream()
-        .map(e -> e.singleTagEstimates())
-        .flatMap(e -> Arrays.stream(e))
-        .forEach(
-            e -> {
-              if (e.tag() != _alignTag) return;
-
-              if (e.distance() < 3) {
-                _alignEstimate = e;
-                return;
-              }
-
-              if (_alignEstimate == null) return;
-
-              if (e.distance() < _alignEstimate.distance()) {
-                _alignEstimate = e;
-              }
-            });
-  }
-
   // updates pose estimator with vision
   private void updateVisionPoseEstimates() {
     _acceptedEstimates.clear();
     _rejectedEstimates.clear();
 
-    _allEstimates.clear();
+    _newEstimates.clear();
 
     _detectedTags.clear();
 
@@ -677,8 +653,55 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             else _rejectedEstimates.add(estimate);
           });
 
-      _allEstimates.addAll(_acceptedEstimates);
-      _allEstimates.addAll(_rejectedEstimates);
+      _newEstimates.addAll(_acceptedEstimates);
+      _newEstimates.addAll(_rejectedEstimates);
+    }
+  }
+
+  // update the alignment estimate
+  // and the odometry compensation transform when an
+  // alignment tag is wanted
+  private void updateAlignEstimate() {
+    if (_alignTag == -1) {
+      _ignoreVisionEstimates = false;
+      _alignEstimate = null;
+      _alignOdomCompensation = null;
+
+      return;
+    }
+
+    _newEstimates.stream()
+        .map(e -> e.singleTagEstimates())
+        .flatMap(e -> Arrays.stream(e))
+        .forEach(
+            e -> {
+              if (e.tag() != _alignTag) return;
+
+              if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
+
+              if (_alignEstimate == null) _alignEstimate = e;
+
+              // only override align estimate if the new estimate is closer
+              if (e.distance() < _alignEstimate.distance()) _alignEstimate = e;
+            });
+
+    if (_alignEstimate == null) return;
+
+    _ignoreVisionEstimates = true; // ensure that the transform2d is ONLY odometry data
+
+    var oldPose = samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()));
+
+    if (oldPose.isPresent()) {
+      _alignOdomCompensation = getPose().minus(oldPose.get());
+      return;
+    }
+
+    // if the odom compensation transform doesn't yet exist and it can't find the oldPose, find a
+    // transform
+    // such the the odom compensated vision pose will be equilavent to getPose()
+    if (_alignOdomCompensation == null) {
+      _alignOdomCompensation = getPose().minus(_alignEstimate.pose().toPose2d());
+      return;
     }
   }
 
