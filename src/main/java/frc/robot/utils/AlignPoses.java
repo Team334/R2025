@@ -64,11 +64,9 @@ public class AlignPoses {
   /** Rotates all the poses around a point. */
   public AlignPoses rotateAround(Translation2d point, Rotation2d rot) {
     return new AlignPoses(
-        new Pose2d(_left.getTranslation().rotateAround(point, rot), _left.getRotation().plus(rot)),
-        new Pose2d(
-            _center.getTranslation().rotateAround(point, rot), _center.getRotation().plus(rot)),
-        new Pose2d(
-            _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
+        _left.rotateAround(point, rot),
+        _center.rotateAround(point, rot),
+        _right.rotateAround(point, rot));
   }
 
   /** Transforms all the poses individually by a translation and rotation. */
