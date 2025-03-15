@@ -64,18 +64,17 @@ public class AlignPoses {
   /** Rotates all the poses around a point. */
   public AlignPoses rotateAround(Translation2d point, Rotation2d rot) {
     return new AlignPoses(
-        new Pose2d(_left.getTranslation().rotateAround(point, rot), _left.getRotation().plus(rot)),
-        new Pose2d(
-            _center.getTranslation().rotateAround(point, rot), _center.getRotation().plus(rot)),
-        new Pose2d(
-            _right.getTranslation().rotateAround(point, rot), _right.getRotation().plus(rot)));
+        _left.rotateAround(point, rot),
+        _center.rotateAround(point, rot),
+        _right.rotateAround(point, rot));
   }
 
-  /** Offset the points by a transformation */
-  public AlignPoses offset(double x, double y) {
+  /** Transforms all the poses individually by a translation and rotation. */
+  public AlignPoses transform(Translation2d translation, Rotation2d rotation) {
     return new AlignPoses(
-        new Pose2d(_left.getX() + x, _left.getY() + y, _left.getRotation()),
-        new Pose2d(_center.getX() + x, _center.getY() + y, _center.getRotation()),
-        new Pose2d(_right.getX() + x, _right.getY() + y, _right.getRotation()));
+        new Pose2d(_left.getTranslation().plus(translation), _left.getRotation().plus(rotation)),
+        new Pose2d(
+            _center.getTranslation().plus(translation), _center.getRotation().plus(rotation)),
+        new Pose2d(_right.getTranslation().plus(translation), _right.getRotation().plus(rotation)));
   }
 }
