@@ -35,6 +35,7 @@ import frc.robot.generated.TunerConstants;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -58,6 +59,22 @@ public final class Constants {
     public static final AprilTagFieldLayout tagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
 
+    public static final Map<Integer, Integer> tagCorrespondences = new HashMap<Integer, Integer>();
+
+    static {
+      tagCorrespondences.put(13, 1);
+      tagCorrespondences.put(12, 2);
+      tagCorrespondences.put(18, 7);
+      tagCorrespondences.put(17, 8);
+      tagCorrespondences.put(22, 9);
+      tagCorrespondences.put(21, 10);
+      tagCorrespondences.put(20, 11);
+      tagCorrespondences.put(19, 6);
+      tagCorrespondences.put(16, 3);
+      tagCorrespondences.put(14, 4);
+      tagCorrespondences.put(15, 5);
+    }
+
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
 
@@ -67,17 +84,20 @@ public final class Constants {
     public static final Translation2d humanCenter =
         new Translation2d(Inches.of(47.93).in(Meter), Inches.of(158.28).in(Meters));
 
-    public static final int blueReefTag = 18;
-    public static final int redReefTag = 7;
+    public static final int reefTag = 17;
 
-    public static final AlignPoses reef =
+    public static final AlignPoses
+        reef = // TODO: switch to correct poses instead of doing the rotation
         new AlignPoses(
-            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
-            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
-            new Pose2d(Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero));
+                    new Pose2d(
+                        Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
+                    new Pose2d(
+                        Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
+                    new Pose2d(
+                        Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero))
+                .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
 
-    public static final int blueHumanTag = 13;
-    public static final int redHumanTag = 1;
+    public static final int humanTag = 13;
 
     public static final AlignPoses human =
         new AlignPoses(
@@ -94,8 +114,7 @@ public final class Constants {
                 Inches.of(294.86).in(Meters),
                 new Rotation2d(Degrees.of(126))));
 
-    public static final int blueProcessorTag = 16;
-    public static final int redProcessorTag = 3;
+    public static final int processorTag = 16;
 
     public static final AlignPoses processor =
         new AlignPoses(

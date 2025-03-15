@@ -145,7 +145,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
 
   @Logged(name = "Is Field Oriented")
-  private boolean _isFieldOriented = false;
+  private boolean _isFieldOriented = true;
 
   @Logged(name = "Is Open Loop")
   private boolean _isOpenLoop = true;
@@ -509,60 +509,51 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               if (alignGoal == FieldConstants.reef) {
                 double minDistance = Double.MAX_VALUE;
 
-                int baseTag =
-                    alliance == Alliance.Blue
-                        ? FieldConstants.blueReefTag
-                        : FieldConstants.redReefTag;
-                int rotateDirection = alliance == Alliance.Blue ? -1 : 1;
-
                 for (int i = 0; i < 6; i++) {
                   AlignPoses goal =
                       FieldConstants.reef.rotateAround(
-                          FieldConstants.reefCenter,
-                          Rotation2d.fromDegrees(rotateDirection * 60).times(i));
+                          FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
 
                   if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
                     _alignGoal = goal;
                     minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
 
-                    _alignTag = baseTag + i;
+                    _alignTag = FieldConstants.reefTag + i;
                   }
                 }
               } else if (alignGoal == FieldConstants.human) {
                 double minDistance = Double.MAX_VALUE;
 
-                int baseTag =
-                    alliance == Alliance.Blue
-                        ? FieldConstants.blueHumanTag
-                        : FieldConstants.redHumanTag;
-                int rotateDirection = alliance == Alliance.Blue ? 1 : -1;
+                int baseTag = FieldConstants.humanTag;
 
                 for (int i = 0; i < 2; i++) {
                   AlignPoses goal =
-                      alignGoal
-                          .transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero)
-                          .rotateAround(
-                              alignGoal.getCenter().getTranslation(),
-                              Rotation2d.fromDegrees(rotateDirection * 106).times(i));
+                      alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+
+                  goal =
+                      goal.rotateAround(
+                          goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
 
                   if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
                     _alignGoal = goal;
                     minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
 
-                    _alignTag = baseTag + i;
+                    _alignTag = baseTag - i;
                   }
                 }
               } else if (alignGoal == FieldConstants.processor) {
-                _alignTag =
-                    alliance == Alliance.Blue
-                        ? FieldConstants.blueProcessorTag
-                        : FieldConstants.redProcessorTag;
+                _alignTag = FieldConstants.processorTag;
               }
 
               _alignGoal =
                   _alignGoal.rotateAround(
                       FieldConstants.fieldCenter,
                       alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
+
+              _alignTag =
+                  alliance == Alliance.Blue
+                      ? _alignTag
+                      : FieldConstants.tagCorrespondences.get(_alignTag);
 
               DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
@@ -700,7 +691,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // alignment tag is wanted
   private void updateAlignEstimate() {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = false;
+      _ignoreVisionEstimates = false; // TODO: need a way to not do this
       _alignEstimate = null;
       _alignOdomCompensation = null;
 
