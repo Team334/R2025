@@ -311,7 +311,10 @@ public class Manipulator extends AdvancedSubsystem {
                         ? ManipulatorConstants.fastFeedSpeed
                         : ManipulatorConstants.slowFeedSpeed)
                     .in(RadiansPerSecond))
-        .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true), watchCoralBeam(Piece.NONE, false))
+        .alongWith(
+            watchCoralBeam(Piece.CORAL, true),
+            watchAlgaeBeam(Piece.ALGAE, true),
+            watchCoralBeam(Piece.NONE, false))
         .withName("Intake");
   }
 

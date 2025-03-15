@@ -35,8 +35,6 @@ import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
 
-import com.fasterxml.jackson.databind.deser.SettableAnyProperty;
-
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -233,7 +231,6 @@ public final class Constants {
       I1(Radians.of(-1.06), Radians.of(3)),
       I2(Radians.of(0.385), Radians.of(36.92)),
       I3(Radians.of(-1.06), Radians.of(30));
-      
 
       private final Angle _angle;
       private final Angle _height;
