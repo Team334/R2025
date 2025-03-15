@@ -192,19 +192,19 @@ public class Robot extends TimedRobot {
                 .ignoringDisable(true));
   }
 
-  private void alignmentTriggers(Trigger button, AlignPoses poses) {
+  private void alignmentTriggers(Trigger button, AlignPoses poses, boolean startReversed) {
     button
         .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT, startReversed));
 
     button
         .and(
             _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER, startReversed));
 
     button
         .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT, startReversed));
   }
 
   private void configureDriverBindings() {
@@ -212,10 +212,10 @@ public class Robot extends TimedRobot {
     _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
     _driverController.povDown().onTrue(_swerve.resetHeading());
 
-    alignmentTriggers(_driverController.x(), FieldConstants.reef);
-    alignmentTriggers(_driverController.y(), FieldConstants.human);
-    alignmentTriggers(_driverController.b(), FieldConstants.processor);
-    alignmentTriggers(_driverController.start(), FieldConstants.cage);
+    alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
+    alignmentTriggers(_driverController.y(), FieldConstants.human, true);
+    alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
+    alignmentTriggers(_driverController.start(), FieldConstants.cage, false);
   }
 
   private void configureOperatorBindings() {

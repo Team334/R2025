@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.VisionPoseEstimator;
+import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.ArrayList;
@@ -383,11 +384,10 @@ public class VisionPoseEstimatorTest {
               Pose3d.kZero,
               new Translation2d[] {Translation2d.kZero},
               new int[] {1},
+              new SingleTagEstimate[0],
               1.2,
               new double[] {0.3, 0.1, 0.2},
-              true,
-              -1000,
-              -1000));
+              true));
     }
 
     newEstimates.add(
@@ -398,14 +398,13 @@ public class VisionPoseEstimatorTest {
             Pose3d.kZero,
             new Translation2d[] {Translation2d.kZero},
             new int[] {1},
+            new SingleTagEstimate[0],
             1.2,
             new double[] {
               4, 3, 5
             }, // these are worse std devs, so it should come before the better estimate @ timestamp
             // = 2s
-            true,
-            -1000,
-            -1000));
+            true));
 
     newEstimates.sort(VisionPoseEstimate.sorter);
 
