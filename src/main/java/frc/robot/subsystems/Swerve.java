@@ -483,8 +483,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     desiredSpeeds = _poseController.calculate(desiredSpeeds, desiredPose, getPose());
 
-    DogLog.log("Auto/Current Trajectory Desired Pose", desiredPose);
-
     setControl(
         _fieldSpeedsRequest
             .withSpeeds(desiredSpeeds)
@@ -566,8 +564,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   alliance == Alliance.Blue
                       ? _alignTag
                       : FieldConstants.tagCorrespondences.get(_alignTag);
-
-              DogLog.log("Auto/Align Pose", _alignGoal.getPose(side));
             })
         .andThen(
             defer(
