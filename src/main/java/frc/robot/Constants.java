@@ -35,6 +35,8 @@ import frc.robot.utils.AlignPoses;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
 
+import com.fasterxml.jackson.databind.deser.SettableAnyProperty;
+
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
  * constants. This class should not be used for any other purpose. All constants should be declared
@@ -194,17 +196,17 @@ public final class Constants {
 
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
-      HOME(Radians.of(0), Radians.of(0)),
-      HUMAN(Radians.of(0.476), Radians.of(18.27)),
-      PROCESSOR(Radians.of(-0.1), Radians.of(5)),
+      HOME(Radians.of(-1.06), Radians.of(0)),
+      HUMAN(Radians.of(-1.06), Radians.of(0)),
+      PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
-      L1(Radians.of(0.436), Radians.of(6)),
-      L2(Radians.of(-0.3), Radians.of(19)),
-      L3(Radians.of(-0.3), Radians.of(28)),
-      L4(Radians.of(-0.1), Radians.of(5)),
+      L1(Radians.of(-0.268), Radians.of(5.6)),
+      L2(Radians.of(-1.06), Radians.of(16.63)),
+      L3(Radians.of(-1.06), Radians.of(26.4)),
+      L4(Radians.of(1.282), Radians.of(37.49)),
 
-      LOWER_ALGAE(Radians.of(0.051), Radians.of(19)),
-      UPPER_ALGAE(Radians.of(0.023), Radians.of(30));
+      LOWER_ALGAE(Radians.of(-1.06), Radians.of(19)),
+      UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
 
       private final Angle _angle;
       private final Angle _height;
@@ -228,7 +230,10 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(0), Radians.of(3));
+      I1(Radians.of(-1.06), Radians.of(3)),
+      I2(Radians.of(0.385), Radians.of(36.92)),
+      I3(Radians.of(-1.06), Radians.of(30));
+      
 
       private final Angle _angle;
       private final Angle _height;
@@ -252,12 +257,33 @@ public final class Constants {
     public static final HashMap<Pair<Setpoint, Setpoint>, Setpoint> setpointMap = new HashMap<>();
 
     static {
+      // going to a upwards wrist angle from home
       setpointMap.put(Pair.of(HOME, L1), I1);
       setpointMap.put(Pair.of(HOME, L4), I1);
+
+      // going up to l4
+      setpointMap.put(Pair.of(I1, L4), I2);
+      setpointMap.put(Pair.of(L1, L4), I2);
+      setpointMap.put(Pair.of(L2, L4), I2);
+      setpointMap.put(Pair.of(L3, L4), I2);
+      setpointMap.put(Pair.of(LOWER_ALGAE, L4), I2);
+      setpointMap.put(Pair.of(UPPER_ALGAE, L4), I2);
+      setpointMap.put(Pair.of(HUMAN, L4), I2);
+      setpointMap.put(Pair.of(PROCESSOR, L4), I2);
+
+      // going down from l4
+      setpointMap.put(Pair.of(L4, L3), I2);
+      setpointMap.put(Pair.of(L4, L2), I2);
+      setpointMap.put(Pair.of(L4, L1), I2);
+      setpointMap.put(Pair.of(L4, HOME), I2);
+      setpointMap.put(Pair.of(L4, UPPER_ALGAE), I2);
+      setpointMap.put(Pair.of(L4, LOWER_ALGAE), I2);
+      setpointMap.put(Pair.of(L4, HUMAN), I2);
+      setpointMap.put(Pair.of(L4, PROCESSOR), I2);
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(1);
-    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(12);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(6);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
@@ -265,7 +291,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(15);
+        RotationsPerSecondPerSecond.of(8);
 
     public static final int homeSwitch = 7;
 
@@ -279,12 +305,12 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(37.5);
+    public static final Angle maxElevatorHeight = Radians.of(37.8);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(0);
-    public static final Angle maxWristAngle = Radians.of(2.14);
+    public static final Angle minWristAngle = Radians.of(-1.12);
+    public static final Angle maxWristAngle = Radians.of(1.32);
 
     public static final double wristGearRatio = 33.75;
 
@@ -299,11 +325,11 @@ public final class Constants {
         Volts.per(Rotations).ofNative(6.7372); // 15 from sysid
 
     public static final Voltage wristkS = Volts.of(0.1);
-    public static final Voltage wristkG = Volts.of(0.17);
+    public static final Voltage wristkG = Volts.of(0.3);
     public static final Per<VoltageUnit, AngularVelocityUnit> wristkV =
         Volts.per(RotationsPerSecond).ofNative(4.05);
     public static final Per<VoltageUnit, AngularAccelerationUnit> wristkA =
-        Volts.per(RotationsPerSecondPerSecond).ofNative(0.02);
+        Volts.per(RotationsPerSecondPerSecond).ofNative(0.1566);
 
     public static final Per<VoltageUnit, AngleUnit> wristkP =
         Volts.per(Rotations).ofNative(13.082); // 17.221 from sysid
