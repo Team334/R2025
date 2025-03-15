@@ -32,9 +32,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -63,7 +63,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.photonvision.simulation.VisionSystemSim;
 
@@ -155,10 +154,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
-  
+
   private boolean _prevIgnoreVisionEstimates = _ignoreVisionEstimates;
 
-  private BooleanEvent _ignoreVisionEstimatesEvent = new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), () -> _ignoreVisionEstimates);
+  private BooleanEvent _ignoreVisionEstimatesEvent =
+      new BooleanEvent(
+          CommandScheduler.getInstance().getDefaultButtonLoop(), () -> _ignoreVisionEstimates);
 
   @Logged(name = "Align Tag")
   private int _alignTag = -1;
@@ -550,7 +551,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   }
                 }
               } else if (alignGoal == FieldConstants.processor) {
+                _alignGoal = alignGoal;
                 _alignTag = FieldConstants.processorTag;
+              } else {
+                _alignGoal = alignGoal;
               }
 
               _alignGoal =

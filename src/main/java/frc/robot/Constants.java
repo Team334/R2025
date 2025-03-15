@@ -62,6 +62,7 @@ public final class Constants {
     public static final Map<Integer, Integer> tagCorrespondences = new HashMap<Integer, Integer>();
 
     static {
+      tagCorrespondences.put(-1, -1);
       tagCorrespondences.put(13, 1);
       tagCorrespondences.put(12, 2);
       tagCorrespondences.put(18, 7);
@@ -201,7 +202,7 @@ public final class Constants {
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
     public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.632);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 3);
 
     // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
     public static final LinearAcceleration maxTranslationalAcceleration =
