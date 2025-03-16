@@ -265,6 +265,8 @@ public class Robot extends TimedRobot {
         .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
         .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
 
+    _operatorController.povDown().whileTrue(Superstructure.groundOuttake(_intake));
+
     // intake / inverse passoff
     _operatorController
         .rightTrigger()

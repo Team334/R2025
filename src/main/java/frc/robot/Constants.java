@@ -199,8 +199,8 @@ public final class Constants {
       PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
       L1(Radians.of(-0.233), Radians.of(7.708)),
-      L2(Radians.of(-1.1), Radians.of(18.043)),
-      L3(Radians.of(-1.06), Radians.of(26.4)),
+      L2(Radians.of(-0.793), Radians.of(14.769)),
+      L3(Radians.of(-1.06), Radians.of(27.86)),
       L4(Radians.of(1.282), Radians.of(37.49)),
 
       LOWER_ALGAE(Radians.of(-1.06), Radians.of(19)),
@@ -256,7 +256,7 @@ public final class Constants {
     static {
       // going to a upwards wrist angle from home
       setpointMap.put(Pair.of(HOME, L1), I1);
-      setpointMap.put(Pair.of(HOME, L4), I1);
+      setpointMap.put(Pair.of(HOME, L4), I2);
 
       // going up to l4
       setpointMap.put(Pair.of(I1, L4), I2);
@@ -280,7 +280,7 @@ public final class Constants {
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(1);
-    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(6);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(14);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
@@ -288,7 +288,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(8);
+        RotationsPerSecondPerSecond.of(15);
 
     public static final int homeSwitch = 7;
 
@@ -306,7 +306,7 @@ public final class Constants {
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-1.12);
+    public static final Angle minWristAngle = Radians.of(-1.3);
     public static final Angle maxWristAngle = Radians.of(1.32);
 
     public static final double wristGearRatio = 33.75;
@@ -347,6 +347,7 @@ public final class Constants {
     public static final double feedGearRatio = 70.0 / 30;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(20);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(35);
 
     public static final int feedMotorId = 10;
   }
@@ -358,8 +359,10 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity fastFeedSpeed = RadiansPerSecond.of(60);
-    public static final AngularVelocity slowFeedSpeed = RadiansPerSecond.of(16);
+    public static final AngularVelocity intakeSpeed = RadiansPerSecond.of(16);
+    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-60);
+
+    public static final double speedMultiplier = 1.5;
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
@@ -367,7 +370,7 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkV =
         Volts.per(RotationsPerSecond).ofNative(0.12915);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkP =
-        Volts.per(RotationsPerSecond).ofNative(0.013687);
+        Volts.per(RotationsPerSecond).ofNative(0.16712);
 
     // left wheel ka = 0.009767
 
@@ -375,7 +378,7 @@ public final class Constants {
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkV =
         Volts.per(RotationsPerSecond).ofNative(0.11962);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkP =
-        Volts.per(RotationsPerSecond).ofNative(0.0020434);
+        Volts.per(RotationsPerSecond).ofNative(0.02354);
 
     // right wheel meow ka = 0.0096618
 

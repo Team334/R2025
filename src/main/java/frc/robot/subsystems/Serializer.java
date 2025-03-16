@@ -165,7 +165,7 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Passoffs a coral to the manipulator. */
   public Command passoff() {
-    return setSpeed(SerializerConstants.feedSpeed.in(RadiansPerSecond)).withName("Passoff");
+    return setSpeed(SerializerConstants.passoffSpeed.in(RadiansPerSecond)).withName("Passoff");
   }
 
   /** Inverse passoff from the manipulator. */

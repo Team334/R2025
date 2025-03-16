@@ -307,10 +307,8 @@ public class Manipulator extends AdvancedSubsystem {
   public Command intake() {
     return setSpeed(
             () ->
-                (_isFastFeed
-                        ? ManipulatorConstants.fastFeedSpeed
-                        : ManipulatorConstants.slowFeedSpeed)
-                    .in(RadiansPerSecond))
+                ManipulatorConstants.intakeSpeed.in(RadiansPerSecond)
+                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
         .alongWith(
             watchCoralBeam(Piece.CORAL, true),
             watchAlgaeBeam(Piece.ALGAE, true),
@@ -322,10 +320,8 @@ public class Manipulator extends AdvancedSubsystem {
   public Command outtake() {
     return setSpeed(
             () ->
-                -(_isFastFeed
-                        ? ManipulatorConstants.fastFeedSpeed
-                        : ManipulatorConstants.slowFeedSpeed)
-                    .in(RadiansPerSecond))
+                ManipulatorConstants.outtakeSpeed.in(RadiansPerSecond)
+                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }
