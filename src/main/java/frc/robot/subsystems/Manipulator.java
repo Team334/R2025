@@ -236,8 +236,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Logged(name = "Algae Beam")
   public boolean getAlgaeBeam() {
-    // return !_algaeBeam.get();
-    return _algaeBeamFake.get();
+    return !_algaeBeam.get();
   }
 
   @Logged(name = "Speed")
@@ -308,11 +307,12 @@ public class Manipulator extends AdvancedSubsystem {
   public Command intake() {
     return setSpeed(
             () ->
-                (_isFastFeed
-                        ? ManipulatorConstants.fastFeedSpeed
-                        : ManipulatorConstants.slowFeedSpeed)
-                    .in(RadiansPerSecond))
-        .alongWith(watchCoralBeam(Piece.CORAL, true), watchAlgaeBeam(Piece.ALGAE, true))
+                ManipulatorConstants.intakeSpeed.in(RadiansPerSecond)
+                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
+        .alongWith(
+            watchCoralBeam(Piece.CORAL, true),
+            watchAlgaeBeam(Piece.ALGAE, true),
+            watchCoralBeam(Piece.NONE, false))
         .withName("Intake");
   }
 
@@ -320,10 +320,8 @@ public class Manipulator extends AdvancedSubsystem {
   public Command outtake() {
     return setSpeed(
             () ->
-                -(_isFastFeed
-                        ? ManipulatorConstants.fastFeedSpeed
-                        : ManipulatorConstants.slowFeedSpeed)
-                    .in(RadiansPerSecond))
+                ManipulatorConstants.outtakeSpeed.in(RadiansPerSecond)
+                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }

@@ -4,12 +4,9 @@
 
 package frc.robot.commands;
 
-import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.IntakeConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Serializer;
@@ -39,16 +36,8 @@ public class Superstructure {
   }
 
   /** Outtake from serializer -> intake. */
-  public static Command groundOuttake(Intake intake, Serializer serializer) {
-    return sequence(
-            intake
-                .outtake()
-                .until(
-                    () ->
-                        MathUtil.isNear(
-                            IntakeConstants.actuatorOut.in(Radians), intake.getAngle(), 0.01)),
-            serializer.outtake())
-        .withName("Ground Outtake");
+  public static Command groundOuttake(Intake intake) {
+    return intake.outtake().withName("Ground Outtake");
   }
 
   /** Intake from intake -> serializer. */

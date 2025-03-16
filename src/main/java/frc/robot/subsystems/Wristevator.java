@@ -17,7 +17,6 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotionMagicIsRunningValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import dev.doglog.DogLog;
@@ -239,7 +238,6 @@ public class Wristevator extends AdvancedSubsystem {
     wristMotorConfigs.Feedback.SensorToMechanismRatio = WristevatorConstants.wristGearRatio;
 
     wristMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
-    wristMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
     wristMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
         WristevatorConstants.maxWristAngle.in(Rotations);
@@ -281,7 +279,7 @@ public class Wristevator extends AdvancedSubsystem {
                 _wristMotor.getMotorVoltage()),
         _wristMotor);
 
-    CTREUtil.attempt(() -> _wristMotor.setPosition(Radians.of(0)), _wristMotor);
+    CTREUtil.attempt(() -> _wristMotor.setPosition(Radians.of(-1.05)), _wristMotor);
     CTREUtil.attempt(() -> _leftMotor.setPosition(Radians.of(0)), _leftMotor);
 
     FaultLogger.register(_leftMotor);
@@ -315,7 +313,7 @@ public class Wristevator extends AdvancedSubsystem {
     DogLog.log("Wristevator/Intermediates", intermediates);
 
     SysId.displayRoutine(
-        "Elevator", _elevatorRoutine, () -> getHeight() >= 29, () -> getHeight() <= 0.5);
+        "Elevator", _elevatorRoutine, () -> getHeight() >= 35, () -> getHeight() <= 0.5);
     SysId.displayRoutine("Wrist", _wristRoutine, () -> getAngle() >= 0.5, () -> getAngle() <= -0.2);
 
     if (Robot.isSimulation()) {
@@ -430,7 +428,6 @@ public class Wristevator extends AdvancedSubsystem {
   @Logged(name = "Home Switch")
   public boolean homeSwitch() {
     return !_homeSwitch.get();
-    // return _homeSwitchFake.getAsBoolean();
   }
 
   /** Whether the wristevator is open for manual control or not. */
