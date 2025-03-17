@@ -35,8 +35,10 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
@@ -248,6 +250,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         });
 
     _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
+
+    // resetRotation(Rotation2d.fromDegrees(60));
+
+    SmartDashboard.putData(
+        "RESET SHIT",
+        Commands.runOnce(
+            () -> {
+              _newEstimates.stream()
+                  .map(e -> e.singleTagEstimates())
+                  .flatMap(e -> Arrays.stream(e))
+                  .forEach(
+                      e -> {
+                        if (e.tag() == 17) resetPose(e.pose().toPose2d());
+                      });
+            }));
 
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
