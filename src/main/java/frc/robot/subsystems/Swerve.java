@@ -91,8 +91,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // sysid requests
   private final SysIdSwerveTranslation _translationSysIdRequest = new SysIdSwerveTranslation();
   private final SysIdSwerveSteerGains _steerSysIdRequest = new SysIdSwerveSteerGains();
-  private final SysIdSwerveRotation _rotationSysIdRequest =
-      new SysIdSwerveRotation(); // how does this work?
 
   // SysId routine for characterizing translation. This is used to find PID gains for the drive
   // motors.
@@ -102,9 +100,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               null, // Use default ramp rate (1 V/s)
               Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
               null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString(
-                      "Swerve SysId Translation Routine State", state.toString())),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_translationSysIdRequest.withVolts(volts)), null, this));
 
@@ -115,32 +111,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               null, // Use default ramp rate (1 V/s)
               Volts.of(7), // Use dynamic voltage of 7 V
               null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString("Swerve SysId Steer Routine State", state.toString())),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_steerSysIdRequest.withVolts(volts)), null, this));
-
-  // SysId routine for characterizing rotation.
-  private final SysIdRoutine _sysIdRoutineRotation =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              // This is in radians per second², but SysId only supports "volts per second"
-              Volts.of(Math.PI / 6).per(Second),
-              // This is in radians per second, but SysId only supports "volts"
-              Volts.of(Math.PI),
-              null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString(
-                      "Swerve SysId Rotation Routine State", state.toString())),
-          new SysIdRoutine.Mechanism(
-              output -> {
-                // output is actually radians per second, but SysId only supports "volts"
-                setControl(_rotationSysIdRequest.withRotationalRate(output.in(Volts)));
-                // also log the requested output for SysId
-                SignalLogger.writeDouble("Swerve Rotational Rate", output.in(Volts));
-              },
-              null,
-              this));
 
   private double _lastSimTime = 0;
   private Notifier _simNotifier;
@@ -269,7 +242,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
     SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
-    SysId.displayRoutine("Swerve Rotation", _sysIdRoutineRotation);
 
     registerFallibles();
 
