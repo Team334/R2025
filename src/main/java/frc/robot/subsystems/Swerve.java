@@ -224,7 +224,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
 
-    // resetRotation(Rotation2d.fromDegrees(60));
+    resetRotation(Rotation2d.fromDegrees(60));
 
     SmartDashboard.putData(
         "RESET SHIT",

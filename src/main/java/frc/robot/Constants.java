@@ -88,10 +88,9 @@ public final class Constants {
     public static final int reefTag = 17;
 
     public static final AlignPoses
-        reef = // TODO: switch to correct poses instead of doing the rotation
+        reef = 
         new AlignPoses(
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
+                    new Pose2d(3.454, 2.943, new Rotation2d(1.015)),
                     new Pose2d(
                         Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
                     new Pose2d(
@@ -241,15 +240,15 @@ public final class Constants {
 
     public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(2);
     public static final AngularAcceleration actuatorAcceleration =
-        RotationsPerSecondPerSecond.of(4);
+        RotationsPerSecondPerSecond.of(3);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle actuatorStowed = Radians.of(2.3067);
-    public static final Angle actuatorOut = Radians.of(-0.307);
+    public static final Angle actuatorStowed = Radians.of(2.26);
+    public static final Angle actuatorOut = Radians.of(-0.34);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }

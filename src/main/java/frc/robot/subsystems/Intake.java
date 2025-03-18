@@ -112,9 +112,9 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        IntakeConstants.actuatorStowed.in(Rotations);
+        IntakeConstants.actuatorStowed.plus(Radians.of(0.15)).in(Rotations);
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
-        IntakeConstants.actuatorOut.in(Rotations);
+        IntakeConstants.actuatorOut.minus(Radians.of(0.15)).in(Rotations);
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
