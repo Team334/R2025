@@ -578,7 +578,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                                                 .getTranslation()
                                                 .getDistance(
                                                     _alignGoal.getPose(side).getTranslation())
-                                            < SwerveConstants.pathingThreshold.in(Meters)),
+                                            < SwerveConstants.pathingDistanceThreshold.in(Meters)),
 
                         // then, drive towards the goal pose (not reversed) using the alignment
                         // estimate
