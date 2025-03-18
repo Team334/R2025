@@ -18,7 +18,7 @@ import frc.robot.Constants.SwerveConstants;
 public class HolonomicController {
   private final ProfiledPIDController _translationProfiled =
       new ProfiledPIDController(
-          0,
+          0.5,
           0,
           0,
           new Constraints(

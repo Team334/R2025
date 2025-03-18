@@ -91,11 +91,8 @@ public final class Constants {
         reef = 
         new AlignPoses(
                     new Pose2d(3.454, 2.943, new Rotation2d(1.015)),
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero))
-                .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
+                    new Pose2d(3.813, 2.824, new Rotation2d(1.096)),
+                    new Pose2d(3.893, 2.893, new Rotation2d(1.044)));
 
     public static final int humanTag = 13;
 
