@@ -211,7 +211,7 @@ public class Wristevator extends AdvancedSubsystem {
     leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
         WristevatorConstants.minElevatorHeight.in(Rotations);
 
-    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = false;
+    leftMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     leftMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
 
     // wrist motor configs
