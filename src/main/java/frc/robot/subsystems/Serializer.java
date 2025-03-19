@@ -143,7 +143,6 @@ public class Serializer extends AdvancedSubsystem {
 
   @Logged(name = "Back Beam")
   public boolean getBackBeam() {
-    // return false;
     return _backBeamFake.get();
   }
 

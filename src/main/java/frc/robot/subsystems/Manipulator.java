@@ -46,8 +46,6 @@ public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
   private final DigitalInput _algaeBeam = new DigitalInput(ManipulatorConstants.algaeBeam);
 
-  private BooleanEntry _algaeBeamFake = Tuning.entry("Tuning/Algae Beam", false);
-
   private final BooleanEvent _coralEvent =
       new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam);
   private final BooleanEvent _algaeEvent =

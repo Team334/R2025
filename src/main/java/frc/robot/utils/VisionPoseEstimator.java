@@ -129,9 +129,6 @@ public class VisionPoseEstimator implements AutoCloseable {
       /** Alternate pose during single-tag measurements that arises from ambiguity. */
       Pose3d altPose,
 
-      /** Detected image tag corners. */
-      Translation2d[] detectedCorners,
-
       /** The detected tag ids in this measurement. */
       int[] detectedTags,
 
@@ -266,7 +263,6 @@ public class VisionPoseEstimator implements AutoCloseable {
     DogLog.log(_estimateLogPath + "Timestamp", estimate.timestamp);
     DogLog.log(_estimateLogPath + "Ambiguity", estimate.ambiguity);
     DogLog.log(_estimateLogPath + "Alternate Pose", estimate.altPose);
-    DogLog.log(_estimateLogPath + "Detected Corners", estimate.detectedCorners);
     DogLog.log(_estimateLogPath + "Detected Tags", estimate.detectedTags);
     DogLog.log(
         _estimateLogPath + "Single Tag Trig Estimates",
@@ -319,7 +315,6 @@ public class VisionPoseEstimator implements AutoCloseable {
     // estimate properties
     Pose3d estimatedPose = estimate.estimatedPose;
     Pose3d altPose = estimatedPose;
-    ArrayList<Translation2d> detectedCorners = new ArrayList<>();
     double timestamp = estimate.timestampSeconds;
     double ambiguity = -1;
     int tagAmount = estimate.targetsUsed.size();
@@ -328,9 +323,6 @@ public class VisionPoseEstimator implements AutoCloseable {
     double avgTagDistance = 0;
     double[] stdDevs = new double[] {-1, -1, -1};
     boolean isValid = false;
-
-    estimate.targetsUsed.forEach(
-        t -> t.getDetectedCorners().forEach(c -> detectedCorners.add(new Translation2d(c.x, c.y))));
 
     // ---- DISAMBIGUATE (if single-tag) ----
     // disambiguate poses using gyro measurement (only necessary for a single tag)
@@ -416,7 +408,6 @@ public class VisionPoseEstimator implements AutoCloseable {
         timestamp,
         ambiguity,
         altPose,
-        detectedCorners.toArray(Translation2d[]::new),
         detectedTags,
         singleTagEstimates,
         avgTagDistance,

@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
 import frc.robot.utils.VisionPoseEstimator;
@@ -382,7 +381,6 @@ public class VisionPoseEstimatorTest {
               i,
               0.03,
               Pose3d.kZero,
-              new Translation2d[] {Translation2d.kZero},
               new int[] {1},
               new SingleTagEstimate[0],
               1.2,
@@ -396,7 +394,6 @@ public class VisionPoseEstimatorTest {
             2, // same timestamp case
             0.03,
             Pose3d.kZero,
-            new Translation2d[] {Translation2d.kZero},
             new int[] {1},
             new SingleTagEstimate[0],
             1.2,
