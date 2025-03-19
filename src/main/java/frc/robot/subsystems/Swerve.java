@@ -24,9 +24,9 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -45,6 +45,7 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
+import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -141,7 +142,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private SingleTagEstimate _alignEstimate = null;
 
-  private Transform2d _alignOdomCompensation = null;
+  private Pose2d _alignmentOldPose = null;
+
+  private BooleanEntry FART = Tuning.entry("Tuning/Timestamp Too Old", false);
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -570,7 +573,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                               return _alignEstimate
                                   .pose()
                                   .toPose2d()
-                                  .transformBy(_alignOdomCompensation);
+                                  .transformBy(
+                                      getPose()
+                                          .minus(
+                                              _alignmentOldPose)); // transform the alignment pose
+                              // by odometry
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -669,7 +676,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     if (_alignTag == -1) {
       _ignoreVisionEstimates = _prevIgnoreVisionEstimates;
       _alignEstimate = null;
-      _alignOdomCompensation = null;
+      _alignmentOldPose = null;
 
       return;
     }
@@ -693,20 +700,21 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     _ignoreVisionEstimates = true; // ensure that the transform2d is ONLY odometry data
 
-    var oldPose = samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()));
+    boolean timestampTooOld = FART.get(); // how to find
 
-    if (oldPose.isPresent()) {
-      _alignOdomCompensation = getPose().minus(oldPose.get());
+    if (!timestampTooOld) {
+      _alignmentOldPose = samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp())).get();
+
       return;
     }
 
-    // if the odom compensation transform doesn't yet exist and it can't find the oldPose, find a
-    // transform
-    // such the the odom compensated vision pose will be equilavent to getPose()
-    if (_alignOdomCompensation == null) {
-      _alignOdomCompensation = getPose().minus(_alignEstimate.pose().toPose2d());
-      return;
+    // if the old pose doesn't yet exist and the vision timestamp is too old for a sample
+    // use the global pose estimate
+    if (_alignmentOldPose == null) {
+      _alignmentOldPose = getPose();
     }
+
+    // in any other case, just use the old alignment pose
   }
 
   @Override
