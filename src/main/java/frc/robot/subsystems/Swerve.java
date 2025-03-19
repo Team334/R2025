@@ -24,9 +24,9 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -45,7 +45,6 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
-import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -142,9 +141,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private SingleTagEstimate _alignEstimate = null;
 
-  private Pose2d _alignmentOldPose = null;
-
-  private BooleanEntry FART = Tuning.entry("Tuning/Timestamp Too Old", false);
+  private Transform2d _alignOdomCompensation = null;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -212,8 +209,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Pose", state.Pose);
           DogLog.log("Swerve/Raw Heading", state.RawHeading);
           DogLog.log("Swerve/Speeds", state.Speeds);
-          // DogLog.log("Swerve/Desired Speeds",
-          // getKinematics().toChassisSpeeds(state.ModuleTargets));
+          DogLog.log("Swerve/Desired Speeds", getKinematics().toChassisSpeeds(state.ModuleTargets));
           DogLog.log("Swerve/Module States", state.ModuleStates);
           DogLog.log("Swerve/Desired Module States", state.ModuleTargets);
 
@@ -224,9 +220,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
-    _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
+    _poseController.setTolerance(Meters.of(0.3), Rotation2d.fromDegrees(2));
 
-    resetRotation(Rotation2d.fromDegrees(60));
+    // resetRotation(Rotation2d.fromDegrees(60));
+    SmartDashboard.putData(
+        "RESET ODOM",
+        Commands.runOnce(
+            () ->
+                resetPose(
+                    new Pose2d(
+                        3.6217780113220215, 2.531855583190918, Rotation2d.fromDegrees(60)))));
+
+    SmartDashboard.putData(
+        "RESET GYRO", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(60))));
 
     SmartDashboard.putData(
         "RESET TO TAG 17",
@@ -570,14 +576,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                             () -> {
                               if (_alignEstimate == null) return getPose();
 
-                              return _alignEstimate
-                                  .pose()
-                                  .toPose2d()
-                                  .transformBy(
-                                      getPose()
-                                          .minus(
-                                              _alignmentOldPose)); // transform the alignment pose
-                              // by odometry
+                              return getPose().transformBy(_alignOdomCompensation);
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -676,7 +675,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     if (_alignTag == -1) {
       _ignoreVisionEstimates = _prevIgnoreVisionEstimates;
       _alignEstimate = null;
-      _alignmentOldPose = null;
+      _alignOdomCompensation = null;
 
       return;
     }
@@ -690,37 +689,36 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
 
-              if (_alignEstimate == null) _alignEstimate = e;
+              // once an alignment estimate is found ignore vision estimates to use only odom
+              if (_alignEstimate == null) {
+                _ignoreVisionEstimates = true;
+
+                _alignEstimate = e;
+
+                _alignOdomCompensation =
+                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
+                        .orElse(getPose())
+                        .minus(_alignEstimate.pose().toPose2d());
+              }
 
               // only override align estimate if the new estimate is closer
-              if (e.distance() < _alignEstimate.distance()) _alignEstimate = e;
+              if (e.distance() < _alignEstimate.distance()) {
+                _alignEstimate = e;
+
+                _alignOdomCompensation =
+                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
+                        .orElse(getPose())
+                        .minus(_alignEstimate.pose().toPose2d());
+              }
             });
-
-    if (_alignEstimate == null) return;
-
-    _ignoreVisionEstimates = true; // ensure that the transform2d is ONLY odometry data
-
-    boolean timestampTooOld = FART.get(); // how to find
-
-    if (!timestampTooOld) {
-      _alignmentOldPose = samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp())).get();
-
-      return;
-    }
-
-    // if the old pose doesn't yet exist and the vision timestamp is too old for a sample
-    // use the global pose estimate
-    if (_alignmentOldPose == null) {
-      _alignmentOldPose = getPose();
-    }
-
-    // in any other case, just use the old alignment pose
   }
 
   @Override
   public void periodic() {
     updateVisionPoseEstimates();
     updateAlignEstimate();
+
+    _poseController.retardation();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()

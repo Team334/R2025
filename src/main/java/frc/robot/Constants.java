@@ -89,9 +89,9 @@ public final class Constants {
 
     public static final AlignPoses reef =
         new AlignPoses(
-            new Pose2d(3.454, 2.943, new Rotation2d(1.015)),
-            new Pose2d(3.813, 2.824, new Rotation2d(1.096)),
-            new Pose2d(3.893, 2.893, new Rotation2d(1.044)));
+            new Pose2d(3.68, 2.95, new Rotation2d(1.023)),
+            new Pose2d(3.839, 2.885, new Rotation2d(1.028)),
+            new Pose2d(3.984, 2.794, new Rotation2d(1.020)));
 
     public static final int humanTag = 13;
 
@@ -158,7 +158,7 @@ public final class Constants {
             lowerRightArducamName,
             new Transform3d(
                 new Translation3d(0.345, -0.285, 0.102),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), 0.2)),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
             0.2,
             0.0001,
             3,
@@ -196,14 +196,14 @@ public final class Constants {
                 Math.pow(TunerConstants.FrontLeft.LocationX, 2)
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
-    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.632);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 3);
+    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
 
     // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
     public static final LinearAcceleration maxTranslationalAcceleration =
-        MetersPerSecondPerSecond.of(14.715);
+        MetersPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxAngularAcceleration =
-        RadiansPerSecondPerSecond.of(Math.PI * 3);
+        RadiansPerSecondPerSecond.of(Math.PI);
 
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
