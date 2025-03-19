@@ -87,12 +87,11 @@ public final class Constants {
 
     public static final int reefTag = 17;
 
-    public static final AlignPoses
-        reef = 
+    public static final AlignPoses reef =
         new AlignPoses(
-                    new Pose2d(3.454, 2.943, new Rotation2d(1.015)),
-                    new Pose2d(3.813, 2.824, new Rotation2d(1.096)),
-                    new Pose2d(3.893, 2.893, new Rotation2d(1.044)));
+            new Pose2d(3.454, 2.943, new Rotation2d(1.015)),
+            new Pose2d(3.813, 2.824, new Rotation2d(1.096)),
+            new Pose2d(3.893, 2.893, new Rotation2d(1.044)));
 
     public static final int humanTag = 13;
 
@@ -269,7 +268,7 @@ public final class Constants {
       L1(Radians.of(-0.233), Radians.of(7.708)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
       L3(Radians.of(-1.06), Radians.of(27.86)),
-      L4(Radians.of(1.282), Radians.of(37.49)),
+      L4(Radians.of(1.282), Radians.of(38.2)),
 
       LOWER_ALGAE(Radians.of(-1.06), Radians.of(19)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
@@ -370,7 +369,7 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(37.8);
+    public static final Angle maxElevatorHeight = Radians.of(38.5);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
