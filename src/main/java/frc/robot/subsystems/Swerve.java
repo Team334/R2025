@@ -27,8 +27,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -211,7 +209,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Pose", state.Pose);
           DogLog.log("Swerve/Raw Heading", state.RawHeading);
           DogLog.log("Swerve/Speeds", state.Speeds);
-          DogLog.log("Swerve/Desired Speeds", getKinematics().toChassisSpeeds(state.ModuleTargets));
+          // DogLog.log("Swerve/Desired Speeds",
+          // getKinematics().toChassisSpeeds(state.ModuleTargets));
           DogLog.log("Swerve/Module States", state.ModuleStates);
           DogLog.log("Swerve/Desired Module States", state.ModuleTargets);
 
@@ -227,7 +226,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     resetRotation(Rotation2d.fromDegrees(60));
 
     SmartDashboard.putData(
-        "RESET SHIT",
+        "RESET TO TAG 17",
         Commands.runOnce(
             () -> {
               _newEstimates.stream()
@@ -380,7 +379,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
-  /** Resets the heading to zero. */
+  /** Resets the heading to face away from the alliance wall. */
   public Command resetHeading() {
     return runOnce(
         () -> {
@@ -421,26 +420,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     _driverChassisSpeeds.vxMetersPerSecond = velX;
     _driverChassisSpeeds.vyMetersPerSecond = velY;
     _driverChassisSpeeds.omegaRadiansPerSecond = velOmega;
-
-    // go through a couple of steps to ensure that input speeds are actually achievable
-    ChassisSpeeds tempSpeeds = _driverChassisSpeeds;
-    SwerveModuleState[] tempStates;
-
-    // TODO: this might be too many memory allocations
-
-    if (_isFieldOriented)
-      tempSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(tempSpeeds, getHeading());
-
-    tempStates = getKinematics().toSwerveModuleStates(tempSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(tempStates, SwerveConstants.maxTranslationalSpeed);
-    tempSpeeds = getKinematics().toChassisSpeeds(tempStates);
-
-    if (_isFieldOriented)
-      tempSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(tempSpeeds, getHeading());
-
-    velX = tempSpeeds.vxMetersPerSecond;
-    velY = tempSpeeds.vyMetersPerSecond;
-    velOmega = tempSpeeds.omegaRadiansPerSecond;
 
     if (_isFieldOriented) {
       setControl(

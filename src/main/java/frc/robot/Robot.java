@@ -12,6 +12,7 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
 import dev.doglog.DogLog;
+import dev.doglog.DogLogOptions;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
@@ -108,7 +109,7 @@ public class Robot extends TimedRobot {
     _ntInst = ntInst;
 
     // set up loggers
-    DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+    DogLog.setOptions(new DogLogOptions().withCaptureDs(true));
 
     setFileOnly(false); // file-only once connected to fms
 
@@ -266,7 +267,7 @@ public class Robot extends TimedRobot {
         .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
         .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
 
-    // _operatorController.povDown().whileTrue(Superstructure.groundOuttake(_intake));
+    _operatorController.povUp().whileTrue(_intake.outtake());
 
     // intake / inverse passoff
     _operatorController
