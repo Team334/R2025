@@ -128,6 +128,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = true; // for sim for now
 
+  private List<VisionPoseEstimate> _estimates = new ArrayList<VisionPoseEstimate>();
+
   private boolean _prevIgnoreVisionEstimates = _ignoreVisionEstimates;
 
   private BooleanEvent _ignoreVisionEstimatesEvent =
@@ -629,10 +631,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     _detectedTags.clear();
 
+    _estimates.clear();
+
     for (VisionPoseEstimator cam : _cameras) {
       cam.update();
 
-      var estimates = cam.getNewEstimates();
+      _estimates = cam.getNewEstimates();
 
       // TEMPORARY CAMERA PLACEMENT VISUALIZATION:
       // DogLog.log(
@@ -642,7 +646,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       //         .transformBy(cam.robotToCam));
 
       // process estimates
-      estimates.forEach(
+      _estimates.forEach(
           (estimate) -> {
             // add all detected tag poses
             for (int id : estimate.detectedTags()) {
