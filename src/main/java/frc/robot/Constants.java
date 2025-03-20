@@ -208,7 +208,7 @@ public final class Constants {
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
 
-    public static final Distance pathingDistanceThreshold = Meters.of(1.5);
+    public static final Distance pathingDistanceThreshold = Meters.of(0.5);
   }
 
   public static class IntakeConstants {

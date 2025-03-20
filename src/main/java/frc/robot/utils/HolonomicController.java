@@ -50,7 +50,8 @@ public class HolonomicController {
     _headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
-  public void retardation() {
+  // temporary
+  public void updateTuning() {
     _translationProfiled.setP(translationkP.get());
     _translationProfiled.setD(translationkD.get());
 

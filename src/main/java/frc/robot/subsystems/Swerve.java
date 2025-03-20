@@ -222,15 +222,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     _poseController.setTolerance(Meters.of(0.3), Rotation2d.fromDegrees(2));
 
-    // resetRotation(Rotation2d.fromDegrees(60));
-    SmartDashboard.putData(
-        "RESET ODOM",
-        Commands.runOnce(
-            () ->
-                resetPose(
-                    new Pose2d(
-                        3.6217780113220215, 2.531855583190918, Rotation2d.fromDegrees(60)))));
-
     SmartDashboard.putData(
         "RESET GYRO", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(60))));
 
@@ -718,7 +709,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     updateVisionPoseEstimates();
     updateAlignEstimate();
 
-    _poseController.retardation();
+    _poseController.updateTuning();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
