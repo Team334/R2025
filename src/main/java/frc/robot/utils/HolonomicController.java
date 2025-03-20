@@ -3,6 +3,7 @@ package frc.robot.utils;
 import static edu.wpi.first.units.Units.*;
 
 import dev.doglog.DogLog;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
@@ -74,6 +75,14 @@ public class HolonomicController {
   }
 
   /**
+   * Whether the profiles have completed or not for the movement profiles.
+   */
+  public boolean isFinished() {
+    return MathUtil.isNear(_translationProfiled.getGoal().position, _translationProfiled.getSetpoint().position, 0.001) && MathUtil.isNear(_translationProfiled.getGoal().velocity, _translationProfiled.getSetpoint().velocity, 0.001) 
+    && MathUtil.isNear(_headingProfiled.getGoal().position, _headingProfiled.getSetpoint().position, 0.001) && MathUtil.isNear(_headingProfiled.getGoal().velocity, _headingProfiled.getSetpoint().velocity, 0.001);
+  }
+
+  /**
    * Whether the error between robot pose and goal (since the last {@link #calculate(Pose2d,
    * Pose2d)} call) is within the set tolerance or not.
    */
@@ -129,6 +138,9 @@ public class HolonomicController {
     double pidOmega =
         _headingProfiled.calculate(
             currentPose.getRotation().getRadians(), goalPose.getRotation().getRadians());
+
+    DogLog.log("profile vel", _translationProfiled.getSetpoint().velocity);
+    DogLog.log("profile pid vel", velMag);
 
     DogLog.log("Auto/Controller Goal Pose", goalPose);
     DogLog.log("Auto/Controller Reference", currentPose);

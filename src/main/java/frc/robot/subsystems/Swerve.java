@@ -595,7 +595,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                     robotPose.get(),
                     goalPose,
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
-        .until(_poseController::atGoal)
+        .until(_poseController::isFinished)
         .withName("Drive To");
   }
 
