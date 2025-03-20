@@ -96,8 +96,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null, // Use default ramp rate (1 V/s)
-              Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
-              null, // Use default timeout (10 s)
+              Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
+              Seconds.of(5), // Use default timeout (10 s)
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_translationSysIdRequest.withVolts(volts)), null, this));
@@ -586,6 +586,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
     return run(() -> {
           ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
+
+          DogLog.log("PROFILE", speeds);
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })

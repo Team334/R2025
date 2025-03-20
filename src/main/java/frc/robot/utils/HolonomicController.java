@@ -53,11 +53,18 @@ public class HolonomicController {
 
   // temporary
   public void updateTuning() {
-    _translationProfiled.setP(translationkP.get());
-    _translationProfiled.setD(translationkD.get());
+    // _translationProfiled.setP(translationkP.get());
+    // _translationProfiled.setD(translationkD.get());
 
-    _headingProfiled.setP(rotationkP.get());
-    _headingProfiled.setD(rotationkD.get());
+    // _headingProfiled.setP(rotationkP.get());
+    // _headingProfiled.setD(rotationkD.get());
+
+
+    _translationProfiled.setP(0);
+    _translationProfiled.setD(0);
+
+    _headingProfiled.setP(0);
+    _headingProfiled.setD(0);
   }
 
   /**
@@ -139,8 +146,8 @@ public class HolonomicController {
         _headingProfiled.calculate(
             currentPose.getRotation().getRadians(), goalPose.getRotation().getRadians());
 
-    DogLog.log("profile vel", _translationProfiled.getSetpoint().velocity);
-    DogLog.log("profile pid vel", velMag);
+    DogLog.log("PID", velMag);
+    DogLog.log("VEL", _translationProfiled.getSetpoint().velocity);
 
     DogLog.log("Auto/Controller Goal Pose", goalPose);
     DogLog.log("Auto/Controller Reference", currentPose);
