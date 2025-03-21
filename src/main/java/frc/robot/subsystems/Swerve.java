@@ -222,8 +222,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
-    _poseController.setTolerance(Meters.of(0.3), Rotation2d.fromDegrees(2));
-
     SmartDashboard.putData(
         "RESET GYRO", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(60))));
 
@@ -585,7 +583,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /** Drives the robot in a straight line to some given goal pose. */
   private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
+          ChassisSpeeds speeds = _poseController.calculate(robotPose.get());
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
@@ -713,7 +711,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     updateVisionPoseEstimates();
     updateAlignEstimate();
 
-    _poseController.updateTuning();
+    // _poseController.updateTuning();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
