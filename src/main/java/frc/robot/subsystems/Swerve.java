@@ -587,8 +587,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> {
           ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
 
-          DogLog.log("PROFILE", speeds);
-
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
         .beforeStarting(

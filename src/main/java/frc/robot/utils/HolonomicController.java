@@ -40,11 +40,11 @@ public class HolonomicController {
   private final PIDController _translationController = new PIDController(0, 0, 0);
   private final PIDController _headingController = new PIDController(0, 0, 0);
 
-  private final DoubleEntry translationkP = Tuning.entry("Tuning/Translation kP", 0.1);
-  private final DoubleEntry translationkD = Tuning.entry("Tuning/Translation kD", 0.05);
+  private final DoubleEntry translationkP = Tuning.entry("Tuning/Translation kP", 0.0);
+  private final DoubleEntry translationkD = Tuning.entry("Tuning/Translation kD", 0.0);
 
-  private final DoubleEntry rotationkP = Tuning.entry("Tuning/Rotation kP", 0.1);
-  private final DoubleEntry rotationkD = Tuning.entry("Tuning/Rotation kD", 0.05);
+  private final DoubleEntry rotationkP = Tuning.entry("Tuning/Rotation kP", 0.0);
+  private final DoubleEntry rotationkD = Tuning.entry("Tuning/Rotation kD", 0.0);
 
   public HolonomicController() {
     _headingProfiled.enableContinuousInput(-Math.PI, Math.PI);
@@ -53,18 +53,11 @@ public class HolonomicController {
 
   // temporary
   public void updateTuning() {
-    // _translationProfiled.setP(translationkP.get());
-    // _translationProfiled.setD(translationkD.get());
+    _translationProfiled.setP(translationkP.get());
+    _translationProfiled.setD(translationkD.get());
 
-    // _headingProfiled.setP(rotationkP.get());
-    // _headingProfiled.setD(rotationkD.get());
-
-
-    _translationProfiled.setP(0);
-    _translationProfiled.setD(0);
-
-    _headingProfiled.setP(0);
-    _headingProfiled.setD(0);
+    _headingProfiled.setP(rotationkP.get());
+    _headingProfiled.setD(rotationkD.get());
   }
 
   /**
@@ -81,12 +74,20 @@ public class HolonomicController {
     _headingController.setTolerance(headingTolerance.getRadians());
   }
 
-  /**
-   * Whether the profiles have completed or not for the movement profiles.
-   */
+  /** Whether the translation and rotation profiles have completed. */
   public boolean isFinished() {
-    return MathUtil.isNear(_translationProfiled.getGoal().position, _translationProfiled.getSetpoint().position, 0.001) && MathUtil.isNear(_translationProfiled.getGoal().velocity, _translationProfiled.getSetpoint().velocity, 0.001) 
-    && MathUtil.isNear(_headingProfiled.getGoal().position, _headingProfiled.getSetpoint().position, 0.001) && MathUtil.isNear(_headingProfiled.getGoal().velocity, _headingProfiled.getSetpoint().velocity, 0.001);
+    return MathUtil.isNear(
+            _translationProfiled.getGoal().position,
+            _translationProfiled.getSetpoint().position,
+            0.001)
+        && MathUtil.isNear(
+            _translationProfiled.getGoal().velocity,
+            _translationProfiled.getSetpoint().velocity,
+            0.001)
+        && MathUtil.isNear(
+            _headingProfiled.getGoal().position, _headingProfiled.getSetpoint().position, 0.001)
+        && MathUtil.isNear(
+            _headingProfiled.getGoal().velocity, _headingProfiled.getSetpoint().velocity, 0.001);
   }
 
   /**
@@ -145,9 +146,6 @@ public class HolonomicController {
     double pidOmega =
         _headingProfiled.calculate(
             currentPose.getRotation().getRadians(), goalPose.getRotation().getRadians());
-
-    DogLog.log("PID", velMag);
-    DogLog.log("VEL", _translationProfiled.getSetpoint().velocity);
 
     DogLog.log("Auto/Controller Goal Pose", goalPose);
     DogLog.log("Auto/Controller Reference", currentPose);
