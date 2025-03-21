@@ -140,7 +140,7 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final Distance trigMaxDistance = Meters.of(1.5);
+    public static final Distance trigMaxDistance = Meters.of(0.8);
 
     public static final VisionPoseEstimatorConstants lowerLeftArducam =
         new VisionPoseEstimatorConstants(
@@ -208,7 +208,7 @@ public final class Constants {
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
 
-    public static final Distance pathingDistanceThreshold = Meters.of(0.5);
+    public static final Distance pathingDistanceThreshold = Meters.of(0.4);
   }
 
   public static class IntakeConstants {
