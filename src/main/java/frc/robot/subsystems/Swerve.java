@@ -580,12 +580,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                             () -> {
                               if (_alignEstimate == null) return getPose();
 
-                              return getPose()
-                                  .transformBy(
-                                      new Transform2d(
-                                          _alignOdomCompensation.getX(),
-                                          _alignOdomCompensation.getY(),
-                                          Rotation2d.kZero));
+                              return new Pose2d(
+                                  getPose().getX() + _alignOdomCompensation.getX(),
+                                  getPose().getY() + _alignOdomCompensation.getY(),
+                                  getHeading());
+
+                              // return getPose();
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -706,10 +706,18 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
                 _alignEstimate = e;
 
-                _alignOdomCompensation =
+                var pose =
                     samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
-                        .orElse(getPose())
-                        .minus(_alignEstimate.pose().toPose2d());
+                        .orElse(getPose());
+
+                _alignOdomCompensation =
+                    new Transform2d(
+                        _alignEstimate.pose().toPose2d().getX() - pose.getX(),
+                        _alignEstimate.pose().toPose2d().getY() - pose.getY(),
+                        Rotation2d.kZero);
+
+                DogLog.log("VISION ESTIMATE", _alignEstimate.pose().toPose2d());
+                DogLog.log("ODOM ESTIMATE", getPose());
               }
 
               // only override align estimate if the new estimate is closer
@@ -726,8 +734,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void periodic() {
-    // updateVisionPoseEstimates();
-    // updateAlignEstimate();
+    updateVisionPoseEstimates();
+    updateAlignEstimate();
 
     _poseController.updateTuning();
 

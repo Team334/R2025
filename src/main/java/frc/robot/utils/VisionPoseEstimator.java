@@ -434,7 +434,7 @@ public class VisionPoseEstimator implements AutoCloseable {
         var newEstimate = processEstimate(est.get(), _gyroAtTime.apply(est.get().timestampSeconds));
         _newEstimates.add(newEstimate);
 
-        // logNewEstimate(newEstimate);
+        logNewEstimate(newEstimate);
       }
     }
   }

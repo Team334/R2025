@@ -138,7 +138,7 @@ public final class Constants {
 
     public static final double xBoundMargin = 0.01;
     public static final double yBoundMargin = 0.01;
-    public static final double zBoundMargin = 0.01;
+    public static final double zBoundMargin = 0.1;
 
     public static final Distance trigMaxDistance = Meters.of(0.8);
 
