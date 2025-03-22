@@ -336,8 +336,10 @@ public class VisionPoseEstimator implements AutoCloseable {
       Pose3d betterReprojPose = tagPose.transformBy(target.getBestCameraToTarget().inverse());
       Pose3d worseReprojPose = tagPose.transformBy(target.getAlternateCameraToTarget().inverse());
 
-      betterReprojPose = betterReprojPose.transformBy(robotToCam.inverse());
-      worseReprojPose = worseReprojPose.transformBy(robotToCam.inverse());
+      var robotToCamInverse = robotToCam.inverse();
+
+      betterReprojPose = betterReprojPose.transformBy(robotToCamInverse);
+      worseReprojPose = worseReprojPose.transformBy(robotToCamInverse);
 
       // check which of the poses is closer to the correct gyro heading
       if (Math.abs(betterReprojPose.toPose2d().getRotation().minus(gyroHeading).getDegrees())
@@ -421,9 +423,9 @@ public class VisionPoseEstimator implements AutoCloseable {
 
     var results = _camera.getAllUnreadResults();
 
-    DogLog.log(
-        "Swerve/" + camName + "/Camera Result #",
-        results.size()); // also to check if cam's connected
+    // DogLog.log(
+    //     "Swerve/" + camName + "/Camera Result #",
+    //     results.size()); // also to check if cam's connected
 
     for (var result : results) {
       var est = _poseEstimator.update(result);
@@ -432,7 +434,7 @@ public class VisionPoseEstimator implements AutoCloseable {
         var newEstimate = processEstimate(est.get(), _gyroAtTime.apply(est.get().timestampSeconds));
         _newEstimates.add(newEstimate);
 
-        logNewEstimate(newEstimate);
+        // logNewEstimate(newEstimate);
       }
     }
   }

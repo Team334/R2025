@@ -13,6 +13,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import edu.wpi.first.networktables.DoubleEntry;
+import frc.lib.Tuning;
 import frc.robot.Constants.SwerveConstants;
 
 public class HolonomicController {
@@ -43,11 +45,28 @@ public class HolonomicController {
   private final PIDController _xController = new PIDController(0.4, 0, 0.01);
   private final PIDController _yController = new PIDController(0.4, 0, 0.01);
 
-  private final PIDController _headingController = new PIDController(0.1, 0, 0.0);
+  private final PIDController _headingController = new PIDController(1.0, 0, 0.01);
+
+  private DoubleEntry rotationKp = Tuning.entry("Tuning/Rotation kp", 1.0);
+  private DoubleEntry rotationKd = Tuning.entry("Tuning/Rotation kd", 0.01);
+
+  private DoubleEntry translationKp = Tuning.entry("Tuning/Translation kp", 0.4);
+  private DoubleEntry translationKd = Tuning.entry("Tuning/Translation kd", 0.01);
 
   public HolonomicController() {
     _headingProfile.enableContinuousInput(-Math.PI, Math.PI);
     _headingController.enableContinuousInput(-Math.PI, Math.PI);
+  }
+
+  public void updateTuning() {
+    _headingController.setP(rotationKp.get());
+    _headingController.setD(rotationKd.get());
+
+    _xController.setP(translationKp.get());
+    _xController.setD(translationKd.get());
+
+    _yController.setP(translationKp.get());
+    _yController.setD(translationKd.get());
   }
 
   /** Whether the translation and rotation profiles have completed. */

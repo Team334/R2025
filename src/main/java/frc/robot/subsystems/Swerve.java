@@ -206,6 +206,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     // closed loop vel always in auto
     _fieldSpeedsRequest.withDriveRequestType(DriveRequestType.Velocity);
 
+    SmartDashboard.putData(
+        "ROTATE TEST",
+        defer(
+            () ->
+                driveTo(
+                    new Pose2d(
+                        getPose().getX() - 0.3,
+                        getPose().getY() - 0.3,
+                        getPose().getRotation().plus(Rotation2d.k180deg)))));
+
     registerTelemetry(
         state -> {
           DogLog.log("Swerve/Pose", state.Pose);
@@ -229,6 +239,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         "RESET TO TAG 17",
         Commands.runOnce(
             () -> {
+              updateVisionPoseEstimates();
+              updateAlignEstimate();
+
               _newEstimates.stream()
                   .map(e -> e.singleTagEstimates())
                   .flatMap(e -> Arrays.stream(e))
@@ -567,7 +580,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                             () -> {
                               if (_alignEstimate == null) return getPose();
 
-                              return getPose().transformBy(_alignOdomCompensation);
+                              return getPose()
+                                  .transformBy(
+                                      new Transform2d(
+                                          _alignOdomCompensation.getX(),
+                                          _alignOdomCompensation.getY(),
+                                          Rotation2d.kZero));
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -643,7 +661,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       //         .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
       //         .transformBy(cam.robotToCam));
 
-      // process estimates
+      // add estimates to arrays and update detected tags
       _estimates.forEach(
           (estimate) -> {
             // add all detected tag poses
@@ -708,10 +726,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void periodic() {
-    updateVisionPoseEstimates();
-    updateAlignEstimate();
+    // updateVisionPoseEstimates();
+    // updateAlignEstimate();
 
-    // _poseController.updateTuning();
+    _poseController.updateTuning();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
