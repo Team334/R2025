@@ -75,11 +75,6 @@ public class HolonomicController {
         VecBuilder.fill(goalPose.getX() - currentPose.getX(), goalPose.getY() - currentPose.getY());
 
     DogLog.log("RESET POSE", currentPose);
-    DogLog.log(
-        "RESET SPEED",
-        _translationDirection.dot(
-                VecBuilder.fill(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond))
-            / _translationDirection.norm());
 
     _translationProfile.reset(
         0,
@@ -134,8 +129,7 @@ public class HolonomicController {
         new ChassisSpeeds(
             _translationDirection.unit().times(_translationProfile.getSetpoint().velocity).get(0),
             _translationDirection.unit().times(_translationProfile.getSetpoint().velocity).get(1),
-            0 // _headingProfile.getSetpoint().velocity
-            ),
+            _headingProfile.getSetpoint().velocity),
         setpoint,
         currentPose);
   }
@@ -151,7 +145,7 @@ public class HolonomicController {
    */
   public ChassisSpeeds calculate(ChassisSpeeds baseSpeeds, Pose2d desiredPose, Pose2d currentPose) {
     DogLog.log("Auto/Controller Desired Pose", desiredPose);
-    DogLog.log("Auto/Controller Reference", currentPose);
+    DogLog.log("Auto/Controller Reference Pose", currentPose);
 
     return baseSpeeds.plus(
         new ChassisSpeeds(
