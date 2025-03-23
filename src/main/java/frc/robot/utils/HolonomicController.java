@@ -93,8 +93,6 @@ public class HolonomicController {
     _translationDirection =
         VecBuilder.fill(goalPose.getX() - currentPose.getX(), goalPose.getY() - currentPose.getY());
 
-    DogLog.log("RESET POSE", currentPose);
-
     _translationProfile.reset(
         0,
         _translationDirection.dot(

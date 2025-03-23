@@ -24,7 +24,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
@@ -143,7 +142,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private SingleTagEstimate _alignEstimate = null;
 
-  private Transform2d _alignOdomCompensation = null;
+  private Translation2d _alignOdomCompensation = null;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -205,16 +204,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     // closed loop vel always in auto
     _fieldSpeedsRequest.withDriveRequestType(DriveRequestType.Velocity);
-
-    SmartDashboard.putData(
-        "ROTATE TEST",
-        defer(
-            () ->
-                driveTo(
-                    new Pose2d(
-                        getPose().getX() - 0.3,
-                        getPose().getY() - 0.3,
-                        getPose().getRotation().plus(Rotation2d.k180deg)))));
 
     registerTelemetry(
         state -> {
@@ -581,11 +570,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                               if (_alignEstimate == null) return getPose();
 
                               return new Pose2d(
-                                  getPose().getX() + _alignOdomCompensation.getX(),
-                                  getPose().getY() + _alignOdomCompensation.getY(),
+                                  getPose().getTranslation().plus(_alignOdomCompensation),
                                   getHeading());
-
-                              // return getPose();
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -711,23 +697,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                         .orElse(getPose());
 
                 _alignOdomCompensation =
-                    new Transform2d(
-                        _alignEstimate.pose().toPose2d().getX() - pose.getX(),
-                        _alignEstimate.pose().toPose2d().getY() - pose.getY(),
-                        Rotation2d.kZero);
-
-                DogLog.log("VISION ESTIMATE", _alignEstimate.pose().toPose2d());
-                DogLog.log("ODOM ESTIMATE", getPose());
+                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
               }
 
               // only override align estimate if the new estimate is closer
               if (e.distance() < _alignEstimate.distance()) {
                 _alignEstimate = e;
 
-                _alignOdomCompensation =
+                var pose =
                     samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
-                        .orElse(getPose())
-                        .minus(_alignEstimate.pose().toPose2d());
+                        .orElse(getPose());
+
+                _alignOdomCompensation =
+                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
               }
             });
   }
