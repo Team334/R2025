@@ -23,10 +23,13 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -53,6 +56,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
+import frc.robot.utils.LimelightHelpers;
+import frc.robot.utils.LimelightHelpers.RawDetection;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
@@ -140,8 +145,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
-  private SingleTagEstimate _alignEstimate = null;
+  private Pose2d _pieceAlignPose;
 
+  private SingleTagEstimate _alignEstimate = null;
   private Translation2d _alignOdomCompensation = null;
 
   private HolonomicController _poseController = new HolonomicController();
@@ -458,6 +464,53 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withSpeeds(desiredSpeeds)
             .withWheelForceFeedforwardsX(sample.moduleForcesX())
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
+  }
+
+  /** Make the chassis align to a piece. */
+  public Command alignToPiece() {
+    return runOnce(
+            () -> {
+              Angle tx = Degrees.of(LimelightHelpers.getTX(VisionConstants.limelightName));
+              Angle ty = Degrees.of(LimelightHelpers.getTY(VisionConstants.limelightName));
+
+              RawDetection[] rawDetections =
+                  LimelightHelpers.getRawDetections(VisionConstants.limelightName);
+              double sideProportions = 0;
+
+              if (rawDetections.length != 0) {
+                Rectangle2d coralBox =
+                    new Rectangle2d(
+                        new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y),
+                        new Translation2d(rawDetections[0].corner3_X, rawDetections[0].corner3_Y));
+
+                sideProportions = coralBox.getYWidth() / coralBox.getXWidth();
+              }
+
+              double groundDistance =
+                  (VisionConstants.robotToLimelight.getZ()
+                          + SwerveConstants.chassisHeight.in(Meters))
+                      * Math.tan(
+                          (Math.PI / 2)
+                              - (VisionConstants.robotToLimelight.getRotation().getY()
+                                  + ty.in(Radians)));
+
+              Rotation2d groundAngle =
+                  new Rotation2d(
+                      Math.atan2(
+                          groundDistance * Math.sin(tx.in(Radians)),
+                          (groundDistance - VisionConstants.robotToLimelight.getX())
+                              * Math.cos(tx.in(Radians))));
+
+              _pieceAlignPose =
+                  getPose()
+                      .transformBy(
+                          new Transform2d(
+                              -groundDistance * groundAngle.getCos(),
+                              -groundDistance * groundAngle.getSin(),
+                              groundAngle));
+            })
+        .andThen(defer(() -> driveTo(_pieceAlignPose)))
+        .withName("Align To Piece");
   }
 
   /** Aligns to a {@link AlignPoses} to the correct side. */
