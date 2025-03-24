@@ -111,5 +111,6 @@
     {
       "guid": "Keyboard0"
     }
-  ]
+  ],
+  "useEstopHotkey": true
 }

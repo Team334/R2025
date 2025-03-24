@@ -12,6 +12,7 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
 import dev.doglog.DogLog;
+import dev.doglog.DogLogOptions;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
@@ -108,7 +109,7 @@ public class Robot extends TimedRobot {
     _ntInst = ntInst;
 
     // set up loggers
-    DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+    DogLog.setOptions(new DogLogOptions().withCaptureDs(true));
 
     setFileOnly(false); // file-only once connected to fms
 
@@ -134,7 +135,8 @@ public class Robot extends TimedRobot {
             .withName("Robot Self Check"));
 
     SmartDashboard.putData(new WheelRadiusCharacterization(_swerve));
-    SmartDashboard.putData(runOnce(FaultLogger::clear).withName("Clear Faults"));
+    SmartDashboard.putData(
+        runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
     // set up auto chooser
     _autoChooser.addRoutine("Simple Trajectory", _autos::simpleTrajectory);
@@ -179,30 +181,32 @@ public class Robot extends TimedRobot {
 
     new Trigger(_wristevator::isManual)
         .onTrue(
-            _wristevator.setSpeeds(
-                InputStream.of(_operatorController::getRightY)
-                    .deadband(0.05, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond)),
-                InputStream.of(_operatorController::getLeftY)
-                    .deadband(0.05, 1)
-                    .negate()
-                    .scale(WristevatorConstants.maxWristSpeed.in(RadiansPerSecond))));
+            _wristevator
+                .setSpeeds(
+                    InputStream.of(_operatorController::getRightY)
+                        .deadband(0.1, 1)
+                        .negate()
+                        .scale(WristevatorConstants.manualElevatorSpeed.in(RadiansPerSecond)),
+                    InputStream.of(_operatorController::getLeftY)
+                        .deadband(0.07, 1)
+                        .negate()
+                        .scale(WristevatorConstants.manualWristSpeed.in(RadiansPerSecond)))
+                .ignoringDisable(true));
   }
 
-  private void alignmentTriggers(Trigger button, AlignPoses poses) {
+  private void alignmentTriggers(Trigger button, AlignPoses poses, boolean startReversed) {
     button
         .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT, startReversed));
 
     button
         .and(
             _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER, startReversed));
 
     button
         .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT));
+        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT, startReversed));
   }
 
   private void configureDriverBindings() {
@@ -210,13 +214,13 @@ public class Robot extends TimedRobot {
     _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
     _driverController.povDown().onTrue(_swerve.resetHeading());
 
-    alignmentTriggers(_driverController.x(), FieldConstants.reef);
-    alignmentTriggers(_driverController.y(), FieldConstants.human);
-    alignmentTriggers(_driverController.b(), FieldConstants.processor);
-    alignmentTriggers(_driverController.start(), FieldConstants.cage);
-
     // align to piece
     _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
+
+    alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
+    alignmentTriggers(_driverController.y(), FieldConstants.human, true);
+    alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
+    alignmentTriggers(_driverController.start(), FieldConstants.cage, false);
   }
 
   private void configureOperatorBindings() {
@@ -260,8 +264,13 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // ground outtake
-    _operatorController.leftBumper().whileTrue(Superstructure.groundOuttake(_intake, _serializer));
+    // switch to fast manipulator feed mode
+    _operatorController
+        .leftBumper()
+        .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
+        .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
+
+    _operatorController.povUp().whileTrue(_intake.outtake());
 
     // intake / inverse passoff
     _operatorController

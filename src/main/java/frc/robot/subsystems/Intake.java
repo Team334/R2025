@@ -2,6 +2,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 
+import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
@@ -11,6 +12,7 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -59,14 +61,20 @@ public class Intake extends AdvancedSubsystem {
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              Volts.per(Second).of(0.5),
+              Volts.of(3),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setActuatorVoltage(volts.in(Volts)), null, this));
 
   private final SysIdRoutine _feedRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null, null, null, state -> SignalLogger.writeString("state", state.toString())),
+              null,
+              Volts.of(4),
+              Seconds.of(5),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
@@ -82,11 +90,17 @@ public class Intake extends AdvancedSubsystem {
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
 
+    // feed configs
+    feedMotorConfigs.Slot0.kS = IntakeConstants.feedkS.in(Volts);
     feedMotorConfigs.Slot0.kV = IntakeConstants.feedkV.in(Volts.per(RotationsPerSecond));
+
     feedMotorConfigs.Slot0.kP = IntakeConstants.feedkP.in(Volts.per(RotationsPerSecond));
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.feedGearRatio;
 
+    // actuator configs
+    actuatorMotorConfigs.Slot0.kS = IntakeConstants.actuatorkS.in(Volts);
+    actuatorMotorConfigs.Slot0.kG = IntakeConstants.actuatorkG.in(Volts);
     actuatorMotorConfigs.Slot0.kV = IntakeConstants.actuatorkV.in(Volts.per(RotationsPerSecond));
     actuatorMotorConfigs.Slot0.kA =
         IntakeConstants.actuatorkA.in(Volts.per(RotationsPerSecondPerSecond));
@@ -98,9 +112,9 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        IntakeConstants.actuatorOut.in(Rotations);
+        IntakeConstants.actuatorStowed.plus(Radians.of(0.15)).in(Rotations);
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
-        IntakeConstants.actuatorStowed.in(Rotations);
+        IntakeConstants.actuatorOut.minus(Radians.of(0.15)).in(Rotations);
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
@@ -110,6 +124,8 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
         IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
 
+    actuatorMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
     CTREUtil.attempt(
@@ -117,10 +133,32 @@ public class Intake extends AdvancedSubsystem {
     CTREUtil.attempt(
         () -> _actuatorMotor.setPosition(IntakeConstants.actuatorStowed), _actuatorMotor);
 
+    CTREUtil.attempt(() -> _feedMotor.optimizeBusUtilization(), _feedMotor);
+    CTREUtil.attempt(() -> _actuatorMotor.optimizeBusUtilization(), _actuatorMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _feedMotor.getPosition(),
+                _feedMotor.getVelocity(),
+                _feedMotor.getMotorVoltage()),
+        _feedMotor);
+
+    CTREUtil.attempt(
+        () ->
+            BaseStatusSignal.setUpdateFrequencyForAll(
+                100,
+                _actuatorMotor.getPosition(),
+                _actuatorMotor.getVelocity(),
+                _actuatorMotor.getMotorVoltage()),
+        _actuatorMotor);
+
     FaultLogger.register(_feedMotor);
     FaultLogger.register(_actuatorMotor);
 
-    SysId.displayRoutine("Actuator", _actuatorRoutine);
+    SysId.displayRoutine(
+        "Actuator", _actuatorRoutine, () -> getAngle() >= 1.8, () -> getAngle() <= -0.4);
     SysId.displayRoutine("Intake Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
