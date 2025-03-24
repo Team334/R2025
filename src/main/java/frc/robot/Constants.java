@@ -408,7 +408,6 @@ public final class Constants {
 
   public static class SerializerConstants {
     public static final int frontBeamPort = 6;
-    public static final int backBeamPort = 2;
 
     public static final Voltage feedkS = Volts.of(0.30489);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
