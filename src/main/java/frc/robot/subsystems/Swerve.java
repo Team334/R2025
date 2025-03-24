@@ -235,7 +235,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         Commands.runOnce(
             () -> {
               updateVisionPoseEstimates();
-              updateAlignEstimate();
 
               _newEstimates.stream()
                   .map(e -> e.singleTagEstimates())
