@@ -78,7 +78,7 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final Autos _autos = new Autos(_swerve);
+  private final Autos _autos = new Autos(_swerve, (Piece piece) -> _currentPiece = piece, _wristevator, _manipulator, _intake, _serializer);
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
@@ -139,7 +139,8 @@ public class Robot extends TimedRobot {
         runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
     // set up auto chooser
-    _autoChooser.addRoutine("Simple Trajectory", _autos::simpleTrajectory);
+    _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
+    _autoChooser.addRoutine("One Piece", _autos::onePiece);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 
@@ -327,7 +328,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void autonomousPeriodic() {
-    _autos.simpleTrajectory().poll();
+    _autos.ground3P().poll();
   }
 
   @Override
