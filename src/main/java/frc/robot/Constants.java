@@ -135,7 +135,6 @@ public final class Constants {
     public static final String upperRightArducamName = "upper-right-arducam";
     public static final String limelightName = "limelight-main";
 
-
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
 

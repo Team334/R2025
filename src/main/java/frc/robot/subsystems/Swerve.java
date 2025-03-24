@@ -28,8 +28,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.*;
@@ -150,7 +148,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
   private Pose2d _pieceAlignPose;
-  
+
   private SingleTagEstimate _alignEstimate = null;
   private Translation2d _alignOdomCompensation = null;
 
@@ -233,7 +231,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Success %", state.SuccessfulDaqs / totalDaqs * 100);
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
-
 
     SmartDashboard.putData(
         "RESET GYRO", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(60))));
@@ -520,11 +517,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
         .finallyDo(() -> System.out.println("FINISED COMMAND"))
         .withName("Align To Piece");
+  }
 
   /** Aligns to a {@link AlignPoses} to the correct side. */
   public Command alignTo(AlignPoses alignGoal, AlignSide side) {
     return alignTo(alignGoal, side, false);
-
   }
 
   /**
@@ -587,7 +584,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 _alignGoal = alignGoal;
               }
 
-
               _alignGoal =
                   _alignGoal.rotateAround(
                       FieldConstants.fieldCenter,
@@ -597,7 +593,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   alliance == Alliance.Blue
                       ? _alignTag
                       : FieldConstants.tagCorrespondences.get(_alignTag);
-
             })
         .andThen(
             defer(
