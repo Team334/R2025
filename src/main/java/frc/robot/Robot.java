@@ -78,7 +78,14 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final Autos _autos = new Autos(_swerve, (Piece piece) -> _currentPiece = piece, _wristevator, _manipulator, _intake, _serializer);
+  private final Autos _autos =
+      new Autos(
+          _swerve,
+          (Piece piece) -> _currentPiece = piece,
+          _wristevator,
+          _manipulator,
+          _intake,
+          _serializer);
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;

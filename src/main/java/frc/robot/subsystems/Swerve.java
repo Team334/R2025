@@ -155,27 +155,26 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private boolean _hasAppliedDriverPerspective;
 
   @Logged(name = VisionConstants.lowerLeftArducamName)
-  private final VisionPoseEstimator _lowerArducam =
+  private final VisionPoseEstimator _lowerLeftArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.lowerRightArducamName)
-  private final VisionPoseEstimator _middleArducam =
+  private final VisionPoseEstimator _lowerRightArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerRightArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.upperLeftArducamName)
-  private final VisionPoseEstimator _upperArducam =
+  private final VisionPoseEstimator _upperLeftArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperLeftArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.upperRightArducamName)
-  private final VisionPoseEstimator _backArducam =
+  private final VisionPoseEstimator _upperRightArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperRightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras =
-      List.of(_lowerArducam, _middleArducam, _upperArducam, _backArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -228,10 +227,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         });
 
     SmartDashboard.putData(
-        "RESET GYRO", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(60))));
-
-    SmartDashboard.putData(
-        "RESET TO TAG 17",
+        "RESET TO TAG 18",
         Commands.runOnce(
             () -> {
               updateVisionPoseEstimates();
@@ -241,7 +237,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                   .flatMap(e -> Arrays.stream(e))
                   .forEach(
                       e -> {
-                        if (e.tag() == 17) resetPose(e.pose().toPose2d());
+                        if (e.tag() == 18) resetPose(e.pose().toPose2d());
                       });
             }));
 
@@ -260,22 +256,22 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _lowerArducam
+      _lowerLeftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _middleArducam
+      _lowerRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _upperArducam
+      _upperLeftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _backArducam
+      _upperRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
@@ -734,7 +730,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // alignment tag is wanted
   private void updateAlignEstimate() {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = _prevIgnoreVisionEstimates;
+      _ignoreVisionEstimates = true;
       _alignEstimate = null;
       _alignOdomCompensation = null;
 

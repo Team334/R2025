@@ -9,8 +9,6 @@ import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
 import static frc.robot.Constants.WristevatorConstants.Preset.L4;
 
-import java.util.function.Consumer;
-
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
@@ -21,6 +19,7 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
+import java.util.function.Consumer;
 
 public class Autos {
   private final Swerve _swerve;
@@ -34,7 +33,13 @@ public class Autos {
 
   private boolean _seesPiece = false;
 
-  public Autos(Swerve swerve, Consumer<Piece> currentPieceSetter, Wristevator wristevator, Manipulator manipulator, Intake intake, Serializer serializer) {
+  public Autos(
+      Swerve swerve,
+      Consumer<Piece> currentPieceSetter,
+      Wristevator wristevator,
+      Manipulator manipulator,
+      Intake intake,
+      Serializer serializer) {
     _swerve = swerve;
     _currentPieceSetter = currentPieceSetter;
     _wristevator = wristevator;
@@ -57,14 +62,14 @@ public class Autos {
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
               DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
-      
-    _factory.
-    bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer)).
-    bind("L4", wristevator.setGoal(L4)).
-    bind("L2", wristevator.setGoal(L2)).
-    bind("Human", wristevator.setGoal(HUMAN)).
-    bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5)).
-    bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
+
+    _factory
+        .bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer))
+        .bind("L4", wristevator.setGoal(L4))
+        .bind("L2", wristevator.setGoal(L2))
+        .bind("Human", wristevator.setGoal(HUMAN))
+        .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
+        .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
   }
 
   public AutoRoutine ground3P() {
@@ -75,7 +80,13 @@ public class Autos {
     var humanToReef2 = routine.trajectory("Human-Reef2");
     var reefToHuman2 = routine.trajectory("Reef-Human2");
 
-    routine.active().onTrue(sequence(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)), start.resetOdometry(), start.cmd()));
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                start.resetOdometry(),
+                start.cmd()));
 
     start.done().onTrue(reefToHuman1.cmd());
 
@@ -107,8 +118,14 @@ public class Autos {
     var routine = _factory.newRoutine("Simple Path");
     var traj = routine.trajectory("SimplePath");
 
-    routine.active().onTrue(sequence(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)), traj.resetOdometry(), traj.cmd()));
-    
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                traj.resetOdometry(),
+                traj.cmd()));
+
     return routine;
   }
 
@@ -117,7 +134,14 @@ public class Autos {
     var meowjectory = routine.trajectory("Start-Reef(A)");
     var meowjectory2 = routine.trajectory("Reef-Human(A)");
 
-    routine.active().onTrue(sequence(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)), meowjectory.resetOdometry(), meowjectory.cmd(), meowjectory2.cmd()));
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                meowjectory.resetOdometry(),
+                meowjectory.cmd(),
+                meowjectory2.cmd()));
 
     return routine;
   }
