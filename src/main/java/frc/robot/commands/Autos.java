@@ -9,8 +9,6 @@ import static edu.wpi.first.wpilibj2.command.Commands.*;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
-import edu.wpi.first.networktables.BooleanEntry;
-import frc.lib.Tuning;
 import frc.robot.subsystems.Swerve;
 
 public class Autos {
@@ -18,8 +16,7 @@ public class Autos {
 
   private final AutoFactory _factory;
 
-  private final BooleanEntry _seesPiece = Tuning.entry("PieceVisable", false);
-  private final BooleanEntry _end = Tuning.entry("End", false);
+  private boolean _seesPiece = false;
 
   public Autos(Swerve swerve) {
     _swerve = swerve;
@@ -55,7 +52,7 @@ public class Autos {
 
     reefToHuman1
         .active()
-        .and(_seesPiece)
+        .and(() -> _seesPiece)
         .onTrue(
             sequence(
                 _swerve.alignToPiece(),
@@ -66,7 +63,7 @@ public class Autos {
 
     reefToHuman2
         .active()
-        .and(_seesPiece)
+        .and(() -> _seesPiece)
         .onTrue(
             sequence(
                 _swerve.alignToPiece(),

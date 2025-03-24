@@ -8,11 +8,9 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import edu.wpi.first.units.measure.Distance;
 import frc.robot.Constants.SwerveConstants;
 
 public class HolonomicController {
@@ -40,20 +38,6 @@ public class HolonomicController {
   public HolonomicController() {
     _headingProfiled.enableContinuousInput(-Math.PI, Math.PI);
     _headingController.enableContinuousInput(-Math.PI, Math.PI);
-  }
-
-  /**
-   * Set the error tolerance for all controllers.
-   *
-   * @param translationTolerance Linear translation tolerance in meters.
-   * @param headingTolerance Heading tolerance.
-   */
-  public void setTolerance(Distance translationTolerance, Rotation2d headingTolerance) {
-    _translationProfiled.setTolerance(translationTolerance.in(Meters));
-    _headingProfiled.setTolerance(headingTolerance.getRadians());
-
-    _translationController.setTolerance(translationTolerance.in(Meters));
-    _headingController.setTolerance(headingTolerance.getRadians());
   }
 
   /**
