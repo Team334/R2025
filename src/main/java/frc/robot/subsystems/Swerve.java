@@ -481,10 +481,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 Rectangle2d coralBox =
                     new Rectangle2d(
                         new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y),
-                        new Translation2d(rawDetections[0].corner3_X, rawDetections[0].corner3_Y));
+                        new Translation2d(rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
 
                 sideProportions = coralBox.getYWidth() / coralBox.getXWidth();
+
+                DogLog.log(
+                    "TOP LEFT",
+                    new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y));
+                DogLog.log(
+                    "BOTTOM RIGHT",
+                    new Translation2d(rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
               }
+
+              DogLog.log("Proportions", sideProportions);
 
               double groundDistance =
                   (VisionConstants.robotToLimelight.getZ()
@@ -507,9 +516,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                           new Transform2d(
                               -groundDistance * groundAngle.getCos(),
                               -groundDistance * groundAngle.getSin(),
-                              groundAngle));
+                              groundAngle.plus(
+                                  sideProportions >= 1.3
+                                      ? Rotation2d.fromDegrees(45)
+                                      : Rotation2d.kZero)));
             })
-        .andThen(defer(() -> driveTo(_pieceAlignPose)))
+        .andThen(defer(() -> Commands.none()))
         .withName("Align To Piece");
   }
 
