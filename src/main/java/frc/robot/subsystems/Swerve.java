@@ -28,7 +28,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -48,7 +47,6 @@ import frc.lib.FaultsTable.Fault;
 import frc.lib.FaultsTable.FaultType;
 import frc.lib.InputStream;
 import frc.lib.SelfChecked;
-import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.SwerveConstants;
@@ -187,9 +185,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
   private final VisionSystemSim _visionSystemSim;
-
-  private final DoubleEntry _tx = Tuning.entry("Piece TX", 0.0);
-  private final DoubleEntry _ty = Tuning.entry("Piece TY", 0.0);
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -515,7 +510,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                               groundAngle));
             })
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
-        .finallyDo(() -> System.out.println("FINISED COMMAND"))
         .withName("Align To Piece");
   }
 
