@@ -419,8 +419,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   private Command holdInPlace() {
     return run(() -> {
-          _leftMotor.setControl(_heightSetter);
-          _wristMotor.setControl(_angleSetter);
+          _leftMotor.setControl(_elevatorVelocitySetter.withVelocity(0));
+          _wristMotor.setControl(_wristVelocitySetter.withVelocity(0));
         })
         .withName("Hold In Place");
   }

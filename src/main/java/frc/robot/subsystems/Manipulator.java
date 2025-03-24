@@ -159,6 +159,8 @@ public class Manipulator extends AdvancedSubsystem {
                 _rightMotor.getMotorVoltage()),
         _rightMotor);
 
+    _feedVelocitySetter.UpdateFreqHz = 250;
+
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
 
