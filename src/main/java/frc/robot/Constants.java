@@ -142,7 +142,7 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.1;
 
-    public static final Distance trigMaxDistance = Meters.of(0.8);
+    public static final Distance trigMaxDistance = Meters.of(1.2);
 
     public static final VisionPoseEstimatorConstants lowerLeftArducam =
         new VisionPoseEstimatorConstants(
@@ -151,9 +151,9 @@ public final class Constants {
                 new Translation3d(0.345, 0.285, 0.232),
                 new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants lowerRightArducam =
         new VisionPoseEstimatorConstants(
@@ -162,9 +162,9 @@ public final class Constants {
                 new Translation3d(0.345, -0.285, 0.232),
                 new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants upperLeftArducam =
         new VisionPoseEstimatorConstants(
@@ -173,9 +173,9 @@ public final class Constants {
                 new Translation3d(0.154, 0.273, 0.972),
                 new Rotation3d(0, -Units.degreesToRadians(11), Math.PI)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants upperRightArducam =
         new VisionPoseEstimatorConstants(
@@ -184,18 +184,18 @@ public final class Constants {
                 new Translation3d(0.154, -0.273, 0.972),
                 new Rotation3d(0, -Units.degreesToRadians(8), Math.PI)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final Transform3d robotToLimelight =
-        new Transform3d(-0.5, 0, -0.5, new Rotation3d(0, Units.degreesToRadians(-45), Math.PI));
+        new Transform3d(0.063, 0, 0.87, new Rotation3d(0, Units.degreesToRadians(-45), Math.PI));
   }
 
   public static class SwerveConstants {
     public static final Frequency odometryFrequency = Hertz.of(250);
 
-    public static final Distance chassisHeight = Inches.of(0.615);
+    public static final Distance chassisHeight = Meter.of(0.098);
 
     public static final Distance driveRadius =
         Meters.of(
@@ -380,7 +380,7 @@ public final class Constants {
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-1.3);
+    public static final Angle minWristAngle = Radians.of(-1.1);
     public static final Angle maxWristAngle = Radians.of(1.32);
 
     public static final double wristGearRatio = 33.75;
@@ -441,7 +441,7 @@ public final class Constants {
 
     public static final Voltage leftFlywheelkS = Volts.of(0.44229);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0.12915);
+        Volts.per(RotationsPerSecond).ofNative(0.26);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkP =
         Volts.per(RotationsPerSecond).ofNative(0.16712);
 
@@ -449,13 +449,13 @@ public final class Constants {
 
     public static final Voltage rightFlywheelkS = Volts.of(0.24209);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0.11962);
+        Volts.per(RotationsPerSecond).ofNative(0.29905);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkP =
         Volts.per(RotationsPerSecond).ofNative(0.02354);
 
     // right wheel meow ka = 0.0096618
 
-    public static final double flywheelGearRatio = 36.0 / 30;
+    public static final double flywheelGearRatio = 3;
 
     public static final double holdAlgaeVoltage = 1.5;
   }

@@ -40,8 +40,8 @@ public class HolonomicController {
   private Pose2d _goalPose = Pose2d.kZero;
 
   // used to follow the path
-  private final PIDController _xController = new PIDController(0.4, 0, 0.01);
-  private final PIDController _yController = new PIDController(0.4, 0, 0.01);
+  private final PIDController _xController = new PIDController(0.8, 0, 0.01);
+  private final PIDController _yController = new PIDController(0.8, 0, 0.01);
 
   private final PIDController _headingController = new PIDController(1.0, 0, 0.01);
 
