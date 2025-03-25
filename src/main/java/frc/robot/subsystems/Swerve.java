@@ -91,6 +91,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // sysid requests
   private final SysIdSwerveTranslation _translationSysIdRequest = new SysIdSwerveTranslation();
   private final SysIdSwerveSteerGains _steerSysIdRequest = new SysIdSwerveSteerGains();
+  private final SysIdSwerveRotation _rotationSysIdRequest = new SysIdSwerveRotation();
 
   // SysId routine for characterizing translation. This is used to find PID gains for the drive
   // motors.
@@ -114,6 +115,19 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_steerSysIdRequest.withVolts(volts)), null, this));
+
+  // SysId routine for finding MOI of the robot.
+  private final SysIdRoutine _sysIdRoutineRotation =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              null, // Radian Per Second
+              Volts.of(7), // Radians
+              null, // Use default timeout (10 s)
+              state -> SignalLogger.writeString("state", state.toString())),
+          new SysIdRoutine.Mechanism(
+              volts -> setControl(_rotationSysIdRequest.withRotationalRate(volts.in(Volts))),
+              null,
+              this));
 
   private double _lastSimTime = 0;
   private Notifier _simNotifier;
@@ -221,6 +235,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
     SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
+    SysId.displayRoutine("Swerve Rotation", _sysIdRoutineRotation);
 
     registerFallibles();
 
