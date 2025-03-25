@@ -225,6 +225,8 @@ public class Robot extends TimedRobot {
     // align to piece
     _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
 
+    _driverController.povRight().onTrue(_swerve.resetToTag());
+
     alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
     alignmentTriggers(_driverController.y(), FieldConstants.human, true);
     alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
