@@ -4,9 +4,12 @@
 
 package frc.robot.commands;
 
+import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.IntakeConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Serializer;
@@ -35,9 +38,16 @@ public class Superstructure {
         .withName("Inverse Passoff");
   }
 
-  /** Outtake from serializer -> intake. */
-  public static Command groundOuttake(Intake intake) {
-    return intake.outtake().withName("Ground Outtake");
+  /** Outtake from serializer. */
+  public static Command groundOuttake(Serializer serializer, Intake intake) {
+    return sequence(
+        intake
+            .stow()
+            .until(
+                () ->
+                    MathUtil.isNear(
+                        IntakeConstants.actuatorStowed.in(Radians), intake.getAngle(), 0.05)),
+        serializer.outtake());
   }
 
   /** Intake from intake -> serializer. */

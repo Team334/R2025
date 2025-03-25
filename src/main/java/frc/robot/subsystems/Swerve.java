@@ -35,9 +35,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -130,15 +128,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private boolean _isOpenLoop = true;
 
   @Logged(name = "Ignore Vision Estimates")
-  private boolean _ignoreVisionEstimates = true; // for sim for now
+  private boolean _ignoreVisionEstimates = false;
 
   private List<VisionPoseEstimate> _estimates = new ArrayList<VisionPoseEstimate>();
-
-  private boolean _prevIgnoreVisionEstimates = _ignoreVisionEstimates;
-
-  private BooleanEvent _ignoreVisionEstimatesEvent =
-      new BooleanEvent(
-          CommandScheduler.getInstance().getDefaultButtonLoop(), () -> _ignoreVisionEstimates);
 
   @Logged(name = "Align Tag")
   private int _alignTag = -1;
@@ -231,9 +223,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
 
     registerFallibles();
-
-    _ignoreVisionEstimatesEvent.rising().ifHigh(() -> _prevIgnoreVisionEstimates = false);
-    _ignoreVisionEstimatesEvent.falling().ifHigh(() -> _prevIgnoreVisionEstimates = true);
 
     if (Robot.isSimulation()) {
       startSimThread();
@@ -446,6 +435,91 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
+  /** Finds the proper align pose and tag when aligning. */
+  private Pair<AlignPoses, Integer> findAlignment(AlignPoses alignGoal) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+
+    AlignPoses alignGoalProcessed = null;
+    int alignTag = -1;
+
+    Pose2d pose =
+        getPose()
+            .rotateAround(
+                FieldConstants.fieldCenter,
+                alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
+
+    if (alignGoal == FieldConstants.reef) {
+      double minDistance = Double.MAX_VALUE;
+
+      for (int i = 0; i < 6; i++) {
+        AlignPoses goal =
+            FieldConstants.reef.rotateAround(
+                FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
+
+        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+          alignGoalProcessed = goal;
+          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+
+          alignTag = FieldConstants.reefTag + i;
+        }
+      }
+    } else if (alignGoal == FieldConstants.human) {
+      double minDistance = Double.MAX_VALUE;
+
+      int baseTag = FieldConstants.humanTag;
+
+      for (int i = 0; i < 2; i++) {
+        AlignPoses goal = alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+
+        goal =
+            goal.rotateAround(
+                goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
+
+        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+          alignGoalProcessed = goal;
+          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+
+          alignTag = baseTag - i;
+        }
+      }
+    } else if (alignGoal == FieldConstants.processor) {
+      alignGoalProcessed = alignGoal;
+      alignTag = FieldConstants.processorTag;
+    } else {
+      alignGoalProcessed = alignGoal;
+    }
+
+    alignGoalProcessed =
+        alignGoalProcessed.rotateAround(
+            FieldConstants.fieldCenter,
+            alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
+
+    alignTag =
+        alliance == Alliance.Blue ? alignTag : FieldConstants.tagCorrespondences.get(alignTag);
+
+    return Pair.of(alignGoalProcessed, alignTag);
+  }
+
+  /** Backup function that'll fully reset odometry to the reef tag the robot is facing. */
+  public Command resetToReefTag() {
+    return Commands.runOnce(
+        () -> {
+          updateVisionPoseEstimates(); // find all new pose estimates in case vision updates are
+          // disabled
+
+          var tag = findAlignment(FieldConstants.reef).getSecond();
+
+          _newEstimates.stream()
+              .map(e -> e.singleTagEstimates())
+              .flatMap(e -> Arrays.stream(e))
+              .forEach(
+                  e -> {
+                    if (e.tag() == tag && e.distance() < VisionConstants.trigMaxDistance.in(Meters))
+                      resetPose(e.pose().toPose2d());
+                  });
+        });
+  }
+
   /** Make the chassis align to a piece. */
   public Command alignToPiece() {
     return runOnce(
@@ -513,8 +587,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
     return runOnce(
             () -> {
-              _alignGoal = calculateAlignment(alignGoal, side).getFirst();
-              _alignTag = calculateAlignment(alignGoal, side).getSecond();
+              var alignment = findAlignment(alignGoal);
+
+              _alignGoal = alignment.getFirst();
+              _alignTag = alignment.getSecond();
             })
         .andThen(
             defer(
@@ -580,86 +656,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::isFinished)
         .withName("Drive To");
-  }
-
-  /** Calculates the pose and tag when aligning. */
-  private Pair<AlignPoses, Integer> calculateAlignment(AlignPoses alignGoal, AlignSide side) {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-    AlignPoses alignPose = null;
-    int tag = -1;
-
-    Pose2d pose =
-        getPose()
-            .rotateAround(
-                FieldConstants.fieldCenter,
-                alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-    if (alignGoal == FieldConstants.reef) {
-      double minDistance = Double.MAX_VALUE;
-
-      for (int i = 0; i < 6; i++) {
-        AlignPoses goal =
-            FieldConstants.reef.rotateAround(
-                FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
-
-        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-          alignPose = goal;
-          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
-
-          tag = FieldConstants.reefTag + i;
-        }
-      }
-    } else if (alignGoal == FieldConstants.human) {
-      double minDistance = Double.MAX_VALUE;
-
-      int baseTag = FieldConstants.humanTag;
-
-      for (int i = 0; i < 2; i++) {
-        AlignPoses goal = alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
-
-        goal =
-            goal.rotateAround(
-                goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
-
-        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-          alignPose = goal;
-          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
-
-          tag = baseTag - i;
-        }
-      }
-    } else if (alignGoal == FieldConstants.processor) {
-      alignPose = alignGoal;
-      tag = FieldConstants.processorTag;
-    } else {
-      alignPose = alignGoal;
-    }
-
-    alignPose =
-        alignPose.rotateAround(
-            FieldConstants.fieldCenter,
-            alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-    tag = alliance == Alliance.Blue ? tag : FieldConstants.tagCorrespondences.get(tag);
-
-    return Pair.of(alignPose, tag);
-  }
-
-  public Command resetToTag() {
-    return Commands.runOnce(
-        () -> {
-          updateVisionPoseEstimates();
-
-          _newEstimates.stream()
-              .map(e -> e.singleTagEstimates())
-              .flatMap(e -> Arrays.stream(e))
-              .forEach(
-                  e -> {
-                    if (e.tag()
-                        == calculateAlignment(FieldConstants.reef, AlignSide.CENTER).getSecond())
-                      resetPose(e.pose().toPose2d());
-                  });
-        });
   }
 
   /** Wrapper for getting estimated pose. */
@@ -749,7 +745,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
               // once an alignment estimate is found ignore vision estimates to use only odom
               if (_alignEstimate == null) {
-                _ignoreVisionEstimates = true;
+                _ignoreVisionEstimates = false;
 
                 _alignEstimate = e;
 
@@ -779,8 +775,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public void periodic() {
     updateVisionPoseEstimates();
     updateAlignEstimate();
-
-    _poseController.updateTuning();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
@@ -818,7 +812,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void simulationPeriodic() {
-    _visionSystemSim.update(getPose()); // TODO: this might require a seperate wheel-only odom
+    _visionSystemSim.update(getPose());
   }
 
   // TODO: add self check routines
