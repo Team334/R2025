@@ -151,10 +151,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
 
-  private Pose2d _pieceAlignPose;
-
   private SingleTagEstimate _alignEstimate = null;
+
   private Translation2d _alignOdomCompensation = null;
+
+  private Pose2d _pieceAlignPose;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -215,11 +216,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     // closed loop vel always in auto
     _fieldSpeedsRequest.withDriveRequestType(DriveRequestType.Velocity);
-
-    resetPose(
-        FieldConstants.reef
-            .rotateAround(FieldConstants.fieldCenter, Rotation2d.k180deg)
-            .getCenter());
 
     registerTelemetry(
         state -> {
@@ -520,28 +516,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return Pair.of(alignGoalProcessed, alignTag);
   }
 
-  /** Backup function that'll fully reset odometry to the reef tag the robot is facing. */
+  /** Backup function that'll manually prepare the odometry for reef alignment. */
   public Command resetToReefTag() {
     return Commands.run(
             () -> {
-              updateVisionPoseEstimates(); // find all new pose estimates in case vision updates are
-              // disabled
+              // set the alignment tag and find an align estimate with no distance bound
+              _alignTag = findAlignment(FieldConstants.reef).getSecond();
 
-              var tag = findAlignment(FieldConstants.reef).getSecond();
-
-              _newEstimates.stream()
-                  .map(e -> e.singleTagEstimates())
-                  .flatMap(e -> Arrays.stream(e))
-                  .forEach(
-                      e -> {
-                        if (e.tag() == tag) {
-                          resetPose(e.pose().toPose2d());
-                          _alignTag = tag;
-                        }
-                      });
+              updateAlignEstimate(Double.MAX_VALUE);
             })
-        .until(() -> _alignTag != -1)
-        .finallyDo(() -> _alignTag = -1);
+        .until(() -> _alignEstimate != null);
   }
 
   /** Make the chassis align to a piece. */
@@ -749,7 +733,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // update the alignment estimate
   // and the odometry compensation transform when an
   // alignment tag is wanted
-  private void updateAlignEstimate() {
+  private void updateAlignEstimate(double distance) {
     if (_alignTag == -1) {
       _ignoreVisionEstimates = false;
       _alignEstimate = null;
@@ -765,7 +749,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             e -> {
               if (e.tag() != _alignTag) return;
 
-              if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
+              if (e.distance() > distance) return;
 
               // once an alignment estimate is found ignore vision estimates to use only odom
               if (_alignEstimate == null) {
@@ -798,7 +782,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Override
   public void periodic() {
     updateVisionPoseEstimates();
-    updateAlignEstimate();
+    updateAlignEstimate(VisionConstants.trigMaxDistance.in(Meters));
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
