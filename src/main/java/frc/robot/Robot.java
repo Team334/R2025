@@ -19,6 +19,7 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -130,6 +131,9 @@ public class Robot extends TimedRobot {
     configureDefaultCommands();
     configureDriverBindings();
     configureOperatorBindings();
+
+    PortForwarder.add(5800, "orangepi-lower.local", 5800);
+    PortForwarder.add(5800, "orangepi-upper.local", 5800);
 
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
@@ -260,6 +264,7 @@ public class Robot extends TimedRobot {
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
+    _operatorController.povLeft().whileTrue(Superstructure.groundOuttake(_serializer, _intake));
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
