@@ -244,7 +244,7 @@ public final class Constants {
     public static final Angle actuatorStowed = Radians.of(2.26);
     public static final Angle actuatorOut = Radians.of(-0.34);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(70);
   }
 
   public static class WristevatorConstants {
@@ -411,7 +411,7 @@ public final class Constants {
     public static final double feedGearRatio = 70.0 / 30;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(20);
-    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(35);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(40);
 
     public static final int feedMotorId = 10;
   }
@@ -426,7 +426,7 @@ public final class Constants {
     public static final AngularVelocity intakeSlowSpeed = RadiansPerSecond.of(16);
     public static final AngularVelocity intakeFastSpeed = RadiansPerSecond.of(30);
 
-    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-60);
+    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-40);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 

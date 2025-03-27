@@ -24,6 +24,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -118,6 +119,7 @@ public class Robot extends TimedRobot {
 
     // set up loggers
     DogLog.setOptions(new DogLogOptions().withCaptureDs(true));
+    DogLog.setPdh(new PowerDistribution());
 
     setFileOnly(false); // file-only once connected to fms
 
@@ -337,7 +339,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
-      setFileOnly(true);
+      // setFileOnly(true);
 
       _fileOnlySet = true;
     }
