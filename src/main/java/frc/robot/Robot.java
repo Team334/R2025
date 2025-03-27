@@ -145,7 +145,10 @@ public class Robot extends TimedRobot {
                 runOnce(() -> DataLogManager.log("Robot Self Check Successful!")))
             .withName("Robot Self Check"));
 
+    SmartDashboard.putData("Clear Current Piece", runOnce(() -> _currentPiece = Piece.NONE));
+
     SmartDashboard.putData(new WheelRadiusCharacterization(_swerve));
+
     SmartDashboard.putData(
         runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
@@ -153,6 +156,7 @@ public class Robot extends TimedRobot {
     _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
     _autoChooser.addRoutine("One Piece", _autos::onePiece);
     _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
+    _autoChooser.addRoutine("Drive", _autos::simplePath);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 
@@ -339,11 +343,6 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
-  }
-
-  @Override
-  public void autonomousPeriodic() {
-    _autos.ground3P().poll();
   }
 
   @Override

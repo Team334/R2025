@@ -115,8 +115,8 @@ public class Autos {
   }
 
   public AutoRoutine simplePath() {
-    var routine = _factory.newRoutine("Simple Path");
-    var traj = routine.trajectory("SimplePath");
+    var routine = _factory.newRoutine("Drive");
+    var traj = routine.trajectory("Drive");
 
     routine
         .active()

@@ -294,7 +294,7 @@ public class Manipulator extends AdvancedSubsystem {
   /** Hold an algae in place. */
   public Command holdAlgae() {
     return run(() -> {
-          _feedVoltageSetter.Output = ManipulatorConstants.holdAlgaeVoltage;
+          _feedVoltageSetter.Output = ManipulatorConstants.holdAlgaeVoltage.in(Volts);
 
           _leftMotor.setControl(_feedVoltageSetter);
           _rightMotor.setControl(_feedVoltageSetter);

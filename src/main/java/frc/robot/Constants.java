@@ -27,7 +27,6 @@ import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
-import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Voltage;
@@ -201,14 +200,8 @@ public final class Constants {
                 Math.pow(TunerConstants.FrontLeft.LocationX, 2)
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
-    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
-
-    // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
-    public static final LinearAcceleration maxTranslationalAcceleration =
-        MetersPerSecondPerSecond.of(3);
-    public static final AngularAcceleration maxAngularAcceleration =
-        RadiansPerSecondPerSecond.of(2 * Math.PI);
+    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.5);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 2);
 
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
@@ -455,6 +448,6 @@ public final class Constants {
 
     public static final double flywheelGearRatio = 3;
 
-    public static final double holdAlgaeVoltage = 1.5;
+    public static final Voltage holdAlgaeVoltage = Volts.of(0.6);
   }
 }
