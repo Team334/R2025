@@ -277,8 +277,8 @@ public class Robot extends TimedRobot {
     // switch to fast manipulator feed mode
     _operatorController
         .leftBumper()
-        .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
-        .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
+        .onTrue(runOnce(() -> _manipulator.setFastIntake(true)))
+        .onFalse(runOnce(() -> _manipulator.setFastIntake(false)));
 
     _operatorController.povUp().whileTrue(_intake.outtake());
 
