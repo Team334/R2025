@@ -189,13 +189,11 @@ public final class Constants {
             4.5);
 
     public static final Transform3d robotToLimelight =
-        new Transform3d(0.063, 0, 0.87, new Rotation3d(0, Units.degreesToRadians(-45), Math.PI));
+        new Transform3d(0.063, 0, 0.968, new Rotation3d(0, Units.degreesToRadians(45), Math.PI));
   }
 
   public static class SwerveConstants {
     public static final Frequency odometryFrequency = Hertz.of(250);
-
-    public static final Distance chassisHeight = Meter.of(0.098);
 
     public static final Distance driveRadius =
         Meters.of(

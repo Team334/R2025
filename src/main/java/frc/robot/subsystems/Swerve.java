@@ -549,12 +549,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               }
 
               double groundDistance =
-                  (VisionConstants.robotToLimelight.getZ()
-                          + SwerveConstants.chassisHeight.in(Meters))
+                  (VisionConstants.robotToLimelight.getZ())
                       * Math.tan(
                           (Math.PI / 2)
                               - (VisionConstants.robotToLimelight.getRotation().getY()
-                                  + ty.in(Radians)));
+                                  - ty.in(Radians)));
 
               Rotation2d groundAngle =
                   new Rotation2d(
@@ -576,6 +575,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                                           : Rotation2d.kZero)))
                       : getPose();
             })
+        .unless(() -> LimelightHelpers.getTargetCount(VisionConstants.limelightName) == 0)
         .andThen(defer(() -> driveTo(_pieceAlignPose)))
         .withName("Align To Piece");
   }
