@@ -71,5 +71,5 @@
   "splits":[0]
  },
  "events":[
-   {"name":"L2", "from":{"target":0, "targetTimestamp":0.0, "offset":{"exp":"0.1 s", "val":0.1}}, "event":{"type":"named", "data":{"name":"L2"}}}]
+   {"name":"L2", "from":{"target":0, "targetTimestamp":0.0, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"L2"}}}]
 }

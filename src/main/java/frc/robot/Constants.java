@@ -88,9 +88,10 @@ public final class Constants {
 
     public static final AlignPoses reef =
         new AlignPoses(
-            new Pose2d(3.68, 2.95, new Rotation2d(1.023)),
-            new Pose2d(3.839, 2.885, new Rotation2d(1.028)),
-            new Pose2d(3.984, 2.794, new Rotation2d(1.020)));
+            new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(60)),
+            new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(60)),
+            new Pose2d(3.249, 3.778, Rotation2d.fromDegrees(0))
+                .rotateAround(reefCenter, Rotation2d.fromDegrees(60)));
 
     public static final int humanTag = 13;
 
@@ -244,7 +245,7 @@ public final class Constants {
     public static final Angle actuatorStowed = Radians.of(2.26);
     public static final Angle actuatorOut = Radians.of(-0.34);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(70);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }
 
   public static class WristevatorConstants {
@@ -411,7 +412,7 @@ public final class Constants {
     public static final double feedGearRatio = 70.0 / 30;
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(20);
-    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(40);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(35);
 
     public static final int feedMotorId = 10;
   }
