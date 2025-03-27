@@ -1,5 +1,5 @@
 {
- "name":"Config",
+ "name":"config",
  "version":1,
  "type":"Swerve",
  "variables":{
@@ -9,64 +9,64 @@
  "config":{
   "frontLeft":{
    "x":{
-    "exp":"10.5 in",
-    "val":0.2667
+    "exp":"11.375 in",
+    "val":0.288925
    },
    "y":{
-    "exp":"10.5 in",
-    "val":0.2667
+    "exp":"11.375 in",
+    "val":0.288925
    }
   },
   "backLeft":{
    "x":{
-    "exp":"-10.5 in",
-    "val":-0.2667
+    "exp":"-11.375 in",
+    "val":-0.288925
    },
    "y":{
-    "exp":"10.5 in",
-    "val":0.2667
+    "exp":"11.375 in",
+    "val":0.288925
    }
   },
   "mass":{
-   "exp":"75 lbs",
-   "val":34.01942775
+   "exp":"114 lbs",
+   "val":51.70953018
   },
   "inertia":{
    "exp":"6.883 kg m ^ 2",
    "val":6.883
   },
   "gearing":{
-   "exp":"7.363636364",
-   "val":7.363636364
+   "exp":"6.75",
+   "val":6.75
   },
   "radius":{
-   "exp":"2.167 in",
-   "val":0.055041799999999995
+   "exp":"2 in",
+   "val":0.0508
   },
   "vmax":{
-   "exp":"485.89966375522135 rad / s",
-   "val":485.8996637552213
+   "exp":"4800 rpm",
+   "val":502.6548245743669
   },
   "tmax":{
-   "exp":"2.327950310559006 N m",
-   "val":2.327950310559006
+   "exp":"1.162 N m",
+   "val":1.162
   },
   "cof":{
-   "exp":"1.5",
-   "val":1.5
+   "exp":"1.25",
+   "val":1.25
   },
   "bumper":{
    "front":{
-    "exp":"16 in",
-    "val":0.4064
+    "exp":"17.5 in",
+    "val":0.4445
    },
    "side":{
-    "exp":"16 in",
-    "val":0.4064
+    "exp":"17.25 in",
+    "val":0.43815
    },
    "back":{
-    "exp":"16 in",
-    "val":0.4064
+    "exp":"17.5 in",
+    "val":0.4445
    }
   },
   "differentialTrackWidth":{

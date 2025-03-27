@@ -12,6 +12,7 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -111,9 +112,9 @@ public class Intake extends AdvancedSubsystem {
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        IntakeConstants.actuatorStowed.in(Rotations);
+        IntakeConstants.actuatorStowed.plus(Radians.of(0.15)).in(Rotations);
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
-        IntakeConstants.actuatorOut.in(Rotations);
+        IntakeConstants.actuatorOut.minus(Radians.of(0.15)).in(Rotations);
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
@@ -122,6 +123,8 @@ public class Intake extends AdvancedSubsystem {
         IntakeConstants.actuatorVelocity.in(RotationsPerSecond);
     actuatorMotorConfigs.MotionMagic.MotionMagicAcceleration =
         IntakeConstants.actuatorAcceleration.in(RotationsPerSecondPerSecond);
+
+    actuatorMotorConfigs.MotorOutput.NeutralMode = NeutralModeValue.Brake;
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 

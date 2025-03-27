@@ -87,16 +87,11 @@ public final class Constants {
 
     public static final int reefTag = 17;
 
-    public static final AlignPoses
-        reef = // TODO: switch to correct poses instead of doing the rotation
+    public static final AlignPoses reef =
         new AlignPoses(
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(170.5).in(Meters), Rotation2d.kZero),
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(158.5).in(Meters), Rotation2d.kZero),
-                    new Pose2d(
-                        Inches.of(101.3).in(Meters), Inches.of(146.5).in(Meters), Rotation2d.kZero))
-                .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
+            new Pose2d(3.68, 2.95, new Rotation2d(1.023)),
+            new Pose2d(3.839, 2.885, new Rotation2d(1.028)),
+            new Pose2d(3.984, 2.794, new Rotation2d(1.020)));
 
     public static final int humanTag = 13;
 
@@ -133,63 +128,68 @@ public final class Constants {
   }
 
   public static class VisionConstants {
+
     public static final String lowerLeftArducamName = "lower-left-arducam";
     public static final String lowerRightArducamName = "lower-right-arducam";
     public static final String upperLeftArducamName = "upper-left-arducam";
     public static final String upperRightArducamName = "upper-right-arducam";
+    public static final String limelightName = "limelight-main";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
     public static final double[] multiTagBaseStdDevs = new double[] {1, 1, 1};
 
     public static final double xBoundMargin = 0.01;
     public static final double yBoundMargin = 0.01;
-    public static final double zBoundMargin = 0.01;
+    public static final double zBoundMargin = 0.1;
 
-    public static final Distance trigMaxDistance = Meters.of(1.5);
+    public static final Distance trigMaxDistance = Meters.of(1.2);
 
     public static final VisionPoseEstimatorConstants lowerLeftArducam =
         new VisionPoseEstimatorConstants(
             lowerLeftArducamName,
             new Transform3d(
-                new Translation3d(0.345, 0.285, 0.102),
+                new Translation3d(0.345, 0.285, 0.232),
                 new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants lowerRightArducam =
         new VisionPoseEstimatorConstants(
             lowerRightArducamName,
             new Transform3d(
-                new Translation3d(0.345, -0.285, 0.102),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), 0.2)),
+                new Translation3d(0.345, -0.285, 0.232),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants upperLeftArducam =
         new VisionPoseEstimatorConstants(
             upperLeftArducamName,
             new Transform3d(
-                new Translation3d(0.154, 0.273, 0.809),
-                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+                new Translation3d(0.154, 0.273, 0.972),
+                new Rotation3d(0, -Units.degreesToRadians(11), Math.PI)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
 
     public static final VisionPoseEstimatorConstants upperRightArducam =
         new VisionPoseEstimatorConstants(
             upperRightArducamName,
             new Transform3d(
-                new Translation3d(0.154, -0.273, 0.809),
-                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+                new Translation3d(0.154, -0.273, 0.972),
+                new Rotation3d(0, -Units.degreesToRadians(8), Math.PI)),
             0.2,
-            0.0001,
-            3,
-            7);
+            0.2,
+            2.5,
+            4.5);
+
+    public static final Transform3d robotToLimelight =
+        new Transform3d(0.063, 0, 0.968, new Rotation3d(0, Units.degreesToRadians(45), Math.PI));
   }
 
   public static class SwerveConstants {
@@ -201,19 +201,19 @@ public final class Constants {
                 Math.pow(TunerConstants.FrontLeft.LocationX, 2)
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
-    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.632);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 3);
+    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
 
     // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
     public static final LinearAcceleration maxTranslationalAcceleration =
-        MetersPerSecondPerSecond.of(14.715);
+        MetersPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxAngularAcceleration =
-        RadiansPerSecondPerSecond.of(Math.PI * 3);
+        RadiansPerSecondPerSecond.of(2 * Math.PI);
 
-    public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.1);
-    public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.1);
+    public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
+    public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
 
-    public static final Distance pathingThreshold = Meters.of(1.5);
+    public static final Distance pathingDistanceThreshold = Meters.of(0.4);
   }
 
   public static class IntakeConstants {
@@ -241,15 +241,15 @@ public final class Constants {
 
     public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(2);
     public static final AngularAcceleration actuatorAcceleration =
-        RotationsPerSecondPerSecond.of(4);
+        RotationsPerSecondPerSecond.of(3);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle actuatorStowed = Radians.of(2.3067);
-    public static final Angle actuatorOut = Radians.of(-0.307);
+    public static final Angle actuatorStowed = Radians.of(2.26);
+    public static final Angle actuatorOut = Radians.of(-0.34);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
   }
@@ -273,7 +273,7 @@ public final class Constants {
       L1(Radians.of(-0.233), Radians.of(7.708)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
       L3(Radians.of(-1.06), Radians.of(27.86)),
-      L4(Radians.of(1.282), Radians.of(37.49)),
+      L4(Radians.of(1.282), Radians.of(38.2)),
 
       LOWER_ALGAE(Radians.of(-1.06), Radians.of(19)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
@@ -374,11 +374,11 @@ public final class Constants {
     public static final Distance drumCircumference = drumRadius.times(2 * Math.PI);
 
     public static final Angle minElevatorHeight = Radians.of(0);
-    public static final Angle maxElevatorHeight = Radians.of(37.8);
+    public static final Angle maxElevatorHeight = Radians.of(38.5);
 
     public static final Distance manipulatorLength = Meters.of(0.18415);
 
-    public static final Angle minWristAngle = Radians.of(-1.3);
+    public static final Angle minWristAngle = Radians.of(-1.1);
     public static final Angle maxWristAngle = Radians.of(1.32);
 
     public static final double wristGearRatio = 33.75;
@@ -406,7 +406,6 @@ public final class Constants {
 
   public static class SerializerConstants {
     public static final int frontBeamPort = 6;
-    public static final int backBeamPort = 2;
 
     public static final Voltage feedkS = Volts.of(0.30489);
     public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
@@ -431,16 +430,16 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity intakeSpeed = RadiansPerSecond.of(16);
-    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-60);
+    public static final AngularVelocity intakeSlowSpeed = RadiansPerSecond.of(16);
+    public static final AngularVelocity intakeFastSpeed = RadiansPerSecond.of(30);
 
-    public static final double speedMultiplier = 1.5;
+    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-60);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
     public static final Voltage leftFlywheelkS = Volts.of(0.44229);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0.12915);
+        Volts.per(RotationsPerSecond).ofNative(0.26);
     public static final Per<VoltageUnit, AngularVelocityUnit> leftFlywheelkP =
         Volts.per(RotationsPerSecond).ofNative(0.16712);
 
@@ -448,13 +447,13 @@ public final class Constants {
 
     public static final Voltage rightFlywheelkS = Volts.of(0.24209);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkV =
-        Volts.per(RotationsPerSecond).ofNative(0.11962);
+        Volts.per(RotationsPerSecond).ofNative(0.29905);
     public static final Per<VoltageUnit, AngularVelocityUnit> rightFlywheelkP =
         Volts.per(RotationsPerSecond).ofNative(0.02354);
 
     // right wheel meow ka = 0.0096618
 
-    public static final double flywheelGearRatio = 36.0 / 30;
+    public static final double flywheelGearRatio = 3;
 
     public static final double holdAlgaeVoltage = 1.5;
   }

@@ -11,7 +11,7 @@ import java.util.function.BooleanSupplier;
 
 /** Displays SysId routines on SmartDashboard. */
 public class SysId {
-  public static boolean displayRoutines = true;
+  public static boolean displayRoutines = false;
 
   /**
    * Displays a single routine to SmartDashboard.

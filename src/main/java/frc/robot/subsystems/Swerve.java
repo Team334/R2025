@@ -20,23 +20,23 @@ import com.ctre.phoenix6.swerve.SwerveRequest.*;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
@@ -54,6 +54,8 @@ import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
+import frc.robot.utils.LimelightHelpers;
+import frc.robot.utils.LimelightHelpers.RawDetection;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
@@ -89,8 +91,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // sysid requests
   private final SysIdSwerveTranslation _translationSysIdRequest = new SysIdSwerveTranslation();
   private final SysIdSwerveSteerGains _steerSysIdRequest = new SysIdSwerveSteerGains();
-  private final SysIdSwerveRotation _rotationSysIdRequest =
-      new SysIdSwerveRotation(); // how does this work?
+  private final SysIdSwerveRotation _rotationSysIdRequest = new SysIdSwerveRotation();
 
   // SysId routine for characterizing translation. This is used to find PID gains for the drive
   // motors.
@@ -98,11 +99,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       new SysIdRoutine(
           new SysIdRoutine.Config(
               null, // Use default ramp rate (1 V/s)
-              Volts.of(4), // Reduce dynamic step voltage to 4 V to prevent brownout
-              null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString(
-                      "Swerve SysId Translation Routine State", state.toString())),
+              Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
+              Seconds.of(5), // Use default timeout (10 s)
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_translationSysIdRequest.withVolts(volts)), null, this));
 
@@ -113,30 +112,20 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
               null, // Use default ramp rate (1 V/s)
               Volts.of(7), // Use dynamic voltage of 7 V
               null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString("Swerve SysId Steer Routine State", state.toString())),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(_steerSysIdRequest.withVolts(volts)), null, this));
 
-  // SysId routine for characterizing rotation.
+  // SysId routine for finding MOI of the robot.
   private final SysIdRoutine _sysIdRoutineRotation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              // This is in radians per second², but SysId only supports "volts per second"
-              Volts.of(Math.PI / 6).per(Second),
-              // This is in radians per second, but SysId only supports "volts"
-              Volts.of(Math.PI),
+              null, // Radian Per Second
+              Volts.of(7), // Radians
               null, // Use default timeout (10 s)
-              state ->
-                  SignalLogger.writeString(
-                      "Swerve SysId Rotation Routine State", state.toString())),
+              state -> SignalLogger.writeString("state", state.toString())),
           new SysIdRoutine.Mechanism(
-              output -> {
-                // output is actually radians per second, but SysId only supports "volts"
-                setControl(_rotationSysIdRequest.withRotationalRate(output.in(Volts)));
-                // also log the requested output for SysId
-                SignalLogger.writeDouble("Swerve Rotational Rate", output.in(Volts));
-              },
+              volts -> setControl(_rotationSysIdRequest.withRotationalRate(volts.in(Volts))),
               null,
               this));
 
@@ -153,13 +142,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private boolean _isOpenLoop = true;
 
   @Logged(name = "Ignore Vision Estimates")
-  private boolean _ignoreVisionEstimates = true; // for sim for now
+  private boolean _ignoreVisionEstimates = false;
 
-  private boolean _prevIgnoreVisionEstimates = _ignoreVisionEstimates;
-
-  private BooleanEvent _ignoreVisionEstimatesEvent =
-      new BooleanEvent(
-          CommandScheduler.getInstance().getDefaultButtonLoop(), () -> _ignoreVisionEstimates);
+  private List<VisionPoseEstimate> _estimates = new ArrayList<VisionPoseEstimate>();
 
   @Logged(name = "Align Tag")
   private int _alignTag = -1;
@@ -168,34 +153,35 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private SingleTagEstimate _alignEstimate = null;
 
-  private Transform2d _alignOdomCompensation = null;
+  private Translation2d _alignOdomCompensation = null;
+
+  private Pose2d _pieceAlignPose;
 
   private HolonomicController _poseController = new HolonomicController();
 
   private boolean _hasAppliedDriverPerspective;
 
   @Logged(name = VisionConstants.lowerLeftArducamName)
-  private final VisionPoseEstimator _lowerArducam =
+  private final VisionPoseEstimator _lowerLeftArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.lowerRightArducamName)
-  private final VisionPoseEstimator _middleArducam =
+  private final VisionPoseEstimator _lowerRightArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerRightArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.upperLeftArducamName)
-  private final VisionPoseEstimator _upperArducam =
+  private final VisionPoseEstimator _upperLeftArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperLeftArducam, this::getHeadingAtTime);
 
   @Logged(name = VisionConstants.upperRightArducamName)
-  private final VisionPoseEstimator _backArducam =
+  private final VisionPoseEstimator _upperRightArducam =
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperRightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras =
-      List.of(_lowerArducam, _middleArducam, _upperArducam, _backArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -247,8 +233,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
-    _poseController.setTolerance(Meters.of(0.1), Rotation2d.fromDegrees(0));
-
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
     SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
@@ -256,31 +240,28 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     registerFallibles();
 
-    _ignoreVisionEstimatesEvent.rising().ifHigh(() -> _prevIgnoreVisionEstimates = false);
-    _ignoreVisionEstimatesEvent.falling().ifHigh(() -> _prevIgnoreVisionEstimates = true);
-
     if (Robot.isSimulation()) {
       startSimThread();
 
       _visionSystemSim = new VisionSystemSim("Vision System Sim");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _lowerArducam
+      _lowerLeftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _middleArducam
+      _lowerRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _upperArducam
+      _upperLeftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _backArducam
+      _upperRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
@@ -391,7 +372,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return run(() -> setControl(_brakeRequest)).withName("Brake");
   }
 
-  /** Resets the heading to zero. */
+  /** Resets the heading to face away from the alliance wall. */
   public Command resetHeading() {
     return runOnce(
         () -> {
@@ -433,26 +414,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     _driverChassisSpeeds.vyMetersPerSecond = velY;
     _driverChassisSpeeds.omegaRadiansPerSecond = velOmega;
 
-    // go through a couple of steps to ensure that input speeds are actually achievable
-    ChassisSpeeds tempSpeeds = _driverChassisSpeeds;
-    SwerveModuleState[] tempStates;
-
-    // TODO: this might be too many memory allocations
-
-    if (_isFieldOriented)
-      tempSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(tempSpeeds, getHeading());
-
-    tempStates = getKinematics().toSwerveModuleStates(tempSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(tempStates, SwerveConstants.maxTranslationalSpeed);
-    tempSpeeds = getKinematics().toChassisSpeeds(tempStates);
-
-    if (_isFieldOriented)
-      tempSpeeds = ChassisSpeeds.fromRobotRelativeSpeeds(tempSpeeds, getHeading());
-
-    velX = tempSpeeds.vxMetersPerSecond;
-    velY = tempSpeeds.vyMetersPerSecond;
-    velOmega = tempSpeeds.omegaRadiansPerSecond;
-
     if (_isFieldOriented) {
       setControl(
           _fieldCentricRequest
@@ -490,6 +451,135 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
+  /** Finds the proper align pose and tag when aligning. */
+  private Pair<AlignPoses, Integer> findAlignment(AlignPoses alignGoal) {
+    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+
+    AlignPoses alignGoalProcessed = null;
+    int alignTag = -1;
+
+    Pose2d pose =
+        getPose()
+            .rotateAround(
+                FieldConstants.fieldCenter,
+                alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
+
+    if (alignGoal == FieldConstants.reef) {
+      double minDistance = Double.MAX_VALUE;
+
+      for (int i = 0; i < 6; i++) {
+        AlignPoses goal =
+            FieldConstants.reef.rotateAround(
+                FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
+
+        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+          alignGoalProcessed = goal;
+          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+
+          alignTag = FieldConstants.reefTag + i;
+        }
+      }
+    } else if (alignGoal == FieldConstants.human) {
+      double minDistance = Double.MAX_VALUE;
+
+      int baseTag = FieldConstants.humanTag;
+
+      for (int i = 0; i < 2; i++) {
+        AlignPoses goal = alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+
+        goal =
+            goal.rotateAround(
+                goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
+
+        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+          alignGoalProcessed = goal;
+          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+
+          alignTag = baseTag - i;
+        }
+      }
+    } else if (alignGoal == FieldConstants.processor) {
+      alignGoalProcessed = alignGoal;
+      alignTag = FieldConstants.processorTag;
+    } else {
+      alignGoalProcessed = alignGoal;
+    }
+
+    alignGoalProcessed =
+        alignGoalProcessed.rotateAround(
+            FieldConstants.fieldCenter,
+            alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
+
+    alignTag =
+        alliance == Alliance.Blue ? alignTag : FieldConstants.tagCorrespondences.get(alignTag);
+
+    return Pair.of(alignGoalProcessed, alignTag);
+  }
+
+  /** Backup function that'll manually prepare the odometry for reef alignment. */
+  public Command resetToReefTag() {
+    return Commands.run(
+            () -> {
+              // set the alignment tag and find an align estimate with no distance bound
+              _alignTag = findAlignment(FieldConstants.reef).getSecond();
+
+              updateAlignEstimate(Double.MAX_VALUE);
+            })
+        .until(() -> _alignEstimate != null);
+  }
+
+  /** Make the chassis align to a piece. */
+  public Command alignToPiece() {
+    return runOnce(
+            () -> {
+              Angle tx = Degrees.of(LimelightHelpers.getTX(VisionConstants.limelightName));
+              Angle ty = Degrees.of(LimelightHelpers.getTY(VisionConstants.limelightName));
+
+              RawDetection[] rawDetections =
+                  LimelightHelpers.getRawDetections(VisionConstants.limelightName);
+              double sideProportions = 0;
+
+              if (rawDetections.length != 0) {
+                Rectangle2d coralBox =
+                    new Rectangle2d(
+                        new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y),
+                        new Translation2d(rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
+
+                sideProportions = coralBox.getYWidth() / coralBox.getXWidth();
+              }
+
+              double groundDistance =
+                  (VisionConstants.robotToLimelight.getZ())
+                      * Math.tan(
+                          (Math.PI / 2)
+                              - (VisionConstants.robotToLimelight.getRotation().getY()
+                                  - ty.in(Radians)));
+
+              Rotation2d groundAngle =
+                  new Rotation2d(
+                      Math.atan2(
+                          groundDistance * Math.sin(tx.in(Radians)),
+                          (groundDistance - VisionConstants.robotToLimelight.getX())
+                              * Math.cos(tx.in(Radians))));
+
+              _pieceAlignPose =
+                  sideProportions >= 2
+                      ? getPose()
+                          .transformBy(
+                              new Transform2d(
+                                  -groundDistance * groundAngle.getCos(),
+                                  -groundDistance * groundAngle.getSin(),
+                                  groundAngle.plus(
+                                      sideProportions >= 1.3
+                                          ? Rotation2d.fromDegrees(45)
+                                          : Rotation2d.kZero)))
+                      : getPose();
+            })
+        .unless(() -> LimelightHelpers.getTargetCount(VisionConstants.limelightName) == 0)
+        .andThen(defer(() -> driveTo(_pieceAlignPose)))
+        .withName("Align To Piece");
+  }
+
   /** Aligns to a {@link AlignPoses} to the correct side. */
   public Command alignTo(AlignPoses alignGoal, AlignSide side) {
     return alignTo(alignGoal, side, false);
@@ -505,65 +595,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
     return runOnce(
             () -> {
-              Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
+              var alignment = findAlignment(alignGoal);
 
-              Pose2d pose =
-                  getPose()
-                      .rotateAround(
-                          FieldConstants.fieldCenter,
-                          alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-              if (alignGoal == FieldConstants.reef) {
-                double minDistance = Double.MAX_VALUE;
-
-                for (int i = 0; i < 6; i++) {
-                  AlignPoses goal =
-                      FieldConstants.reef.rotateAround(
-                          FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
-
-                  if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-                    _alignGoal = goal;
-                    minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
-
-                    _alignTag = FieldConstants.reefTag + i;
-                  }
-                }
-              } else if (alignGoal == FieldConstants.human) {
-                double minDistance = Double.MAX_VALUE;
-
-                int baseTag = FieldConstants.humanTag;
-
-                for (int i = 0; i < 2; i++) {
-                  AlignPoses goal =
-                      alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
-
-                  goal =
-                      goal.rotateAround(
-                          goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
-
-                  if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-                    _alignGoal = goal;
-                    minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
-
-                    _alignTag = baseTag - i;
-                  }
-                }
-              } else if (alignGoal == FieldConstants.processor) {
-                _alignGoal = alignGoal;
-                _alignTag = FieldConstants.processorTag;
-              } else {
-                _alignGoal = alignGoal;
-              }
-
-              _alignGoal =
-                  _alignGoal.rotateAround(
-                      FieldConstants.fieldCenter,
-                      alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-              _alignTag =
-                  alliance == Alliance.Blue
-                      ? _alignTag
-                      : FieldConstants.tagCorrespondences.get(_alignTag);
+              _alignGoal = alignment.getFirst();
+              _alignTag = alignment.getSecond();
             })
         .andThen(
             defer(
@@ -589,7 +624,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                                                 .getTranslation()
                                                 .getDistance(
                                                     _alignGoal.getPose(side).getTranslation())
-                                            < SwerveConstants.pathingThreshold.in(Meters)),
+                                            < SwerveConstants.pathingDistanceThreshold.in(Meters)),
 
                         // then, drive towards the goal pose (not reversed) using the alignment
                         // estimate
@@ -599,10 +634,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                             () -> {
                               if (_alignEstimate == null) return getPose();
 
-                              return _alignEstimate
-                                  .pose()
-                                  .toPose2d()
-                                  .transformBy(_alignOdomCompensation);
+                              return new Pose2d(
+                                  getPose().getTranslation().plus(_alignOdomCompensation),
+                                  getHeading());
                             }))))
         .finallyDo(
             () -> _alignTag = -1 // clear alignment tag
@@ -618,7 +652,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   /** Drives the robot in a straight line to some given goal pose. */
   private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(robotPose.get(), goalPose);
+          ChassisSpeeds speeds = _poseController.calculate(robotPose.get());
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
@@ -628,7 +662,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                     robotPose.get(),
                     goalPose,
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
-        .until(_poseController::atGoal)
+        .until(_poseController::isFinished)
         .withName("Drive To");
   }
 
@@ -664,10 +698,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     _detectedTags.clear();
 
+    _estimates.clear();
+
     for (VisionPoseEstimator cam : _cameras) {
       cam.update();
 
-      var estimates = cam.getNewEstimates();
+      _estimates = cam.getNewEstimates();
 
       // TEMPORARY CAMERA PLACEMENT VISUALIZATION:
       // DogLog.log(
@@ -676,8 +712,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       //         .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
       //         .transformBy(cam.robotToCam));
 
-      // process estimates
-      estimates.forEach(
+      // add estimates to arrays and update detected tags
+      _estimates.forEach(
           (estimate) -> {
             // add all detected tag poses
             for (int id : estimate.detectedTags()) {
@@ -697,9 +733,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // update the alignment estimate
   // and the odometry compensation transform when an
   // alignment tag is wanted
-  private void updateAlignEstimate() {
+  private void updateAlignEstimate(double distance) {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = _prevIgnoreVisionEstimates;
+      _ignoreVisionEstimates = false;
       _alignEstimate = null;
       _alignOdomCompensation = null;
 
@@ -713,38 +749,40 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             e -> {
               if (e.tag() != _alignTag) return;
 
-              if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
+              if (e.distance() > distance) return;
 
-              if (_alignEstimate == null) _alignEstimate = e;
+              // once an alignment estimate is found ignore vision estimates to use only odom
+              if (_alignEstimate == null) {
+                _ignoreVisionEstimates = true;
+
+                _alignEstimate = e;
+
+                var pose =
+                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
+                        .orElse(getPose());
+
+                _alignOdomCompensation =
+                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
+              }
 
               // only override align estimate if the new estimate is closer
-              if (e.distance() < _alignEstimate.distance()) _alignEstimate = e;
+              if (e.distance() < _alignEstimate.distance()) {
+                _alignEstimate = e;
+
+                var pose =
+                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
+                        .orElse(getPose());
+
+                _alignOdomCompensation =
+                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
+              }
             });
-
-    if (_alignEstimate == null) return;
-
-    _ignoreVisionEstimates = true; // ensure that the transform2d is ONLY odometry data
-
-    var oldPose = samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()));
-
-    if (oldPose.isPresent()) {
-      _alignOdomCompensation = getPose().minus(oldPose.get());
-      return;
-    }
-
-    // if the odom compensation transform doesn't yet exist and it can't find the oldPose, find a
-    // transform
-    // such the the odom compensated vision pose will be equilavent to getPose()
-    if (_alignOdomCompensation == null) {
-      _alignOdomCompensation = getPose().minus(_alignEstimate.pose().toPose2d());
-      return;
-    }
   }
 
   @Override
   public void periodic() {
     updateVisionPoseEstimates();
-    updateAlignEstimate();
+    updateAlignEstimate(VisionConstants.trigMaxDistance.in(Meters));
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
@@ -782,7 +820,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void simulationPeriodic() {
-    _visionSystemSim.update(getPose()); // TODO: this might require a seperate wheel-only odom
+    _visionSystemSim.update(getPose());
   }
 
   // TODO: add self check routines

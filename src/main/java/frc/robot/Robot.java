@@ -12,6 +12,7 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
 import dev.doglog.DogLog;
+import dev.doglog.DogLogOptions;
 import edu.wpi.first.epilogue.Epilogue;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
@@ -77,7 +78,14 @@ public class Robot extends TimedRobot {
   @Logged(name = "Wristevator")
   private final Wristevator _wristevator = new Wristevator();
 
-  private final Autos _autos = new Autos(_swerve);
+  private final Autos _autos =
+      new Autos(
+          _swerve,
+          (Piece piece) -> _currentPiece = piece,
+          _wristevator,
+          _manipulator,
+          _intake,
+          _serializer);
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
@@ -108,7 +116,7 @@ public class Robot extends TimedRobot {
     _ntInst = ntInst;
 
     // set up loggers
-    DogLog.setOptions(DogLog.getOptions().withCaptureDs(true));
+    DogLog.setOptions(new DogLogOptions().withCaptureDs(true));
 
     setFileOnly(false); // file-only once connected to fms
 
@@ -134,10 +142,13 @@ public class Robot extends TimedRobot {
             .withName("Robot Self Check"));
 
     SmartDashboard.putData(new WheelRadiusCharacterization(_swerve));
-    SmartDashboard.putData(runOnce(FaultLogger::clear).withName("Clear Faults"));
+    SmartDashboard.putData(
+        runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
     // set up auto chooser
-    _autoChooser.addRoutine("Simple Trajectory", _autos::simpleTrajectory);
+    _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
+    _autoChooser.addRoutine("One Piece", _autos::onePiece);
+    _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 
@@ -212,6 +223,11 @@ public class Robot extends TimedRobot {
     _driverController.povUp().onTrue(_swerve.toggleFieldOriented());
     _driverController.povDown().onTrue(_swerve.resetHeading());
 
+    // align to piece
+    _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
+
+    _driverController.povRight().onTrue(_swerve.resetToReefTag().andThen(rumbleControllers(1, 1)));
+
     alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
     alignmentTriggers(_driverController.y(), FieldConstants.human, true);
     alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
@@ -262,10 +278,10 @@ public class Robot extends TimedRobot {
     // switch to fast manipulator feed mode
     _operatorController
         .leftBumper()
-        .onTrue(runOnce(() -> _manipulator.setFastFeed(true)))
-        .onFalse(runOnce(() -> _manipulator.setFastFeed(false)));
+        .onTrue(runOnce(() -> _manipulator.setFastIntake(true)))
+        .onFalse(runOnce(() -> _manipulator.setFastIntake(false)));
 
-    _operatorController.povDown().whileTrue(Superstructure.groundOuttake(_intake));
+    _operatorController.povUp().whileTrue(_intake.outtake());
 
     // intake / inverse passoff
     _operatorController
@@ -318,6 +334,11 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
+  }
+
+  @Override
+  public void autonomousPeriodic() {
+    _autos.ground3P().poll();
   }
 
   @Override

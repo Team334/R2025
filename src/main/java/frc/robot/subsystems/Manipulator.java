@@ -46,8 +46,6 @@ public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
   private final DigitalInput _algaeBeam = new DigitalInput(ManipulatorConstants.algaeBeam);
 
-  private BooleanEntry _algaeBeamFake = Tuning.entry("Tuning/Algae Beam", false);
-
   private final BooleanEvent _coralEvent =
       new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam);
   private final BooleanEvent _algaeEvent =
@@ -100,8 +98,8 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanEntry _coralBeamSimValue;
   private BooleanEntry _algaeBeamSimValue;
 
-  @Logged(name = "Is Fast Feed")
-  private boolean _isFastFeed = false;
+  @Logged(name = "Is Fast Intake")
+  private boolean _isFastIntake = false;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
@@ -160,6 +158,8 @@ public class Manipulator extends AdvancedSubsystem {
                 _rightMotor.getVelocity(),
                 _rightMotor.getMotorVoltage()),
         _rightMotor);
+
+    _feedVelocitySetter.UpdateFreqHz = 250;
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -225,8 +225,8 @@ public class Manipulator extends AdvancedSubsystem {
     motor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
-  public void setFastFeed(boolean isFast) {
-    _isFastFeed = isFast;
+  public void setFastIntake(boolean isFast) {
+    _isFastIntake = isFast;
   }
 
   @Logged(name = "Coral Beam")
@@ -307,8 +307,9 @@ public class Manipulator extends AdvancedSubsystem {
   public Command intake() {
     return setSpeed(
             () ->
-                ManipulatorConstants.intakeSpeed.in(RadiansPerSecond)
-                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
+                _isFastIntake
+                    ? ManipulatorConstants.intakeFastSpeed.in(RadiansPerSecond)
+                    : ManipulatorConstants.intakeSlowSpeed.in(RadiansPerSecond))
         .alongWith(
             watchCoralBeam(Piece.CORAL, true),
             watchAlgaeBeam(Piece.ALGAE, true),
@@ -318,10 +319,7 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** General outtake. */
   public Command outtake() {
-    return setSpeed(
-            () ->
-                ManipulatorConstants.outtakeSpeed.in(RadiansPerSecond)
-                    * (_isFastFeed ? ManipulatorConstants.speedMultiplier : 1))
+    return setSpeed(ManipulatorConstants.outtakeSpeed.in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }

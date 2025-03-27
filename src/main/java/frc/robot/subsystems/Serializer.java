@@ -16,8 +16,10 @@ import edu.wpi.first.networktables.BooleanEntry;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
@@ -33,18 +35,15 @@ import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {
   private final DigitalInput _frontBeam;
-  private final DigitalInput _backBeam;
 
   private DIOSim _frontBeamSim;
-  private DIOSim _backBeamSim;
+
+  private final BooleanEvent _frontBeamEvent;
 
   private BooleanEntry _frontBeamSimValue;
-  private BooleanEntry _backBeamSimValue;
 
   @Logged(name = "Desired Speed")
   private double _desiredSpeed;
-
-  private final BooleanEntry _backBeamFake = Tuning.entry("Tuning/Back Beam", false);
 
   private final TalonFX _feedMotor =
       new TalonFX(SerializerConstants.feedMotorId, Constants.canivore);
@@ -72,16 +71,17 @@ public class Serializer extends AdvancedSubsystem {
     _currentPieceSetter = currentPieceSetter;
 
     _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
-    _backBeam = new DigitalInput(SerializerConstants.backBeamPort);
+
+    _frontBeamEvent =
+        new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getFrontBeam)
+            .falling();
 
     SysId.displayRoutine("Serializer Feed", _serializerRoutine);
 
     if (Robot.isSimulation()) {
       _frontBeamSim = new DIOSim(_frontBeam);
-      _backBeamSim = new DIOSim(_backBeam);
 
       _frontBeamSimValue = Tuning.entry("/Tuning/Serializer Front Beam", false);
-      _backBeamSimValue = Tuning.entry("/Tuning/Serializer Back Beam", false);
     }
 
     var feedMotorConfigs = new TalonFXConfiguration();
@@ -127,24 +127,9 @@ public class Serializer extends AdvancedSubsystem {
         });
   }
 
-  /**
-   * Whether a coral is at all inside the serializer.
-   *
-   * @return front beam broken OR back beam broken
-   */
-  public boolean hasCoral() {
-    return getFrontBeam() || getBackBeam();
-  }
-
   @Logged(name = "Front Beam")
   public boolean getFrontBeam() {
     return !_frontBeam.get();
-  }
-
-  @Logged(name = "Back Beam")
-  public boolean getBackBeam() {
-    // return false;
-    return _backBeamFake.get();
   }
 
   public Command idle() {
@@ -171,7 +156,7 @@ public class Serializer extends AdvancedSubsystem {
   /** Inverse passoff from the manipulator. */
   public Command inversePassoff() {
     return setSpeed(-SerializerConstants.feedSpeed.in(RadiansPerSecond))
-        .until(this::getBackBeam)
+        .until(() -> _frontBeamEvent.getAsBoolean())
         .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.NONE)))
         .withName("Inverse Passoff");
   }
@@ -190,17 +175,14 @@ public class Serializer extends AdvancedSubsystem {
     super.simulationPeriodic();
 
     _frontBeamSim.setValue(!_frontBeamSimValue.get());
-    _backBeamSim.setValue(!_backBeamSimValue.get());
   }
 
   @Override
   public void close() {
     _frontBeam.close();
-    _backBeam.close();
 
     _feedMotor.close();
 
     _frontBeamSimValue.close();
-    _backBeamSimValue.close();
   }
 }
