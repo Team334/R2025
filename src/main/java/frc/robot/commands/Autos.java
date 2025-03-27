@@ -145,4 +145,13 @@ public class Autos {
 
     return routine;
   }
+
+  public AutoRoutine resetOdometry() {
+    var routine = _factory.newRoutine("Reset Odometry");
+    var traj = routine.trajectory("ResetOdometry");
+
+    routine.active().onTrue(sequence(traj.resetOdometry(), traj.cmd()));
+
+    return routine;
+  }
 }
