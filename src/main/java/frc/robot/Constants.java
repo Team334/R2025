@@ -171,7 +171,7 @@ public final class Constants {
             upperLeftArducamName,
             new Transform3d(
                 new Translation3d(0.154, 0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(11), Math.PI)),
+                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
             0.2,
             0.2,
             2.5,
@@ -182,7 +182,7 @@ public final class Constants {
             upperRightArducamName,
             new Transform3d(
                 new Translation3d(0.154, -0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(8), Math.PI)),
+                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
             0.2,
             0.2,
             2.5,
