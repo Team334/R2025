@@ -183,7 +183,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperRightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerRightArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerRightArducam, _lowerLeftArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
