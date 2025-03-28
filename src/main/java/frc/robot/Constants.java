@@ -264,7 +264,7 @@ public final class Constants {
       HUMAN(Radians.of(-0.457), Radians.of(17.984)),
       PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
-      L1(Radians.of(-0.233), Radians.of(7.708)),
+      L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
       L3(Radians.of(-1.06), Radians.of(26.828)),
       L4(Radians.of(1.282), Radians.of(38.2)),

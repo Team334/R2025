@@ -183,7 +183,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.upperRightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerRightArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -238,9 +238,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     SmartDashboard.putData(
         "Practice Field Reset", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(120))));
 
-    autonomous()
-        .onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = true))
-        .onFalse(Commands.runOnce(() -> _ignoreVisionEstimates = false));
+    autonomous().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
+    // .onFalse(Commands.runOnce(() -> _ignoreVisionEstimates = false));
 
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
@@ -744,7 +743,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // alignment tag is wanted
   private void updateAlignEstimate(double distance) {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = DriverStation.isAutonomous() ? true : false; // TODO: store a previous value or something for this
+      _ignoreVisionEstimates =
+          DriverStation.isAutonomous()
+              ? false
+              : false; // TODO: store a previous value or something for this
       _alignEstimate = null;
       _alignOdomCompensation = null;
 

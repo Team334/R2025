@@ -9,7 +9,6 @@ import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
 import static frc.robot.Constants.WristevatorConstants.Preset.L1;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
 import static frc.robot.Constants.WristevatorConstants.Preset.L4;
-import static frc.robot.Robot.getCurrentPiece;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
@@ -70,8 +69,8 @@ public class Autos {
         .bind("L2", wristevator.setGoal(L2))
         .bind("L1", wristevator.setGoal(L1))
         .bind("Human", wristevator.setGoal(HUMAN))
-        .bind("Manipulator Intake", _manipulator.intake().until(() -> getCurrentPiece() == Piece.CORAL || getCurrentPiece() == Piece.NONE).withTimeout(1.5))
-        .bind("Manipulator Outtake", _manipulator.outtake().until(() -> getCurrentPiece() == Piece.NONE).withTimeout(1.5));
+        .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
+        .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
   }
 
   public AutoRoutine ground3P() {
