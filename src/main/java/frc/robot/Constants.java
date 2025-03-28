@@ -171,7 +171,7 @@ public final class Constants {
             upperLeftArducamName,
             new Transform3d(
                 new Translation3d(0.154, 0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(11), Math.PI)),
+                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
             0.2,
             0.2,
             2.5,
@@ -182,7 +182,7 @@ public final class Constants {
             upperRightArducamName,
             new Transform3d(
                 new Translation3d(0.154, -0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(8), Math.PI)),
+                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
             0.2,
             0.2,
             2.5,
@@ -264,7 +264,7 @@ public final class Constants {
       HUMAN(Radians.of(-0.457), Radians.of(17.984)),
       PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
-      L1(Radians.of(-0.233), Radians.of(7.708)),
+      L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
       L3(Radians.of(-1.06), Radians.of(26.828)),
       L4(Radians.of(1.282), Radians.of(38.2)),
