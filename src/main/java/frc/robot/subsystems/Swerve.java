@@ -745,7 +745,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private void updateAlignEstimate(double distance) {
     if (_alignTag == -1) {
       if (!DriverStation.isAutonomous()) {
-        _ignoreVisionEstimates = false;
+        _ignoreVisionEstimates = false; // TODO: store a previous value or something for this
       }
       _alignEstimate = null;
       _alignOdomCompensation = null;
