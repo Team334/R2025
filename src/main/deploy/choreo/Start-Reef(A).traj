@@ -49,6 +49,5 @@
   "splits":[0]
  },
  "events":[
-   {"name":"L2", "from":{"target":0, "targetTimestamp":0.0, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"L2"}}},
-   {"name":"Manipulator Outtake", "from":{"target":1, "targetTimestamp":0.83231, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"Manipulator Outtake"}}}]
+   {"name":"L2", "from":{"target":0, "targetTimestamp":0.0, "offset":{"exp":"0 s", "val":0.0}}, "event":{"type":"named", "data":{"name":"L2"}}}]
 }
