@@ -65,10 +65,10 @@ public class Autos {
             });
     _factory
         .bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer))
-        .bind("L4", wristevator.setGoal(L4))
-        .bind("L2", wristevator.setGoal(L2))
-        .bind("L1", wristevator.setGoal(L1))
-        .bind("Human", wristevator.setGoal(HUMAN))
+        .bind("L4", _wristevator.setGoal(L4))
+        .bind("L2", _wristevator.setGoal(L2))
+        .bind("L1", _wristevator.setGoal(L1))
+        .bind("Human", _wristevator.setGoal(HUMAN))
         .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
         .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
   }
