@@ -148,8 +148,8 @@ public final class Constants {
         new VisionPoseEstimatorConstants(
             lowerLeftArducamName,
             new Transform3d(
-                new Translation3d(0.345, 0.285, 0.232),
-                new Rotation3d(0, -Units.degreesToRadians(18.6), 0)),
+                new Translation3d(0.3015, 0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
             0.2,
             0.2,
             2.5,
@@ -159,8 +159,8 @@ public final class Constants {
         new VisionPoseEstimatorConstants(
             lowerRightArducamName,
             new Transform3d(
-                new Translation3d(0.345, -0.285, 0.232),
-                new Rotation3d(0, -Units.degreesToRadians(17.8), 0)),
+                new Translation3d(0.3015, -0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),
             0.2,
             0.2,
             2.5,
