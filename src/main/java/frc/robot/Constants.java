@@ -131,8 +131,8 @@ public final class Constants {
 
     public static final String lowerLeftArducamName = "lower-left-arducam";
     public static final String lowerRightArducamName = "lower-right-arducam";
-    public static final String upperLeftArducamName = "upper-left-arducam";
-    public static final String upperRightArducamName = "upper-right-arducam";
+    // public static final String upperLeftArducamName = "upper-left-arducam";
+    // public static final String upperRightArducamName = "upper-right-arducam";
     public static final String limelightName = "limelight-main";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
@@ -166,27 +166,27 @@ public final class Constants {
             2.5,
             4.5);
 
-    public static final VisionPoseEstimatorConstants upperLeftArducam =
-        new VisionPoseEstimatorConstants(
-            upperLeftArducamName,
-            new Transform3d(
-                new Translation3d(0.154, 0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
-            0.2,
-            0.2,
-            2.5,
-            4.5);
+    // public static final VisionPoseEstimatorConstants upperLeftArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         upperLeftArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.154, 0.273, 0.972),
+    //             new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+    //         0.2,
+    //         0.2,
+    //         2.5,
+    //         4.5);
 
-    public static final VisionPoseEstimatorConstants upperRightArducam =
-        new VisionPoseEstimatorConstants(
-            upperRightArducamName,
-            new Transform3d(
-                new Translation3d(0.154, -0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
-            0.2,
-            0.2,
-            2.5,
-            4.5);
+    // public static final VisionPoseEstimatorConstants upperRightArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         upperRightArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.154, -0.273, 0.972),
+    //             new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+    //         0.2,
+    //         0.2,
+    //         2.5,
+    //         4.5);
 
     public static final Transform3d robotToLimelight =
         new Transform3d(0.063, 0, 0.968, new Rotation3d(0, Units.degreesToRadians(45), Math.PI));

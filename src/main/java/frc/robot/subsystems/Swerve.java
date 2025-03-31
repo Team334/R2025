@@ -173,17 +173,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerRightArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.upperLeftArducamName)
-  private final VisionPoseEstimator _upperLeftArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.upperLeftArducam, this::getHeadingAtTime);
-
-  @Logged(name = VisionConstants.upperRightArducamName)
-  private final VisionPoseEstimator _upperRightArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.upperRightArducam, this::getHeadingAtTime);
-
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerRightArducam, _lowerLeftArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
@@ -260,16 +250,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
       _lowerRightArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
-
-      _upperLeftArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
-
-      _upperRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));

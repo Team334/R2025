@@ -88,6 +88,7 @@ public class Robot extends TimedRobot {
           _manipulator,
           _intake,
           _serializer);
+
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
@@ -135,7 +136,6 @@ public class Robot extends TimedRobot {
     configureOperatorBindings();
 
     PortForwarder.add(5800, "orangepi-lower.local", 5800);
-    PortForwarder.add(5800, "orangepi-upper.local", 5800);
 
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
@@ -339,7 +339,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
-      // setFileOnly(true);
+      setFileOnly(true);
 
       _fileOnlySet = true;
     }
