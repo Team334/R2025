@@ -19,10 +19,12 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -86,6 +88,7 @@ public class Robot extends TimedRobot {
           _manipulator,
           _intake,
           _serializer);
+
   private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
@@ -117,6 +120,7 @@ public class Robot extends TimedRobot {
 
     // set up loggers
     DogLog.setOptions(new DogLogOptions().withCaptureDs(true));
+    DogLog.setPdh(new PowerDistribution());
 
     setFileOnly(false); // file-only once connected to fms
 
@@ -131,6 +135,8 @@ public class Robot extends TimedRobot {
     configureDriverBindings();
     configureOperatorBindings();
 
+    PortForwarder.add(5800, "orangepi-lower.local", 5800);
+
     new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
 
     SmartDashboard.putData(
@@ -141,7 +147,10 @@ public class Robot extends TimedRobot {
                 runOnce(() -> DataLogManager.log("Robot Self Check Successful!")))
             .withName("Robot Self Check"));
 
+    SmartDashboard.putData("Clear Current Piece", runOnce(() -> _currentPiece = Piece.NONE));
+
     SmartDashboard.putData(new WheelRadiusCharacterization(_swerve));
+
     SmartDashboard.putData(
         runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
@@ -149,6 +158,7 @@ public class Robot extends TimedRobot {
     _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
     _autoChooser.addRoutine("One Piece", _autos::onePiece);
     _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
+    _autoChooser.addRoutine("Drive", _autos::simplePath);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 
@@ -260,6 +270,7 @@ public class Robot extends TimedRobot {
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
+    _operatorController.povLeft().whileTrue(Superstructure.groundOuttake(_serializer, _intake));
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
@@ -334,11 +345,6 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
-  }
-
-  @Override
-  public void autonomousPeriodic() {
-    _autos.ground3P().poll();
   }
 
   @Override

@@ -1,7 +1,5 @@
 package frc.robot.utils;
 
-import static edu.wpi.first.units.Units.*;
-
 import dev.doglog.DogLog;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
@@ -13,26 +11,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
-import frc.robot.Constants.SwerveConstants;
 
 public class HolonomicController {
   // generate the path for the robot to follow
   private final ProfiledPIDController _translationProfile =
-      new ProfiledPIDController(
-          0,
-          0,
-          0,
-          new Constraints(
-              SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond),
-              SwerveConstants.maxTranslationalAcceleration.in(MetersPerSecondPerSecond)));
+      new ProfiledPIDController(0, 0, 0, new Constraints(3, 3));
   private final ProfiledPIDController _headingProfile =
-      new ProfiledPIDController(
-          0,
-          0,
-          0,
-          new Constraints(
-              SwerveConstants.maxAngularSpeed.in(RadiansPerSecond),
-              SwerveConstants.maxAngularAcceleration.in(RadiansPerSecondPerSecond)));
+      new ProfiledPIDController(0, 0, 0, new Constraints(Math.PI, Math.PI * 2));
 
   private Vector<N2> _translationDirection = VecBuilder.fill(0, 0);
 
@@ -45,27 +30,10 @@ public class HolonomicController {
 
   private final PIDController _headingController = new PIDController(1.0, 0, 0.01);
 
-  //   private DoubleEntry rotationKp = Tuning.entry("Tuning/Rotation kp", 1.0);
-  //   private DoubleEntry rotationKd = Tuning.entry("Tuning/Rotation kd", 0.01);
-
-  //   private DoubleEntry translationKp = Tuning.entry("Tuning/Translation kp", 0.4);
-  //   private DoubleEntry translationKd = Tuning.entry("Tuning/Translation kd", 0.01);
-
   public HolonomicController() {
     _headingProfile.enableContinuousInput(-Math.PI, Math.PI);
     _headingController.enableContinuousInput(-Math.PI, Math.PI);
   }
-
-  //   public void updateTuning() {
-  //     _headingController.setP(rotationKp.get());
-  //     _headingController.setD(rotationKd.get());
-
-  //     _xController.setP(translationKp.get());
-  //     _xController.setD(translationKd.get());
-
-  //     _yController.setP(translationKp.get());
-  //     _yController.setD(translationKd.get());
-  //   }
 
   /** Whether the translation and rotation profiles have completed. */
   public boolean isFinished() {

@@ -27,7 +27,6 @@ import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
-import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Voltage;
@@ -89,9 +88,10 @@ public final class Constants {
 
     public static final AlignPoses reef =
         new AlignPoses(
-            new Pose2d(3.68, 2.95, new Rotation2d(1.023)),
-            new Pose2d(3.839, 2.885, new Rotation2d(1.028)),
-            new Pose2d(3.984, 2.794, new Rotation2d(1.020)));
+            new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(60)),
+            new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(60)),
+            new Pose2d(3.249, 3.778, Rotation2d.fromDegrees(0))
+                .rotateAround(reefCenter, Rotation2d.fromDegrees(60)));
 
     public static final int humanTag = 13;
 
@@ -131,8 +131,8 @@ public final class Constants {
 
     public static final String lowerLeftArducamName = "lower-left-arducam";
     public static final String lowerRightArducamName = "lower-right-arducam";
-    public static final String upperLeftArducamName = "upper-left-arducam";
-    public static final String upperRightArducamName = "upper-right-arducam";
+    // public static final String upperLeftArducamName = "upper-left-arducam";
+    // public static final String upperRightArducamName = "upper-right-arducam";
     public static final String limelightName = "limelight-main";
 
     public static final double[] singleTagBaseStdDevs = new double[] {5, 5, 5};
@@ -148,8 +148,8 @@ public final class Constants {
         new VisionPoseEstimatorConstants(
             lowerLeftArducamName,
             new Transform3d(
-                new Translation3d(0.345, 0.285, 0.232),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
+                new Translation3d(0.3015, 0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
             0.2,
             0.2,
             2.5,
@@ -159,34 +159,34 @@ public final class Constants {
         new VisionPoseEstimatorConstants(
             lowerRightArducamName,
             new Transform3d(
-                new Translation3d(0.345, -0.285, 0.232),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), 0)),
+                new Translation3d(0.3015, -0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),
             0.2,
             0.2,
             2.5,
             4.5);
 
-    public static final VisionPoseEstimatorConstants upperLeftArducam =
-        new VisionPoseEstimatorConstants(
-            upperLeftArducamName,
-            new Transform3d(
-                new Translation3d(0.154, 0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(11), Math.PI)),
-            0.2,
-            0.2,
-            2.5,
-            4.5);
+    // public static final VisionPoseEstimatorConstants upperLeftArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         upperLeftArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.154, 0.273, 0.972),
+    //             new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+    //         0.2,
+    //         0.2,
+    //         2.5,
+    //         4.5);
 
-    public static final VisionPoseEstimatorConstants upperRightArducam =
-        new VisionPoseEstimatorConstants(
-            upperRightArducamName,
-            new Transform3d(
-                new Translation3d(0.154, -0.273, 0.972),
-                new Rotation3d(0, -Units.degreesToRadians(8), Math.PI)),
-            0.2,
-            0.2,
-            2.5,
-            4.5);
+    // public static final VisionPoseEstimatorConstants upperRightArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         upperRightArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.154, -0.273, 0.972),
+    //             new Rotation3d(0, -Units.degreesToRadians(10), Math.PI)),
+    //         0.2,
+    //         0.2,
+    //         2.5,
+    //         4.5);
 
     public static final Transform3d robotToLimelight =
         new Transform3d(0.063, 0, 0.968, new Rotation3d(0, Units.degreesToRadians(45), Math.PI));
@@ -201,14 +201,8 @@ public final class Constants {
                 Math.pow(TunerConstants.FrontLeft.LocationX, 2)
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
-    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
-
-    // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
-    public static final LinearAcceleration maxTranslationalAcceleration =
-        MetersPerSecondPerSecond.of(3);
-    public static final AngularAcceleration maxAngularAcceleration =
-        RadiansPerSecondPerSecond.of(2 * Math.PI);
+    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.5);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 2);
 
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
@@ -270,12 +264,12 @@ public final class Constants {
       HUMAN(Radians.of(-0.457), Radians.of(17.984)),
       PROCESSOR(Radians.of(-1.06), Radians.of(0)),
 
-      L1(Radians.of(-0.233), Radians.of(7.708)),
+      L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
-      L3(Radians.of(-1.06), Radians.of(27.86)),
+      L3(Radians.of(-1.06), Radians.of(26.828)),
       L4(Radians.of(1.282), Radians.of(38.2)),
 
-      LOWER_ALGAE(Radians.of(-1.06), Radians.of(19)),
+      LOWER_ALGAE(Radians.of(-0.877), Radians.of(17.969)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
 
       private final Angle _angle;
@@ -433,7 +427,7 @@ public final class Constants {
     public static final AngularVelocity intakeSlowSpeed = RadiansPerSecond.of(16);
     public static final AngularVelocity intakeFastSpeed = RadiansPerSecond.of(30);
 
-    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-60);
+    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-40);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
@@ -455,6 +449,6 @@ public final class Constants {
 
     public static final double flywheelGearRatio = 3;
 
-    public static final double holdAlgaeVoltage = 1.5;
+    public static final Voltage holdAlgaeVoltage = Volts.of(0.6);
   }
 }

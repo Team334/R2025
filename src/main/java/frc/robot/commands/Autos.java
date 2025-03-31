@@ -6,6 +6,7 @@ package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
+import static frc.robot.Constants.WristevatorConstants.Preset.L1;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
 import static frc.robot.Constants.WristevatorConstants.Preset.L4;
 
@@ -62,12 +63,12 @@ public class Autos {
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
               DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
-
     _factory
         .bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer))
-        .bind("L4", wristevator.setGoal(L4))
-        .bind("L2", wristevator.setGoal(L2))
-        .bind("Human", wristevator.setGoal(HUMAN))
+        .bind("L4", _wristevator.setGoal(L4))
+        .bind("L2", _wristevator.setGoal(L2))
+        .bind("L1", _wristevator.setGoal(L1))
+        .bind("Human", _wristevator.setGoal(HUMAN))
         .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
         .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
   }
@@ -115,8 +116,8 @@ public class Autos {
   }
 
   public AutoRoutine simplePath() {
-    var routine = _factory.newRoutine("Simple Path");
-    var traj = routine.trajectory("SimplePath");
+    var routine = _factory.newRoutine("Drive");
+    var traj = routine.trajectory("Drive");
 
     routine
         .active()
@@ -131,17 +132,15 @@ public class Autos {
 
   public AutoRoutine onePiece() {
     var routine = _factory.newRoutine("One Piece");
-    var meowjectory = routine.trajectory("Start-Reef(A)");
-    var meowjectory2 = routine.trajectory("Reef-Human(A)");
+    var traj = routine.trajectory("Start-Reef(A)");
 
     routine
         .active()
         .onTrue(
             sequence(
                 Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
-                meowjectory.resetOdometry(),
-                meowjectory.cmd(),
-                meowjectory2.cmd()));
+                traj.resetOdometry(),
+                traj.cmd()));
 
     return routine;
   }

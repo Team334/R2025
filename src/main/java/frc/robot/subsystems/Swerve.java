@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
 
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
@@ -171,16 +172,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       VisionPoseEstimator.buildFromConstants(
           VisionConstants.lowerRightArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.upperLeftArducamName)
-  private final VisionPoseEstimator _upperLeftArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.upperLeftArducam, this::getHeadingAtTime);
-
-  @Logged(name = VisionConstants.upperRightArducamName)
-  private final VisionPoseEstimator _upperRightArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.upperRightArducam, this::getHeadingAtTime);
-
   private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
@@ -233,6 +224,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
+    autonomous().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
+
+    teleop().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
+
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
     SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
@@ -252,16 +247,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
       _lowerRightArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
-
-      _upperLeftArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
-
-      _upperRightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
@@ -735,7 +720,10 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   // alignment tag is wanted
   private void updateAlignEstimate(double distance) {
     if (_alignTag == -1) {
-      _ignoreVisionEstimates = false;
+      _ignoreVisionEstimates =
+          DriverStation.isAutonomous()
+              ? false
+              : false; // TODO: store a previous value or something for this
       _alignEstimate = null;
       _alignOdomCompensation = null;
 
