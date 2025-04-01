@@ -8,6 +8,7 @@ import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
 import static frc.robot.Constants.WristevatorConstants.Preset.L1;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
+import static frc.robot.Constants.WristevatorConstants.Preset.L3;
 import static frc.robot.Constants.WristevatorConstants.Preset.L4;
 
 import choreo.auto.AutoFactory;
@@ -87,6 +88,7 @@ public class Autos {
     _factory
         .bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer))
         .bind("L4", _wristevator.setGoal(L4))
+        .bind("L3", _wristevator.setGoal(L3))
         .bind("L2", _wristevator.setGoal(L2))
         .bind("L1", _wristevator.setGoal(L1))
         .bind("Human", _wristevator.setGoal(HUMAN))
