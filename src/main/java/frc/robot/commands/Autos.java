@@ -96,7 +96,7 @@ public class Autos {
         .and(() -> _seesPiece)
         .onTrue(
             sequence(
-                _swerve.alignToPiece(),
+                _swerve.pieceAlign(),
                 _swerve.driveTo(humanToReef1.getFinalPose().get()),
                 reefToHuman2.cmd()));
     reefToHuman1.done().onTrue(humanToReef1.cmd());
@@ -107,7 +107,7 @@ public class Autos {
         .and(() -> _seesPiece)
         .onTrue(
             sequence(
-                _swerve.alignToPiece(),
+                _swerve.pieceAlign(),
                 _swerve.driveTo(humanToReef2.getFinalPose().get()),
                 reefToHuman2.cmd()));
     reefToHuman2.done().onTrue(humanToReef2.cmd());

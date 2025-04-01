@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -48,7 +48,6 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
-import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 
 /**
@@ -213,19 +212,19 @@ public class Robot extends TimedRobot {
                 .ignoringDisable(true));
   }
 
-  private void alignmentTriggers(Trigger button, AlignPoses poses, boolean startReversed) {
+  private void alignmentTriggers(Trigger button, FieldLocation location) {
     button
         .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.LEFT));
 
     button
         .and(
             _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.CENTER));
 
     button
         .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.RIGHT));
   }
 
   private void configureDriverBindings() {
@@ -234,14 +233,13 @@ public class Robot extends TimedRobot {
     _driverController.povDown().onTrue(_swerve.resetHeading());
 
     // align to piece
-    _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
+    _driverController.leftBumper().whileTrue(_swerve.pieceAlign());
 
     _driverController.povRight().onTrue(_swerve.resetToReefTag().andThen(rumbleControllers(1, 1)));
 
-    alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
-    alignmentTriggers(_driverController.y(), FieldConstants.human, true);
-    alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
-    alignmentTriggers(_driverController.start(), FieldConstants.cage, false);
+    alignmentTriggers(_driverController.x(), FieldLocation.REEF);
+    alignmentTriggers(_driverController.y(), FieldLocation.HUMAN);
+    alignmentTriggers(_driverController.b(), FieldLocation.PROCESSOR);
   }
 
   private void configureOperatorBindings() {

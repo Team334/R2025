@@ -48,6 +48,7 @@ import frc.lib.InputStream;
 import frc.lib.SelfChecked;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
@@ -59,7 +60,6 @@ import frc.robot.utils.LimelightHelpers;
 import frc.robot.utils.LimelightHelpers.RawDetection;
 import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
-import frc.robot.utils.VisionPoseEstimator.SingleTagEstimate;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,16 +147,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   private List<VisionPoseEstimate> _estimates = new ArrayList<VisionPoseEstimate>();
 
-  @Logged(name = "Align Tag")
-  private int _alignTag = -1;
-
-  private AlignPoses _alignGoal = new AlignPoses(Pose2d.kZero);
-
-  private SingleTagEstimate _alignEstimate = null;
+  private double _alignEstimateDistance = Double.MAX_VALUE;
 
   private Translation2d _alignOdomCompensation = null;
-
-  private Pose2d _pieceAlignPose;
 
   private HolonomicController _poseController = new HolonomicController();
 
@@ -437,85 +430,110 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   }
 
   /** Finds the proper align pose and tag when aligning. */
-  private Pair<AlignPoses, Integer> findAlignment(AlignPoses alignGoal) {
+  private Pair<AlignPoses, Integer> findAlignment(FieldLocation location) {
     Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
 
-    AlignPoses alignGoalProcessed = null;
-    int alignTag = -1;
+    AlignPoses alignGoal = FieldConstants.reef;
 
-    Pose2d pose =
+    int alignTag = FieldConstants.reefTag;
+
+    double minDistance = Double.MAX_VALUE;
+
+    Pose2d robotPose =
         getPose()
             .rotateAround(
                 FieldConstants.fieldCenter,
                 alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
 
-    if (alignGoal == FieldConstants.reef) {
-      double minDistance = Double.MAX_VALUE;
+    switch (location) {
+      case REEF:
+        for (int i = 0; i < 6; i++) {
+          AlignPoses goal =
+              FieldConstants.reef.rotateAround(
+                  FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
 
-      for (int i = 0; i < 6; i++) {
-        AlignPoses goal =
-            FieldConstants.reef.rotateAround(
-                FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
+          if (robotPose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+            alignGoal = goal;
+            minDistance = robotPose.minus(goal.getCenter()).getTranslation().getNorm();
 
-        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-          alignGoalProcessed = goal;
-          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
-
-          alignTag = FieldConstants.reefTag + i;
+            alignTag = FieldConstants.reefTag + i;
+          }
         }
-      }
-    } else if (alignGoal == FieldConstants.human) {
-      double minDistance = Double.MAX_VALUE;
 
-      int baseTag = FieldConstants.humanTag;
+        break;
 
-      for (int i = 0; i < 2; i++) {
-        AlignPoses goal = alignGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+      case HUMAN:
+        for (int i = 0; i < 2; i++) {
+          AlignPoses goal =
+              FieldConstants.human.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
 
-        goal =
-            goal.rotateAround(
-                goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
+          goal =
+              goal.rotateAround(
+                  goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
 
-        if (pose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-          alignGoalProcessed = goal;
-          minDistance = pose.minus(goal.getCenter()).getTranslation().getNorm();
+          if (robotPose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
+            alignGoal = goal;
+            minDistance = robotPose.minus(goal.getCenter()).getTranslation().getNorm();
 
-          alignTag = baseTag - i;
+            alignTag = FieldConstants.humanTag - i;
+          }
         }
-      }
-    } else if (alignGoal == FieldConstants.processor) {
-      alignGoalProcessed = alignGoal;
-      alignTag = FieldConstants.processorTag;
-    } else {
-      alignGoalProcessed = alignGoal;
+
+        break;
+
+      case PROCESSOR:
+        alignGoal = FieldConstants.processor;
+        alignTag = FieldConstants.processorTag;
+        break;
+
+      default:
+        break;
     }
 
-    alignGoalProcessed =
-        alignGoalProcessed.rotateAround(
+    alignGoal =
+        alignGoal.rotateAround(
             FieldConstants.fieldCenter,
             alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
 
     alignTag =
         alliance == Alliance.Blue ? alignTag : FieldConstants.tagCorrespondences.get(alignTag);
 
-    return Pair.of(alignGoalProcessed, alignTag);
+    return Pair.of(alignGoal, alignTag);
   }
 
-  /** Backup function that'll manually prepare the odometry for reef alignment. */
+  /** Backup function that'll manually prepare for reef alignment. */
   public Command resetToReefTag() {
     return Commands.run(
             () -> {
-              // set the alignment tag and find an align estimate with no distance bound
-              _alignTag = findAlignment(FieldConstants.reef).getSecond();
+              var tag = findAlignment(FieldLocation.REEF).getSecond();
 
-              updateAlignEstimate(Double.MAX_VALUE);
+              _newEstimates.stream()
+                  .map(e -> e.singleTagEstimates())
+                  .flatMap(e -> Arrays.stream(e))
+                  .forEach(
+                      e -> {
+                        if (e.tag() != tag) return;
+
+                        if (e.distance() < _alignEstimateDistance) {
+                          _ignoreVisionEstimates = true;
+
+                          var pose =
+                              samplePoseAt(Utils.fpgaToCurrentTime(e.timestamp()))
+                                  .orElse(getPose());
+
+                          _alignOdomCompensation =
+                              e.pose().toPose2d().getTranslation().minus(pose.getTranslation());
+
+                          _alignEstimateDistance = e.distance();
+                        }
+                      });
             })
-        .until(() -> _alignEstimate != null);
+        .until(() -> _alignOdomCompensation != null);
   }
 
-  /** Make the chassis align to a piece. */
-  public Command alignToPiece() {
-    return runOnce(
+  /** Align to a coral. */
+  public Command pieceAlign() {
+    return defer(
             () -> {
               Angle tx = Degrees.of(LimelightHelpers.getTX(VisionConstants.limelightName));
               Angle ty = Degrees.of(LimelightHelpers.getTY(VisionConstants.limelightName));
@@ -547,7 +565,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                           (groundDistance - VisionConstants.robotToLimelight.getX())
                               * Math.cos(tx.in(Radians))));
 
-              _pieceAlignPose =
+              var pose =
                   sideProportions >= 2
                       ? getPose()
                           .transformBy(
@@ -559,73 +577,70 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                                           ? Rotation2d.fromDegrees(45)
                                           : Rotation2d.kZero)))
                       : getPose();
+
+              return driveTo(pose);
             })
         .unless(() -> LimelightHelpers.getTargetCount(VisionConstants.limelightName) == 0)
-        .andThen(defer(() -> driveTo(_pieceAlignPose)))
-        .withName("Align To Piece");
+        .withName("Piece Align");
   }
 
-  /** Aligns to a {@link AlignPoses} to the correct side. */
-  public Command alignTo(AlignPoses alignGoal, AlignSide side) {
-    return alignTo(alignGoal, side, false);
-  }
-
-  /**
-   * Aligns to a {@link AlignPoses} to the correct side.
-   *
-   * @param side The side to align to.
-   * @param startReversed Whether to start driving towards the goal pose in reverse, needed if the
-   *     required camera is on the opposite side of the alignment heading.
-   */
-  public Command alignTo(AlignPoses alignGoal, AlignSide side, boolean startReversed) {
-    return runOnce(
+  /** Aligns to the specified field location. */
+  public Command fieldAlign(FieldLocation location, AlignSide side) {
+    return defer(
             () -> {
-              var alignment = findAlignment(alignGoal);
+              var alignment = findAlignment(location);
 
-              _alignGoal = alignment.getFirst();
-              _alignTag = alignment.getSecond();
+              return alignTo(alignment.getFirst().getPose(side), alignment.getSecond());
             })
-        .andThen(
-            defer(
-                () ->
-                    sequence(
-                        // first drive towards the goal pose using the global pose estimate
-                        // the goal pose is reversed if the alignment is started as reversed
-                        // this command ends when the alignment tag comes in view at the right
-                        // distance
-                        // or if that doesn't happen, it's until the robot is close to the alignment
-                        // pose
-                        driveTo(
-                                startReversed
-                                    ? _alignGoal
-                                        .transform(Translation2d.kZero, Rotation2d.k180deg)
-                                        .getPose(side)
-                                    : _alignGoal.getPose(side),
-                                this::getPose)
-                            .until(
-                                () ->
-                                    _alignEstimate != null
-                                        || getPose()
-                                                .getTranslation()
-                                                .getDistance(
-                                                    _alignGoal.getPose(side).getTranslation())
-                                            < SwerveConstants.pathingDistanceThreshold.in(Meters)),
+        .withName("Field Align");
+  }
 
-                        // then, drive towards the goal pose (not reversed) using the alignment
-                        // estimate
-                        // or the global pose estimate if the alignment tag was never seen
-                        driveTo(
-                            _alignGoal.getPose(side),
-                            () -> {
-                              if (_alignEstimate == null) return getPose();
+  /** Aligns to a pose using trig estimate for the robot pose that uses the specified tag id. */
+  public Command alignTo(Pose2d goalPose, int tag) {
+    return sequence(
+            driveTo(goalPose).until(() -> _alignOdomCompensation != null),
+            driveTo(
+                goalPose,
+                () -> {
+                  // if it drove all the way to the goal pose but never got a trig estimate
+                  if (_alignOdomCompensation == null) return getPose();
 
-                              return new Pose2d(
-                                  getPose().getTranslation().plus(_alignOdomCompensation),
-                                  getHeading());
-                            }))))
+                  return new Pose2d(
+                      getPose().getTranslation().plus(_alignOdomCompensation), getHeading());
+                }))
+        .raceWith(
+            Commands.run(
+                () -> {
+                  // update align odom compensation if there are new trig estimates
+                  _newEstimates.stream()
+                      .map(e -> e.singleTagEstimates())
+                      .flatMap(e -> Arrays.stream(e))
+                      .forEach(
+                          e -> {
+                            if (e.tag() != tag) return;
+
+                            if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
+
+                            if (e.distance() < _alignEstimateDistance) {
+                              _ignoreVisionEstimates = true;
+
+                              var pose =
+                                  samplePoseAt(Utils.fpgaToCurrentTime(e.timestamp()))
+                                      .orElse(getPose());
+
+                              _alignOdomCompensation =
+                                  e.pose().toPose2d().getTranslation().minus(pose.getTranslation());
+
+                              _alignEstimateDistance = e.distance();
+                            }
+                          });
+                }))
         .finallyDo(
-            () -> _alignTag = -1 // clear alignment tag
-            )
+            () -> {
+              _alignEstimateDistance = Double.MAX_VALUE;
+              _alignOdomCompensation = null;
+              _ignoreVisionEstimates = false; // TODO: reset to old value instead of this
+            })
         .withName("Align To");
   }
 
@@ -715,62 +730,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     }
   }
 
-  // update the alignment estimate
-  // and the odometry compensation transform when an
-  // alignment tag is wanted
-  private void updateAlignEstimate(double distance) {
-    if (_alignTag == -1) {
-      _ignoreVisionEstimates =
-          DriverStation.isAutonomous()
-              ? false
-              : false; // TODO: store a previous value or something for this
-      _alignEstimate = null;
-      _alignOdomCompensation = null;
-
-      return;
-    }
-
-    _newEstimates.stream()
-        .map(e -> e.singleTagEstimates())
-        .flatMap(e -> Arrays.stream(e))
-        .forEach(
-            e -> {
-              if (e.tag() != _alignTag) return;
-
-              if (e.distance() > distance) return;
-
-              // once an alignment estimate is found ignore vision estimates to use only odom
-              if (_alignEstimate == null) {
-                _ignoreVisionEstimates = true;
-
-                _alignEstimate = e;
-
-                var pose =
-                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
-                        .orElse(getPose());
-
-                _alignOdomCompensation =
-                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
-              }
-
-              // only override align estimate if the new estimate is closer
-              if (e.distance() < _alignEstimate.distance()) {
-                _alignEstimate = e;
-
-                var pose =
-                    samplePoseAt(Utils.fpgaToCurrentTime(_alignEstimate.timestamp()))
-                        .orElse(getPose());
-
-                _alignOdomCompensation =
-                    _alignEstimate.pose().toPose2d().getTranslation().minus(pose.getTranslation());
-              }
-            });
-  }
-
   @Override
   public void periodic() {
     updateVisionPoseEstimates();
-    updateAlignEstimate(VisionConstants.trigMaxDistance.in(Meters));
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
