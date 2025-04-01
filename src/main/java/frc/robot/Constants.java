@@ -242,7 +242,7 @@ public final class Constants {
     public static final Angle actuatorStowed = Radians.of(2.26);
     public static final Angle actuatorOut = Radians.of(-0.34);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
   }
 
   public static class WristevatorConstants {
