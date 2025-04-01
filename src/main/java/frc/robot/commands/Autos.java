@@ -13,6 +13,8 @@ import static frc.robot.Constants.WristevatorConstants.Preset.L4;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
@@ -33,6 +35,25 @@ public class Autos {
   private final AutoFactory _factory;
 
   private boolean _seesPiece = false;
+
+  private SendableChooser<Side> _selector = new SendableChooser<Side>();
+  private Side _currentSide = Side.CENTER;
+
+  private enum Side {
+    LEFT("Left "),
+    CENTER("Center "),
+    RIGHT("Right ");
+
+    private final String _dir;
+
+    private Side(String dir) {
+      _dir = dir;
+    }
+
+    public String getDirectory() {
+      return _dir;
+    }
+  }
 
   public Autos(
       Swerve swerve,
@@ -71,6 +92,12 @@ public class Autos {
         .bind("Human", _wristevator.setGoal(HUMAN))
         .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
         .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
+
+    _selector.addOption("Left", Side.LEFT);
+    _selector.addOption("Center", Side.CENTER);
+    _selector.addOption("Right", Side.RIGHT);
+
+    SmartDashboard.putData("Auton Side Selector", _selector);
   }
 
   public AutoRoutine ground3P() {
