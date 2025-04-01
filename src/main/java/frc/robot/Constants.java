@@ -92,12 +92,15 @@ public final class Constants {
 
     public static final int reefTag = 17;
 
-    public static final AlignPoses reef =
+    public static final AlignPoses reefFlush =
         new AlignPoses(
             new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(60)),
             new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(60)),
             new Pose2d(3.249, 3.778, Rotation2d.fromDegrees(0))
                 .rotateAround(reefCenter, Rotation2d.fromDegrees(60)));
+
+    public static final AlignPoses reefNotFlush =
+        new AlignPoses(new Pose2d(), new Pose2d(), new Pose2d());
 
     public static final int humanTag = 13;
 

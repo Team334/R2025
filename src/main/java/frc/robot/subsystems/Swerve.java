@@ -7,6 +7,8 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
+import static frc.robot.Robot.getWristevatorGoal;
 
 import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.SignalLogger;
@@ -433,7 +435,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private Pair<AlignPoses, Integer> findAlignment(FieldLocation location) {
     Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
 
-    AlignPoses alignGoal = FieldConstants.reef;
+    AlignPoses alignGoal = FieldConstants.reefFlush;
+    AlignPoses alignBaseGoal = FieldConstants.reefFlush;
 
     int alignTag = FieldConstants.reefTag;
 
@@ -447,9 +450,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
     switch (location) {
       case REEF:
+        if (getWristevatorGoal() == L1 || getWristevatorGoal() == L4) {
+          alignBaseGoal = FieldConstants.reefNotFlush;
+        } else {
+          alignBaseGoal = FieldConstants.reefFlush;
+        }
+
         for (int i = 0; i < 6; i++) {
           AlignPoses goal =
-              FieldConstants.reef.rotateAround(
+              alignBaseGoal.rotateAround(
                   FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
 
           if (robotPose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
@@ -463,9 +472,11 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
         break;
 
       case HUMAN:
+        alignBaseGoal = FieldConstants.human;
+
         for (int i = 0; i < 2; i++) {
           AlignPoses goal =
-              FieldConstants.human.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
+              alignBaseGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
 
           goal =
               goal.rotateAround(

@@ -38,6 +38,7 @@ import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
+import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.commands.Autos;
 import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
@@ -77,7 +78,8 @@ public class Robot extends TimedRobot {
   private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Wristevator")
-  private final Wristevator _wristevator = new Wristevator();
+  private final Wristevator _wristevator =
+      new Wristevator((Setpoint goal) -> _wristevatorGoal = goal);
 
   private final Autos _autos =
       new Autos(
@@ -97,9 +99,16 @@ public class Robot extends TimedRobot {
   // global state variables
   private static Piece _currentPiece = Piece.NONE;
 
+  private static Setpoint _wristevatorGoal = HOME;
+
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
     return _currentPiece;
+  }
+
+  /** The goal for the wristevator. */
+  public static Setpoint getWristevatorGoal() {
+    return _wristevatorGoal;
   }
 
   /**
@@ -343,6 +352,7 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
+    DogLog.log("Wristevator Goal", _wristevatorGoal != null ? _wristevatorGoal.toString() : "None");
   }
 
   @Override
