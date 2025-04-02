@@ -35,6 +35,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.FieldConstants.FieldLocation;
+import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
@@ -277,7 +278,11 @@ public class Robot extends TimedRobot {
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
-    _operatorController.povLeft().whileTrue(Superstructure.groundOuttake(_serializer, _intake));
+    // ground outtake
+    _operatorController.leftBumper().whileTrue(_intake.outtake());
+    _operatorController.povUp().whileTrue(Superstructure.serializerOuttake(_serializer, _intake));
+
+    // switch to manual
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
@@ -293,14 +298,6 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // switch to fast manipulator feed mode
-    _operatorController
-        .leftBumper()
-        .onTrue(runOnce(() -> _manipulator.setFastIntake(true)))
-        .onFalse(runOnce(() -> _manipulator.setFastIntake(false)));
-
-    _operatorController.povUp().whileTrue(_intake.outtake());
-
     // intake / inverse passoff
     _operatorController
         .rightTrigger()
@@ -310,10 +307,12 @@ public class Robot extends TimedRobot {
     _operatorController
         .rightTrigger()
         .and(() -> !_wristevator.homeSwitch())
-        .whileTrue(_manipulator.intake());
+        .whileTrue(_manipulator.feed());
 
     // outtake
-    _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
+    _operatorController
+        .leftTrigger()
+        .whileTrue(_manipulator.outtake(ManipulatorConstants.coralOuttakeSpeed));
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */

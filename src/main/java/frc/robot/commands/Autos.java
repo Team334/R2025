@@ -92,8 +92,7 @@ public class Autos {
         .bind("L2", _wristevator.setGoal(L2))
         .bind("L1", _wristevator.setGoal(L1))
         .bind("Human", _wristevator.setGoal(HUMAN))
-        .bind("Manipulator Intake", _manipulator.intake().withTimeout(1.5))
-        .bind("Manipulator Outtake", _manipulator.outtake().withTimeout(1.5));
+        .bind("Manipulator Feed", _manipulator.feed().withTimeout(1.5));
 
     _selector.addOption("Left", Side.LEFT);
     _selector.addOption("Center", Side.CENTER);

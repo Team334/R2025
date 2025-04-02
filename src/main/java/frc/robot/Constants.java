@@ -100,10 +100,11 @@ public final class Constants {
                 .rotateAround(reefCenter, Rotation2d.fromDegrees(60)));
 
     public static final AlignPoses reefNotFlush =
-      new AlignPoses(
-        new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(0)),
-        new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(0)),
-        new Pose2d(3.23, 3.84, Rotation2d.fromDegrees(0))).rotateAround(reefCenter, Rotation2d.fromDegrees(60));
+        new AlignPoses(
+                new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.23, 3.84, Rotation2d.fromDegrees(0)))
+            .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
 
     public static final int humanTag = 13;
 
@@ -427,10 +428,10 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity intakeSlowSpeed = RadiansPerSecond.of(16);
-    public static final AngularVelocity intakeFastSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(0);
+    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(0);
 
-    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-40);
+    public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(0);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
