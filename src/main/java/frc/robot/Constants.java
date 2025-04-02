@@ -428,10 +428,11 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(0);
-    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(0);
+    public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(-30);
+    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(30);
 
-    public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(0);
+    public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(-40);
+    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(30);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 

@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import static frc.robot.Robot.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -39,6 +40,7 @@ import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
@@ -293,7 +295,21 @@ public class Manipulator extends AdvancedSubsystem {
 
   /** Feeds in the proper direction depending on wristevator goal. */
   public Command feed() {
-    return idle(); // TODO: make this either select or deffered (idk)
+    return Commands.either(
+        Commands.select(
+            Map.ofEntries(
+                Map.entry(L1, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L2, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L3, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L4, intake(ManipulatorConstants.coralIntakeSpeed)),
+                Map.entry(LOWER_ALGAE, intake(ManipulatorConstants.algaeIntakeSpeed)),
+                Map.entry(UPPER_ALGAE, intake(ManipulatorConstants.algaeIntakeSpeed)),
+                Map.entry(PROCESSOR, outtake(ManipulatorConstants.algaeOuttakeSpeed)),
+                Map.entry(HOME, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(HUMAN, intake(ManipulatorConstants.coralIntakeSpeed))),
+            () -> getWristevatorGoal()),
+        intake(ManipulatorConstants.coralIntakeSpeed),
+        () -> getWristevatorGoal() != null);
   }
 
   /** Intake that detects when a game piece is picked up. */
