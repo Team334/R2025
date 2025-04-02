@@ -272,7 +272,7 @@ public final class Constants {
       L3(Radians.of(-1.06), Radians.of(26.828)),
       L4(Radians.of(1.282), Radians.of(38.2)),
 
-      LOWER_ALGAE(Radians.of(-0.877), Radians.of(17.969)),
+      LOWER_ALGAE(Radians.of(-0.877), Radians.of(17.5549)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
 
       private final Angle _angle;
