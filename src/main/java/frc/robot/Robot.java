@@ -167,7 +167,7 @@ public class Robot extends TimedRobot {
     _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
     _autoChooser.addRoutine("One Piece", _autos::onePiece);
     _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
-    _autoChooser.addRoutine("Drive", _autos::simplePath);
+    _autoChooser.addRoutine("Simple Path", _autos::simplePath);
 
     SmartDashboard.putData("Auto Chooser", _autoChooser);
 
