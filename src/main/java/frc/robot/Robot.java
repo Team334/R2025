@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
@@ -90,8 +91,6 @@ public class Robot extends TimedRobot {
           _manipulator,
           _intake,
           _serializer);
-
-  private final AutoChooser _autoChooser = new AutoChooser();
 
   private final NetworkTableInstance _ntInst;
 
@@ -156,6 +155,8 @@ public class Robot extends TimedRobot {
                 runOnce(() -> DataLogManager.log("Robot Self Check Successful!")))
             .withName("Robot Self Check"));
 
+    FieldConstants.tagLayout.getFieldLength();
+
     SmartDashboard.putData("Clear Current Piece", runOnce(() -> _currentPiece = Piece.NONE));
 
     SmartDashboard.putData(new WheelRadiusCharacterization(_swerve));
@@ -164,14 +165,17 @@ public class Robot extends TimedRobot {
         runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
     // set up auto chooser
-    _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
-    _autoChooser.addRoutine("One Piece", _autos::onePiece);
-    _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
-    _autoChooser.addRoutine("Simple Path", _autos::simplePath);
+    var autoChooser = new AutoChooser();
 
-    SmartDashboard.putData("Auto Chooser", _autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    autonomous().whileTrue(_autoChooser.selectedCommandScheduler());
+    autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
+    autoChooser.addRoutine("Simple Path", _autos::simplePath);
+    autoChooser.addRoutine("One Piece", _autos::onePiece);
+
+    autonomous().whileTrue(autoChooser.selectedCommandScheduler());
+
+    _autos.warmup().schedule();
 
     addPeriodic(FaultLogger::update, 1);
   }

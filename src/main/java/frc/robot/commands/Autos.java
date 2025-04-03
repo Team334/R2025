@@ -16,13 +16,16 @@ import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
+import frc.robot.utils.AlignPoses.AlignSide;
 import java.util.function.Consumer;
 
 public class Autos {
@@ -77,8 +80,6 @@ public class Autos {
             true,
             _swerve,
             (traj, isActive) -> {
-              traj = traj.flipped();
-
               DogLog.log("Auto/Current Trajectory", traj.getPoses());
               DogLog.log("Auto/Current Trajectory Name", traj.name());
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
@@ -101,51 +102,9 @@ public class Autos {
     SmartDashboard.putData("Auton Side Selector", _selector);
   }
 
-  public AutoRoutine ground3P() {
-    var routine = _factory.newRoutine("Ground 3 Piece");
-    var start = routine.trajectory("Start-Reef");
-    var humanToReef1 = routine.trajectory("Human-Reef1");
-    var reefToHuman1 = routine.trajectory("Reef-Human1");
-    var humanToReef2 = routine.trajectory("Human-Reef2");
-    var reefToHuman2 = routine.trajectory("Reef-Human2");
-
-    routine
-        .active()
-        .onTrue(
-            sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
-                start.resetOdometry(),
-                start.cmd()));
-
-    start.done().onTrue(reefToHuman1.cmd());
-
-    reefToHuman1
-        .active()
-        .and(() -> _seesPiece)
-        .onTrue(
-            sequence(
-                _swerve.pieceAlign(),
-                _swerve.driveTo(humanToReef1.getFinalPose().get()),
-                reefToHuman2.cmd()));
-    reefToHuman1.done().onTrue(humanToReef1.cmd());
-    humanToReef1.done().onTrue(reefToHuman2.cmd());
-
-    reefToHuman2
-        .active()
-        .and(() -> _seesPiece)
-        .onTrue(
-            sequence(
-                _swerve.pieceAlign(),
-                _swerve.driveTo(humanToReef2.getFinalPose().get()),
-                reefToHuman2.cmd()));
-    reefToHuman2.done().onTrue(humanToReef2.cmd());
-
-    return routine;
-  }
-
-  public AutoRoutine simplePath() {
-    var routine = _factory.newRoutine("Simple Path");
-    var traj = routine.trajectory("Simple Path");
+  public AutoRoutine onePiece() {
+    var routine = _factory.newRoutine("One Piece");
+    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "1P");
 
     routine
         .active()
@@ -153,14 +112,16 @@ public class Autos {
             sequence(
                 Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
-                traj.cmd()));
+                traj.cmd(),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.RIGHT),
+                _manipulator.feed().withTimeout(1.5)));
 
     return routine;
   }
 
-  public AutoRoutine onePiece() {
-    var routine = _factory.newRoutine("One Piece");
-    var traj = routine.trajectory("Start-Reef(A)");
+  public AutoRoutine simplePath() {
+    var routine = _factory.newRoutine("SimplePath");
+    var traj = routine.trajectory("SimplePath");
 
     routine
         .active()
@@ -180,5 +141,9 @@ public class Autos {
     routine.active().onTrue(sequence(traj.resetOdometry(), traj.cmd()));
 
     return routine;
+  }
+
+  public Command warmup() {
+    return _factory.trajectoryCmd("ResetOdometry");
   }
 }

@@ -101,9 +101,9 @@ public final class Constants {
 
     public static final AlignPoses reefNotFlush =
         new AlignPoses(
-                new Pose2d(3.17, 4.18, Rotation2d.fromDegrees(0)),
-                new Pose2d(3.15, 4, Rotation2d.fromDegrees(0)),
-                new Pose2d(3.18, 3.84, Rotation2d.fromDegrees(0)))
+                new Pose2d(3.05, 4.18, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.05, 4, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.05, 3.84, Rotation2d.fromDegrees(0)))
             .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
 
     public static final int humanTag = 13;
