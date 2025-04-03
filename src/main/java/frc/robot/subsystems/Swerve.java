@@ -546,7 +546,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public Command pieceAlign() {
     return defer(
             () -> {
-              Angle tx = Degrees.of(LimelightHelpers.getTX(VisionConstants.limelightName));
+              Angle tx = Degrees.of(-LimelightHelpers.getTX(VisionConstants.limelightName));
               Angle ty = Degrees.of(LimelightHelpers.getTY(VisionConstants.limelightName));
 
               RawDetection[] rawDetections =
@@ -577,7 +577,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                               * Math.cos(tx.in(Radians))));
 
               var pose =
-                  sideProportions >= 2
+                  sideProportions < 1.3
                       ? getPose()
                           .transformBy(
                               new Transform2d(
