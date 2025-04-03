@@ -38,7 +38,6 @@ public class Autos {
   private boolean _seesPiece = false;
 
   private SendableChooser<Side> _selector = new SendableChooser<Side>();
-  private Side _currentSide = Side.CENTER;
 
   private enum Side {
     LEFT("Left "),
@@ -85,6 +84,7 @@ public class Autos {
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
               DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
+
     _factory
         .bind("Ground Intake", Superstructure.groundIntake(_intake, _serializer))
         .bind("L4", _wristevator.setGoal(L4))
