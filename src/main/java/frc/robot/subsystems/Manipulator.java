@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import static frc.robot.Robot.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -39,8 +40,8 @@ import frc.robot.Constants;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
+import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.DoubleSupplier;
 
 public class Manipulator extends AdvancedSubsystem {
   private final DigitalInput _coralBeam = new DigitalInput(ManipulatorConstants.coralBeam);
@@ -97,9 +98,6 @@ public class Manipulator extends AdvancedSubsystem {
 
   private BooleanEntry _coralBeamSimValue;
   private BooleanEntry _algaeBeamSimValue;
-
-  @Logged(name = "Is Fast Intake")
-  private boolean _isFastIntake = false;
 
   public Manipulator(Consumer<Piece> currentPieceSetter) {
     setDefaultCommand(idle());
@@ -225,10 +223,6 @@ public class Manipulator extends AdvancedSubsystem {
     motor.setControl(_feedVoltageSetter.withOutput(volts));
   }
 
-  public void setFastIntake(boolean isFast) {
-    _isFastIntake = isFast;
-  }
-
   @Logged(name = "Coral Beam")
   public boolean getCoralBeam() {
     return !_coralBeam.get();
@@ -245,20 +239,16 @@ public class Manipulator extends AdvancedSubsystem {
   }
 
   // set the speed of the back feed wheels in rad/s
-  private Command setSpeed(DoubleSupplier speed) {
+  private Command setSpeed(double speed) {
     return run(
         () -> {
-          _desiredSpeed = speed.getAsDouble();
+          _desiredSpeed = speed;
 
-          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed.getAsDouble());
+          _feedVelocitySetter.Velocity = Units.radiansToRotations(speed);
 
           _leftMotor.setControl(_feedVelocitySetter);
           _rightMotor.setControl(_feedVelocitySetter);
         });
-  }
-
-  private Command setSpeed(double speed) {
-    return setSpeed(() -> speed);
   }
 
   /** Sets the current piece when the coral beam changes state. */
@@ -303,13 +293,28 @@ public class Manipulator extends AdvancedSubsystem {
         .withName("Hold Algae");
   }
 
-  /** General intake. */
-  public Command intake() {
-    return setSpeed(
-            () ->
-                _isFastIntake
-                    ? ManipulatorConstants.intakeFastSpeed.in(RadiansPerSecond)
-                    : ManipulatorConstants.intakeSlowSpeed.in(RadiansPerSecond))
+  /** Feeds in the proper direction depending on wristevator goal. */
+  public Command feed() {
+    return Commands.either(
+        Commands.select(
+            Map.ofEntries(
+                Map.entry(L1, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L2, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L3, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(L4, intake(ManipulatorConstants.coralIntakeSpeed)),
+                Map.entry(LOWER_ALGAE, intake(ManipulatorConstants.algaeIntakeSpeed)),
+                Map.entry(UPPER_ALGAE, intake(ManipulatorConstants.algaeIntakeSpeed)),
+                Map.entry(PROCESSOR, outtake(ManipulatorConstants.algaeOuttakeSpeed)),
+                Map.entry(HOME, outtake(ManipulatorConstants.coralOuttakeSpeed)),
+                Map.entry(HUMAN, intake(ManipulatorConstants.coralIntakeSpeed))),
+            () -> getWristevatorGoal()),
+        intake(ManipulatorConstants.coralIntakeSpeed),
+        () -> getWristevatorGoal() != null);
+  }
+
+  /** Intake that detects when a game piece is picked up. */
+  public Command intake(AngularVelocity speed) {
+    return setSpeed(speed.in(RadiansPerSecond))
         .alongWith(
             watchCoralBeam(Piece.CORAL, true),
             watchAlgaeBeam(Piece.ALGAE, true),
@@ -317,9 +322,9 @@ public class Manipulator extends AdvancedSubsystem {
         .withName("Intake");
   }
 
-  /** General outtake. */
-  public Command outtake() {
-    return setSpeed(ManipulatorConstants.outtakeSpeed.in(RadiansPerSecond))
+  /** Outtake that detects when a game piece is dropped. */
+  public Command outtake(AngularVelocity speed) {
+    return setSpeed(speed.in(RadiansPerSecond))
         .alongWith(watchCoralBeam(Piece.NONE, false), watchAlgaeBeam(Piece.NONE, false))
         .withName("Outtake");
   }

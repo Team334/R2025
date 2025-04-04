@@ -75,6 +75,12 @@ public final class Constants {
       tagCorrespondences.put(15, 5);
     }
 
+    public static enum FieldLocation {
+      REEF,
+      PROCESSOR,
+      HUMAN
+    }
+
     public static final Translation2d reefCenter =
         new Translation2d(Inches.of(176.75).in(Meters), Inches.of(158.5).in(Meters));
 
@@ -86,12 +92,19 @@ public final class Constants {
 
     public static final int reefTag = 17;
 
-    public static final AlignPoses reef =
+    public static final AlignPoses reefFlush =
         new AlignPoses(
             new Pose2d(3.68, 2.95, Rotation2d.fromDegrees(60)),
             new Pose2d(3.839, 2.885, Rotation2d.fromDegrees(60)),
-            new Pose2d(3.249, 3.778, Rotation2d.fromDegrees(0))
+            new Pose2d(3.23, 3.84, Rotation2d.fromDegrees(0))
                 .rotateAround(reefCenter, Rotation2d.fromDegrees(60)));
+
+    public static final AlignPoses reefNotFlush =
+        new AlignPoses(
+                new Pose2d(3.05, 4.18, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.05, 4, Rotation2d.fromDegrees(0)),
+                new Pose2d(3.05, 3.84, Rotation2d.fromDegrees(0)))
+            .rotateAround(reefCenter, Rotation2d.fromDegrees(60));
 
     public static final int humanTag = 13;
 
@@ -116,15 +129,6 @@ public final class Constants {
         new AlignPoses(
             new Pose2d(
                 Inches.of(233.7).in(Meters), Inches.of(16.2).in(Meters), Rotation2d.kCW_90deg));
-
-    public static final AlignPoses cage =
-        new AlignPoses(
-            new Pose2d(
-                Inches.of(324.95).in(Meters), Inches.of(285.84).in(Meters), Rotation2d.kCCW_90deg),
-            new Pose2d(
-                Inches.of(324.95).in(Meters), Inches.of(241.89).in(Meters), Rotation2d.kCCW_90deg),
-            new Pose2d(
-                Inches.of(324.95).in(Meters), Inches.of(200.16).in(Meters), Rotation2d.kCCW_90deg));
   }
 
   public static class VisionConstants {
@@ -245,7 +249,7 @@ public final class Constants {
     public static final Angle actuatorStowed = Radians.of(2.26);
     public static final Angle actuatorOut = Radians.of(-0.34);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(50);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
   }
 
   public static class WristevatorConstants {
@@ -269,7 +273,7 @@ public final class Constants {
       L3(Radians.of(-1.06), Radians.of(26.828)),
       L4(Radians.of(1.282), Radians.of(38.2)),
 
-      LOWER_ALGAE(Radians.of(-0.877), Radians.of(17.969)),
+      LOWER_ALGAE(Radians.of(-0.877), Radians.of(17.5549)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));
 
       private final Angle _angle;
@@ -424,10 +428,11 @@ public final class Constants {
     public static final int coralBeam = 9;
     public static final int algaeBeam = 4;
 
-    public static final AngularVelocity intakeSlowSpeed = RadiansPerSecond.of(16);
-    public static final AngularVelocity intakeFastSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(-30);
+    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(30);
 
-    public static final AngularVelocity outtakeSpeed = RadiansPerSecond.of(-40);
+    public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(-40);
+    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(30);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 

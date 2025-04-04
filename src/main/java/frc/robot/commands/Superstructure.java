@@ -39,7 +39,7 @@ public class Superstructure {
   }
 
   /** Outtake from serializer. */
-  public static Command groundOuttake(Serializer serializer, Intake intake) {
+  public static Command serializerOuttake(Serializer serializer, Intake intake) {
     return sequence(
         intake
             .stow()

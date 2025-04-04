@@ -56,6 +56,7 @@ import frc.robot.Constants.WristevatorConstants.Intermediate;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
@@ -172,6 +173,7 @@ public class Wristevator extends AdvancedSubsystem {
   private boolean _finishedLatestProfiles = true;
 
   private Setpoint _latestSetpoint = HOME;
+  private Consumer<Setpoint> _wristevatorGoalSetter;
 
   private DIOSim _homeSwitchSim;
 
@@ -182,7 +184,12 @@ public class Wristevator extends AdvancedSubsystem {
 
   private Notifier _simNotifier;
 
-  public Wristevator() {
+  public Wristevator(Consumer<Setpoint> wristevatorGoalSetter) {
+    _wristevatorGoalSetter = wristevatorGoalSetter;
+
+    new Trigger(() -> _isManual)
+        .onTrue(Commands.runOnce(() -> _wristevatorGoalSetter.accept(null)));
+
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
     var wristMotorConfigs = new TalonFXConfiguration();
@@ -557,47 +564,49 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Drives the wristevator to a goal setpoint, going to any intermediate setpoints if needed. */
   public Command setGoal(Setpoint goal) {
-    return run(() -> {
-          // move towards the next setpoint
-          _leftMotor.setControl(_heightSetter.withPosition(_latestSetpoint.getHeight()));
-          _wristMotor.setControl(_angleSetter.withPosition(_latestSetpoint.getAngle()));
+    return Commands.runOnce(() -> _wristevatorGoalSetter.accept(goal))
+        .andThen(
+            run(() -> {
+                  // move towards the next setpoint
+                  _leftMotor.setControl(_heightSetter.withPosition(_latestSetpoint.getHeight()));
+                  _wristMotor.setControl(_angleSetter.withPosition(_latestSetpoint.getAngle()));
 
-          if (!_isMotionMagic) return;
+                  if (!_isMotionMagic) return;
 
-          // once the next setpoint is reached, re-find the next one
-          if (_finishedLatestProfiles) {
-            findNextSetpoint(goal);
-            findProfileConstraints(_latestSetpoint);
-          }
+                  // once the next setpoint is reached, re-find the next one
+                  if (_finishedLatestProfiles) {
+                    findNextSetpoint(goal);
+                    findProfileConstraints(_latestSetpoint);
+                  }
 
-          _finishedLatestProfiles =
-              (MathUtil.isNear(
-                      _latestSetpoint.getHeight().in(Rotations),
-                      _elevatorReference.getValueAsDouble(),
-                      0.001)
-                  && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
-                  && MathUtil.isNear(
-                      _latestSetpoint.getAngle().in(Rotations),
-                      _wristReference.getValueAsDouble(),
-                      0.001)
-                  && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.001));
-        })
-        .beforeStarting(
-            setSpeeds(() -> 0, () -> 0)
-                .until(
-                    () ->
-                        MathUtil.isNear(0, getElevatorVelocity(), 0.01)
-                            && MathUtil.isNear(0, getWristVelocity(), 0.01))
-                .andThen(
-                    () -> {
-                      _isManual = false;
+                  _finishedLatestProfiles =
+                      (MathUtil.isNear(
+                              _latestSetpoint.getHeight().in(Rotations),
+                              _elevatorReference.getValueAsDouble(),
+                              0.001)
+                          && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
+                          && MathUtil.isNear(
+                              _latestSetpoint.getAngle().in(Rotations),
+                              _wristReference.getValueAsDouble(),
+                              0.001)
+                          && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.001));
+                })
+                .beforeStarting(
+                    setSpeeds(() -> 0, () -> 0)
+                        .until(
+                            () ->
+                                MathUtil.isNear(0, getElevatorVelocity(), 0.01)
+                                    && MathUtil.isNear(0, getWristVelocity(), 0.01))
+                        .andThen(
+                            () -> {
+                              _isManual = false;
 
-                      findNextSetpoint(goal);
-                      findProfileConstraints(_latestSetpoint);
+                              findNextSetpoint(goal);
+                              findProfileConstraints(_latestSetpoint);
 
-                      _finishedLatestProfiles = false;
-                    }))
-        .until(() -> _finishedLatestProfiles && _latestSetpoint == goal)
+                              _finishedLatestProfiles = false;
+                            }))
+                .until(() -> _finishedLatestProfiles && _latestSetpoint == goal))
         .withName("Set Goal");
   }
 

@@ -34,10 +34,12 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.FieldConstants.FieldLocation;
+import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants;
+import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.commands.Autos;
 import frc.robot.commands.Superstructure;
 import frc.robot.commands.WheelRadiusCharacterization;
@@ -48,7 +50,6 @@ import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.Wristevator;
-import frc.robot.utils.AlignPoses;
 import frc.robot.utils.AlignPoses.AlignSide;
 
 /**
@@ -78,7 +79,8 @@ public class Robot extends TimedRobot {
   private final Manipulator _manipulator = new Manipulator((Piece piece) -> _currentPiece = piece);
 
   @Logged(name = "Wristevator")
-  private final Wristevator _wristevator = new Wristevator();
+  private final Wristevator _wristevator =
+      new Wristevator((Setpoint goal) -> _wristevatorGoal = goal);
 
   private final Autos _autos =
       new Autos(
@@ -89,8 +91,6 @@ public class Robot extends TimedRobot {
           _intake,
           _serializer);
 
-  private final AutoChooser _autoChooser = new AutoChooser();
-
   private final NetworkTableInstance _ntInst;
 
   private boolean _fileOnlySet = false;
@@ -98,9 +98,16 @@ public class Robot extends TimedRobot {
   // global state variables
   private static Piece _currentPiece = Piece.NONE;
 
+  private static Setpoint _wristevatorGoal = HOME;
+
   /** The current piece in the manipulator. */
   public static Piece getCurrentPiece() {
     return _currentPiece;
+  }
+
+  /** The goal for the wristevator. */
+  public static Setpoint getWristevatorGoal() {
+    return _wristevatorGoal;
   }
 
   /**
@@ -137,7 +144,8 @@ public class Robot extends TimedRobot {
 
     PortForwarder.add(5800, "orangepi-lower.local", 5800);
 
-    new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
+    new Trigger(() -> getCurrentPiece() == Piece.NONE)
+        .onChange(rumbleControllers(1, 1).onlyIf(teleop()::getAsBoolean));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -155,14 +163,15 @@ public class Robot extends TimedRobot {
         runOnce(FaultLogger::clear).ignoringDisable(true).withName("Clear Faults"));
 
     // set up auto chooser
-    _autoChooser.addRoutine("Ground 3 Piece", _autos::ground3P);
-    _autoChooser.addRoutine("One Piece", _autos::onePiece);
-    _autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
-    _autoChooser.addRoutine("Drive", _autos::simplePath);
+    var autoChooser = new AutoChooser();
 
-    SmartDashboard.putData("Auto Chooser", _autoChooser);
+    SmartDashboard.putData("Auto Chooser", autoChooser);
 
-    autonomous().whileTrue(_autoChooser.selectedCommandScheduler());
+    autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
+    autoChooser.addRoutine("Simple Path", _autos::simplePath);
+    autoChooser.addRoutine("One Piece", _autos::onePiece);
+
+    autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
     addPeriodic(FaultLogger::update, 1);
   }
@@ -213,19 +222,19 @@ public class Robot extends TimedRobot {
                 .ignoringDisable(true));
   }
 
-  private void alignmentTriggers(Trigger button, AlignPoses poses, boolean startReversed) {
+  private void alignmentTriggers(Trigger button, FieldLocation location) {
     button
         .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.LEFT, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.LEFT));
 
     button
         .and(
             _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.CENTER, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.CENTER));
 
     button
         .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
-        .whileTrue(_swerve.alignTo(poses, AlignSide.RIGHT, startReversed));
+        .whileTrue(_swerve.fieldAlign(location, AlignSide.RIGHT));
   }
 
   private void configureDriverBindings() {
@@ -234,14 +243,13 @@ public class Robot extends TimedRobot {
     _driverController.povDown().onTrue(_swerve.resetHeading());
 
     // align to piece
-    _driverController.leftBumper().whileTrue(_swerve.alignToPiece());
+    _driverController.leftBumper().whileTrue(_swerve.pieceAlign());
 
     _driverController.povRight().onTrue(_swerve.resetToReefTag().andThen(rumbleControllers(1, 1)));
 
-    alignmentTriggers(_driverController.x(), FieldConstants.reef, false);
-    alignmentTriggers(_driverController.y(), FieldConstants.human, true);
-    alignmentTriggers(_driverController.b(), FieldConstants.processor, false);
-    alignmentTriggers(_driverController.start(), FieldConstants.cage, false);
+    alignmentTriggers(_driverController.x(), FieldLocation.REEF);
+    alignmentTriggers(_driverController.y(), FieldLocation.HUMAN);
+    alignmentTriggers(_driverController.b(), FieldLocation.PROCESSOR);
   }
 
   private void configureOperatorBindings() {
@@ -270,7 +278,11 @@ public class Robot extends TimedRobot {
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
 
-    _operatorController.povLeft().whileTrue(Superstructure.groundOuttake(_serializer, _intake));
+    // ground outtake
+    _operatorController.leftBumper().whileTrue(_intake.outtake());
+    _operatorController.povUp().whileTrue(Superstructure.serializerOuttake(_serializer, _intake));
+
+    // switch to manual
     _operatorController.povDown().onTrue(_wristevator.switchToManual());
 
     // ground intake / passoff
@@ -286,14 +298,6 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // switch to fast manipulator feed mode
-    _operatorController
-        .leftBumper()
-        .onTrue(runOnce(() -> _manipulator.setFastIntake(true)))
-        .onFalse(runOnce(() -> _manipulator.setFastIntake(false)));
-
-    _operatorController.povUp().whileTrue(_intake.outtake());
-
     // intake / inverse passoff
     _operatorController
         .rightTrigger()
@@ -303,10 +307,12 @@ public class Robot extends TimedRobot {
     _operatorController
         .rightTrigger()
         .and(() -> !_wristevator.homeSwitch())
-        .whileTrue(_manipulator.intake());
+        .whileTrue(_manipulator.feed());
 
     // outtake
-    _operatorController.leftTrigger().whileTrue(_manipulator.outtake());
+    _operatorController
+        .leftTrigger()
+        .whileTrue(_manipulator.outtake(ManipulatorConstants.coralOuttakeSpeed));
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */
@@ -345,6 +351,7 @@ public class Robot extends TimedRobot {
     }
 
     DogLog.log("Manipulator Current Piece", _currentPiece);
+    DogLog.log("Wristevator Goal", _wristevatorGoal != null ? _wristevatorGoal.toString() : "None");
   }
 
   @Override
