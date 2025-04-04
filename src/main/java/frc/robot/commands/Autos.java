@@ -5,6 +5,7 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.HOME;
 import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
 import static frc.robot.Constants.WristevatorConstants.Preset.L1;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
@@ -131,8 +132,37 @@ public class Autos {
     traj.done()
         .onTrue(
             sequence(
+                _wristevator.setGoal(L4),
                 _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
                 _manipulator.feed().withTimeout(1.5)));
+
+    return routine;
+  }
+
+  public AutoRoutine twoPiece() {
+    var routine = _factory.newRoutine("Two Piece");
+    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "2PA");
+    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "2PB");
+    var trajC = routine.trajectory(_selector.getSelected().getDirectory() + "2PC");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                trajA.resetOdometry(),
+                trajA.cmd()));
+
+    trajA
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(L4),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
+                _manipulator.feed().withTimeout(1.5),
+                trajB.cmd()));
+
+    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME)));
 
     return routine;
   }
@@ -141,19 +171,13 @@ public class Autos {
     var routine = _factory.newRoutine("SimplePath");
     var traj = routine.trajectory("SimplePath");
 
-    traj.getFinalPose();
-
     routine
         .active()
         .onTrue(
             sequence(
                 Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
-                // runOnce(() -> DogLog.log("AUTO START", true))
                 traj.cmd()));
-    // traj.cmd()
-
-    // routine.active().onTrue(runOnce(() -> DogLog.log("AUTO START", true)));
 
     return routine;
   }

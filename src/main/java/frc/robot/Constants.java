@@ -266,7 +266,7 @@ public final class Constants {
     public static enum Preset implements Setpoint {
       HOME(Radians.of(-1.06), Radians.of(0)),
       HUMAN(Radians.of(-0.457), Radians.of(17.984)),
-      PROCESSOR(Radians.of(-1.06), Radians.of(0)),
+      PROCESSOR(Radians.of(-1.06), Radians.of(6.182)),
 
       L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
@@ -300,7 +300,8 @@ public final class Constants {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
       I1(Radians.of(-1.06), Radians.of(3)),
       I2(Radians.of(-1.06), Radians.of(36.92)),
-      I3(Radians.of(-1.06), Radians.of(30));
+      I3(Radians.of(-1.06), Radians.of(30)),
+      I4(Radians.of(-1.06), Radians.of(10));
 
       private final Angle _angle;
       private final Angle _height;
@@ -347,10 +348,13 @@ public final class Constants {
       setpointMap.put(Pair.of(L4, LOWER_ALGAE), I2);
       setpointMap.put(Pair.of(L4, HUMAN), I2);
       setpointMap.put(Pair.of(L4, PROCESSOR), I2);
+
+      setpointMap.put(Pair.of(UPPER_ALGAE, PROCESSOR), I4);
+      setpointMap.put(Pair.of(LOWER_ALGAE, PROCESSOR), I4);
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(1);
-    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(14);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(17);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
@@ -358,7 +362,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(15);
+        RotationsPerSecondPerSecond.of(17);
 
     public static final int homeSwitch = 7;
 
@@ -429,7 +433,7 @@ public final class Constants {
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(-30);
-    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(50);
 
     public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(-40);
     public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(30);
@@ -454,6 +458,6 @@ public final class Constants {
 
     public static final double flywheelGearRatio = 3;
 
-    public static final Voltage holdAlgaeVoltage = Volts.of(0.6);
+    public static final Voltage holdAlgaeVoltage = Volts.of(0.8);
   }
 }
