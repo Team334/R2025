@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
@@ -222,6 +223,9 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     autonomous().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
 
     teleop().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
+
+    SmartDashboard.putData(
+        "RESET PRACTICE FIELD", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(120))));
 
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);

@@ -4,7 +4,7 @@
 
 package frc.robot.commands;
 
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
 import static frc.robot.Constants.WristevatorConstants.Preset.L1;
 import static frc.robot.Constants.WristevatorConstants.Preset.L2;
@@ -124,9 +124,13 @@ public class Autos {
         .active()
         .onTrue(
             sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
-                traj.cmd(),
+                traj.cmd()));
+
+    traj.done()
+        .onTrue(
+            sequence(
                 _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
                 _manipulator.feed().withTimeout(1.5)));
 
@@ -137,13 +141,19 @@ public class Autos {
     var routine = _factory.newRoutine("SimplePath");
     var traj = routine.trajectory("SimplePath");
 
+    traj.getFinalPose();
+
     routine
         .active()
         .onTrue(
             sequence(
                 Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
+                // runOnce(() -> DogLog.log("AUTO START", true))
                 traj.cmd()));
+    // traj.cmd()
+
+    // routine.active().onTrue(runOnce(() -> DogLog.log("AUTO START", true)));
 
     return routine;
   }
