@@ -170,6 +170,7 @@ public class Robot extends TimedRobot {
     autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
     autoChooser.addRoutine("Simple Path", _autos::simplePath);
     autoChooser.addRoutine("One Piece", _autos::onePiece);
+    autoChooser.addRoutine("Taxi", _autos::taxi);
 
     autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 

@@ -101,6 +101,21 @@ public class Autos {
     SmartDashboard.putData("Auton Side Selector", _selector);
   }
 
+  public AutoRoutine taxi() {
+    var routine = _factory.newRoutine("Taxi");
+    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "Taxi");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                traj.resetOdometry(),
+                traj.cmd()));
+
+    return routine;
+  }
+
   public AutoRoutine onePiece() {
     var routine = _factory.newRoutine("One Piece");
     var traj = routine.trajectory(_selector.getSelected().getDirectory() + "1P");
@@ -112,7 +127,7 @@ public class Autos {
                 Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
                 traj.cmd(),
-                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.RIGHT),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
                 _manipulator.feed().withTimeout(1.5)));
 
     return routine;
