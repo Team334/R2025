@@ -34,7 +34,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.Constants.ManipulatorConstants;
 import frc.robot.Constants.Ports;
@@ -145,7 +144,8 @@ public class Robot extends TimedRobot {
 
     PortForwarder.add(5800, "orangepi-lower.local", 5800);
 
-    new Trigger(() -> getCurrentPiece() == Piece.NONE).onChange(rumbleControllers(1, 1));
+    new Trigger(() -> getCurrentPiece() == Piece.NONE)
+        .onChange(rumbleControllers(1, 1).onlyIf(teleop()::getAsBoolean));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -154,8 +154,6 @@ public class Robot extends TimedRobot {
                 _swerve.fullSelfCheck(),
                 runOnce(() -> DataLogManager.log("Robot Self Check Successful!")))
             .withName("Robot Self Check"));
-
-    FieldConstants.tagLayout.getFieldLength();
 
     SmartDashboard.putData("Clear Current Piece", runOnce(() -> _currentPiece = Piece.NONE));
 
@@ -174,8 +172,6 @@ public class Robot extends TimedRobot {
     autoChooser.addRoutine("One Piece", _autos::onePiece);
 
     autonomous().whileTrue(autoChooser.selectedCommandScheduler());
-
-    _autos.warmup().schedule();
 
     addPeriodic(FaultLogger::update, 1);
   }

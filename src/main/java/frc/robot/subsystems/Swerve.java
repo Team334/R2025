@@ -422,9 +422,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     var desiredSpeeds = sample.getChassisSpeeds();
     var desiredPose = sample.getPose();
 
-    // DogLog.log("AUTO POSE", desiredPose);
-    // DogLog.log("AUTO SPEEDS", desiredSpeeds);
-
     desiredSpeeds = _poseController.calculate(desiredSpeeds, desiredPose, getPose());
 
     setControl(

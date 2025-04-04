@@ -16,7 +16,6 @@ import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.subsystems.Intake;
@@ -38,7 +37,7 @@ public class Autos {
 
   private final AutoFactory _factory;
 
-  private boolean _seesPiece = false;
+  // private boolean _seesPiece = false;
 
   private SendableChooser<Side> _selector = new SendableChooser<Side>();
 
@@ -141,9 +140,5 @@ public class Autos {
     routine.active().onTrue(sequence(traj.resetOdometry(), traj.cmd()));
 
     return routine;
-  }
-
-  public Command warmup() {
-    return _factory.trajectoryCmd("ResetOdometry");
   }
 }
