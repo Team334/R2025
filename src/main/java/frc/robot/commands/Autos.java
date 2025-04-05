@@ -5,19 +5,13 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
-import static frc.robot.Constants.WristevatorConstants.Preset.HOME;
-import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
-import static frc.robot.Constants.WristevatorConstants.Preset.L1;
-import static frc.robot.Constants.WristevatorConstants.Preset.L2;
-import static frc.robot.Constants.WristevatorConstants.Preset.L3;
-import static frc.robot.Constants.WristevatorConstants.Preset.L4;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
@@ -110,7 +104,7 @@ public class Autos {
         .active()
         .onTrue(
             sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
                 traj.cmd()));
 
@@ -175,7 +169,7 @@ public class Autos {
         .active()
         .onTrue(
             sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
                 traj.cmd()));
 
