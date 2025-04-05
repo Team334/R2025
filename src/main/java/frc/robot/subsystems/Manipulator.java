@@ -306,7 +306,7 @@ public class Manipulator extends AdvancedSubsystem {
                 Map.entry(UPPER_ALGAE, intake(ManipulatorConstants.algaeIntakeSpeed)),
                 Map.entry(PROCESSOR, outtake(ManipulatorConstants.algaeOuttakeSpeed)),
                 Map.entry(HOME, outtake(ManipulatorConstants.coralOuttakeSpeed)),
-                Map.entry(HUMAN, intake(ManipulatorConstants.coralIntakeSpeed))),
+                Map.entry(HUMAN, intake(ManipulatorConstants.humanIntakeSpeed))),
             () -> getWristevatorGoal()),
         intake(ManipulatorConstants.coralIntakeSpeed),
         () -> getWristevatorGoal() != null);

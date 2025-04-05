@@ -239,7 +239,7 @@ public final class Constants {
 
     public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(2);
     public static final AngularAcceleration actuatorAcceleration =
-        RotationsPerSecondPerSecond.of(3);
+        RotationsPerSecondPerSecond.of(5);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
@@ -265,7 +265,7 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(-1.06), Radians.of(0)),
-      HUMAN(Radians.of(-0.457), Radians.of(17.984)),
+      HUMAN(Radians.of(-0.457), Radians.of(16.96)),
       PROCESSOR(Radians.of(-1.06), Radians.of(6.182)),
 
       L1(Radians.of(-0.233), Radians.of(2.095)),
@@ -298,7 +298,7 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(-1.06), Radians.of(3)),
+      I1(Radians.of(-1.06), Radians.of(1.8)),
       I2(Radians.of(-1.06), Radians.of(36.92)),
       I3(Radians.of(-1.06), Radians.of(30)),
       I4(Radians.of(-1.06), Radians.of(10));
@@ -325,12 +325,8 @@ public final class Constants {
     public static final HashMap<Pair<Setpoint, Setpoint>, Setpoint> setpointMap = new HashMap<>();
 
     static {
-      // going to a upwards wrist angle from home
-      setpointMap.put(Pair.of(HOME, L1), I1);
-      setpointMap.put(Pair.of(HOME, L4), I2);
-
       // going up to l4
-      setpointMap.put(Pair.of(I1, L4), I2);
+      setpointMap.put(Pair.of(HOME, L4), I2);
       setpointMap.put(Pair.of(L1, L4), I2);
       setpointMap.put(Pair.of(L2, L4), I2);
       setpointMap.put(Pair.of(L3, L4), I2);
@@ -349,6 +345,21 @@ public final class Constants {
       setpointMap.put(Pair.of(L4, HUMAN), I2);
       setpointMap.put(Pair.of(L4, PROCESSOR), I2);
 
+      // going to a upwards wrist angle from home
+      setpointMap.put(Pair.of(HOME, L1), I1);
+
+      // going down to home
+      setpointMap.put(Pair.of(I2, HOME), I1);
+      setpointMap.put(Pair.of(L3, HOME), I1);
+      setpointMap.put(Pair.of(L2, HOME), I1);
+      setpointMap.put(Pair.of(L1, HOME), I1);
+      setpointMap.put(Pair.of(UPPER_ALGAE, HOME), I1);
+      setpointMap.put(Pair.of(LOWER_ALGAE, HOME), I1);
+      setpointMap.put(Pair.of(HUMAN, HOME), I1);
+      setpointMap.put(Pair.of(PROCESSOR, HOME), I1);
+      setpointMap.put(Pair.of(HOME, HOME), I1);
+
+      // going down to processor
       setpointMap.put(Pair.of(UPPER_ALGAE, PROCESSOR), I4);
       setpointMap.put(Pair.of(LOWER_ALGAE, PROCESSOR), I4);
     }
@@ -436,7 +447,9 @@ public final class Constants {
     public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(50);
 
     public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(-40);
-    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(40);
+
+    public static final AngularVelocity humanIntakeSpeed = RadiansPerSecond.of(20);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
