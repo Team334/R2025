@@ -168,8 +168,12 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
-    autoChooser.addRoutine("Simple Path", _autos::simplePath);
+    autoChooser.addRoutine("88888888888 Simple Path", _autos::simplePath);
     autoChooser.addRoutine("One Piece", _autos::onePiece);
+    autoChooser.addRoutine("Two Piece", _autos::twoPiece);
+    autoChooser.addRoutine("Taxi", _autos::taxi);
+
+    DogLog.log("AUTO START", false);
 
     autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
@@ -338,6 +342,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    DogLog.log("AUTON ENABLE", autonomous().getAsBoolean());
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic

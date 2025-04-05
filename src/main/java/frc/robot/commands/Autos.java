@@ -4,19 +4,14 @@
 
 package frc.robot.commands;
 
-import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static frc.robot.Constants.WristevatorConstants.Preset.HUMAN;
-import static frc.robot.Constants.WristevatorConstants.Preset.L1;
-import static frc.robot.Constants.WristevatorConstants.Preset.L2;
-import static frc.robot.Constants.WristevatorConstants.Preset.L3;
-import static frc.robot.Constants.WristevatorConstants.Preset.L4;
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import dev.doglog.DogLog;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants.FieldLocation;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
@@ -101,19 +96,72 @@ public class Autos {
     SmartDashboard.putData("Auton Side Selector", _selector);
   }
 
-  public AutoRoutine onePiece() {
-    var routine = _factory.newRoutine("One Piece");
-    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "1P");
+  public AutoRoutine taxi() {
+    var routine = _factory.newRoutine("Taxi");
+    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "Taxi");
 
     routine
         .active()
         .onTrue(
             sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
-                traj.cmd(),
-                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.RIGHT),
-                _manipulator.feed().withTimeout(1.5)));
+                traj.cmd()));
+
+    return routine;
+  }
+
+  public AutoRoutine onePiece() {
+    var routine = _factory.newRoutine("One Piece");
+    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "1PA");
+    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "1PB");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                trajA.resetOdometry(),
+                trajA.cmd()));
+
+    trajA
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(L4),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
+                _manipulator.feed().withTimeout(1.5),
+                trajB.cmd()));
+
+    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME)));
+
+    return routine;
+  }
+
+  public AutoRoutine twoPiece() {
+    var routine = _factory.newRoutine("Two Piece");
+    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "2PA");
+    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "2PB");
+    var trajC = routine.trajectory(_selector.getSelected().getDirectory() + "2PC");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                trajA.resetOdometry(),
+                trajA.cmd()));
+
+    trajA
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(L4),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
+                _manipulator.feed().withTimeout(1.5),
+                trajB.cmd()));
+
+    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME), trajC.cmd()));
 
     return routine;
   }
@@ -126,7 +174,7 @@ public class Autos {
         .active()
         .onTrue(
             sequence(
-                Commands.runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
                 traj.resetOdometry(),
                 traj.cmd()));
 
