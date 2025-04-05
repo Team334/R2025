@@ -113,22 +113,27 @@ public class Autos {
 
   public AutoRoutine onePiece() {
     var routine = _factory.newRoutine("One Piece");
-    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "1P");
+    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "1PA");
+    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "1PB");
 
     routine
         .active()
         .onTrue(
             sequence(
                 runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
-                traj.resetOdometry(),
-                traj.cmd()));
+                trajA.resetOdometry(),
+                trajA.cmd()));
 
-    traj.done()
+    trajA
+        .done()
         .onTrue(
             sequence(
                 _wristevator.setGoal(L4),
                 _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
-                _manipulator.feed().withTimeout(1.5)));
+                _manipulator.feed().withTimeout(1.5),
+                trajB.cmd()));
+
+    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME)));
 
     return routine;
   }
@@ -156,7 +161,7 @@ public class Autos {
                 _manipulator.feed().withTimeout(1.5),
                 trajB.cmd()));
 
-    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME)));
+    trajB.done().onTrue(sequence(_wristevator.setGoal(HOME), trajC.cmd()));
 
     return routine;
   }
