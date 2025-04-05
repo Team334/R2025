@@ -34,7 +34,7 @@ public class Autos {
 
   // private boolean _seesPiece = false;
 
-  private SendableChooser<Side> _selector = new SendableChooser<Side>();
+  private SendableChooser<Side> _sideSelector = new SendableChooser<Side>();
 
   private enum Side {
     LEFT("Left "),
@@ -89,16 +89,18 @@ public class Autos {
         .bind("Human", _wristevator.setGoal(HUMAN))
         .bind("Manipulator Feed", _manipulator.feed().withTimeout(1.5));
 
-    _selector.addOption("Left", Side.LEFT);
-    _selector.addOption("Center", Side.CENTER);
-    _selector.addOption("Right", Side.RIGHT);
+    _sideSelector.setDefaultOption("Center", Side.CENTER);
 
-    SmartDashboard.putData("Auton Side Selector", _selector);
+    _sideSelector.addOption("Left", Side.LEFT);
+    _sideSelector.addOption("Center", Side.CENTER);
+    _sideSelector.addOption("Right", Side.RIGHT);
+
+    SmartDashboard.putData("Auton Side Selector", _sideSelector);
   }
 
   public AutoRoutine taxi() {
     var routine = _factory.newRoutine("Taxi");
-    var traj = routine.trajectory(_selector.getSelected().getDirectory() + "Taxi");
+    var traj = routine.trajectory(_sideSelector.getSelected().getDirectory() + "Taxi");
 
     routine
         .active()
@@ -113,8 +115,8 @@ public class Autos {
 
   public AutoRoutine onePiece() {
     var routine = _factory.newRoutine("One Piece");
-    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "1PA");
-    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "1PB");
+    var trajA = routine.trajectory(_sideSelector.getSelected().getDirectory() + "1PA");
+    var trajB = routine.trajectory(_sideSelector.getSelected().getDirectory() + "1PB");
 
     routine
         .active()
@@ -140,9 +142,9 @@ public class Autos {
 
   public AutoRoutine twoPiece() {
     var routine = _factory.newRoutine("Two Piece");
-    var trajA = routine.trajectory(_selector.getSelected().getDirectory() + "2PA");
-    var trajB = routine.trajectory(_selector.getSelected().getDirectory() + "2PB");
-    var trajC = routine.trajectory(_selector.getSelected().getDirectory() + "2PC");
+    var trajA = routine.trajectory(_sideSelector.getSelected().getDirectory() + "2PA");
+    var trajB = routine.trajectory(_sideSelector.getSelected().getDirectory() + "2PB");
+    var trajC = routine.trajectory(_sideSelector.getSelected().getDirectory() + "2PC");
 
     routine
         .active()
