@@ -145,7 +145,9 @@ public class Robot extends TimedRobot {
     PortForwarder.add(5800, "orangepi-lower.local", 5800);
 
     new Trigger(() -> getCurrentPiece() == Piece.NONE)
-        .onChange(rumbleControllers(1, 1).onlyIf(teleop()::getAsBoolean));
+        .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
+
+    new Trigger(() -> _intake.hasAlgae()).onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
     SmartDashboard.putData(
         "Robot Self Check",

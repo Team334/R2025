@@ -255,7 +255,9 @@ public final class Constants {
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
     public static final AngularVelocity algaeFeedSpeed = RadiansPerSecond.of(-30);
 
-    public static final Current algaeCurrentThreshold = Amps.of(40);
+    public static final Current algaeIntakeCurrentThreshold = Amps.of(30);
+
+    public static final Current algaeHoldCurrentThreshold = Amps.of(40);
     public static final Voltage algaeStallVolts = Volts.of(-1);
   }
 

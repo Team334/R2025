@@ -23,6 +23,7 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -31,6 +32,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -84,13 +86,6 @@ public class Intake extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
-  private final Trigger _retrievedAlgae =
-      new Trigger(
-              () ->
-                  _feedCurrentGetter.getValue().in(Amps)
-                      > IntakeConstants.algaeCurrentThreshold.in(Amps))
-          .debounce(0.1);
-
   private boolean _hasAlgae = false;
 
   private SingleJointedArmSim _actuatorSim;
@@ -102,9 +97,18 @@ public class Intake extends AdvancedSubsystem {
   public Intake() {
     setDefaultCommand(stow());
 
-    _retrievedAlgae.and(intakeAlgae()::isScheduled).onTrue(runOnce(() -> _hasAlgae = true));
-    new Trigger(holdAlgae()::isScheduled).onFalse(runOnce(() -> _hasAlgae = false));
     new Trigger(() -> _hasAlgae).whileTrue(holdAlgae());
+
+    // if the intake is supposed to be holding an algae but stator current drops, assume that
+    // the algae fell out
+    new Trigger(
+            () -> {
+              return _feedCurrentGetter.getValue().in(Amps)
+                  >= IntakeConstants.algaeHoldCurrentThreshold.in(Amps);
+            })
+        .and(() -> _hasAlgae)
+        .debounce(0.1)
+        .onTrue(Commands.runOnce(() -> _hasAlgae = false));
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -292,9 +296,20 @@ public class Intake extends AdvancedSubsystem {
 
   /** Intakes algae of the ground. */
   public Command intakeAlgae() {
+    var pickedUpAlgae =
+        new BooleanEvent(
+                CommandScheduler.getInstance().getDefaultButtonLoop(),
+                () -> {
+                  return _feedCurrentGetter.getValue().in(Amps)
+                      >= IntakeConstants.algaeIntakeCurrentThreshold.in(Amps);
+                })
+            .debounce(0.1);
+
     return set(
-        IntakeConstants.intakeAlgae.in(Radians),
-        -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond));
+            IntakeConstants.intakeAlgae.in(Radians),
+            -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
+        .until(pickedUpAlgae)
+        .andThen(Commands.runOnce(() -> _hasAlgae = true));
   }
 
   /** Outtakes algae into the processor. */
