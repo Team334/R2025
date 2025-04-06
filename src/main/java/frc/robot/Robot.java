@@ -318,8 +318,8 @@ public class Robot extends TimedRobot {
 
     // intake / outtake algae
     _operatorController
-    .leftStick()
-    .whileTrue(either(_intake.outtakeAlgae(), _intake.intakeAlgae(), _intake::hasAlgae));
+        .leftStick()
+        .whileTrue(either(_intake.outtakeAlgae(), _intake.intakeAlgae(), _intake::hasAlgae));
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */

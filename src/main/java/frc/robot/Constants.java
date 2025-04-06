@@ -25,6 +25,7 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -253,6 +254,9 @@ public final class Constants {
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
     public static final AngularVelocity algaeFeedSpeed = RadiansPerSecond.of(-30);
+
+    public static final Current algaeCurrentThreshold = Amps.of(40);
+    public static final Voltage algaeStallVolts = Volts.of(-1);
   }
 
   public static class WristevatorConstants {

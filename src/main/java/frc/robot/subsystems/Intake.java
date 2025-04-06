@@ -84,9 +84,14 @@ public class Intake extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
-  private final Trigger _retrievedAlgae = new Trigger(
-    () -> _feedCurrentGetter.getValue().in(Amp) > 40
-  ).debounce(0.1);
+  private final Trigger _retrievedAlgae =
+      new Trigger(
+              () ->
+                  _feedCurrentGetter.getValue().in(Amps)
+                      > IntakeConstants.algaeCurrentThreshold.in(Amps))
+          .debounce(0.1);
+
+  private boolean _hasAlgae = false;
 
   private SingleJointedArmSim _actuatorSim;
 
@@ -96,6 +101,10 @@ public class Intake extends AdvancedSubsystem {
 
   public Intake() {
     setDefaultCommand(stow());
+
+    _retrievedAlgae.and(intakeAlgae()::isScheduled).onTrue(runOnce(() -> _hasAlgae = true));
+    new Trigger(holdAlgae()::isScheduled).onFalse(runOnce(() -> _hasAlgae = false));
+    new Trigger(() -> _hasAlgae).whileTrue(holdAlgae());
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -233,6 +242,11 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
+  @Logged(name = "Has Algae")
+  public boolean hasAlgae() {
+    return _hasAlgae;
+  }
+
   // set the actuator angle and feed speed.
   private Command set(double actuatorAngle, double feedSpeed) {
     return run(
@@ -266,36 +280,33 @@ public class Intake extends AdvancedSubsystem {
 
   /** Holds an algae in the intake. */
   public Command holdAlgae() {
-    return run(() -> {
+    return run(
+        () -> {
           _actuatorMotor.setControl(
               _actuatorPositionSetter.withPosition(
                   Units.radiansToRotations(IntakeConstants.intakeAlgae.in(Radians))));
           _feedMotor.setControl(
               _feedVoltageSetter.withOutput(IntakeConstants.algaeStallVolts.in(Volts)));
-        })
-        .alongWith(watchAlgaeBeam(false, false));
+        });
   }
 
   /** Intakes algae of the ground. */
   public Command intakeAlgae() {
     return set(
-            IntakeConstants.intakeAlgae.in(Radians),
-            -IntakeConstants.feedSpeed.in(RadiansPerSecond))
-        .alongWith(watchAlgaeBeam(true, true));
+        IntakeConstants.intakeAlgae.in(Radians),
+        -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond));
   }
 
   /** Outtakes algae into the processor. */
   public Command outtakeAlgae() {
     return Commands.sequence(
-            set(
-                    IntakeConstants.scoreAlgae.in(Radians),
-                    -IntakeConstants.feedSpeed.in(RadiansPerSecond))
-                .until(
-                    () -> MathUtil.isNear(IntakeConstants.scoreAlgae.in(Radians), getAngle(), 0.1)),
-            set(
+        set(
                 IntakeConstants.scoreAlgae.in(Radians),
-                IntakeConstants.feedSpeed.in(RadiansPerSecond)))
-        .alongWith(watchAlgaeBeam(false, false));
+                -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
+            .until(() -> MathUtil.isNear(IntakeConstants.scoreAlgae.in(Radians), getAngle(), 0.1)),
+        set(
+            IntakeConstants.scoreAlgae.in(Radians),
+            IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond)));
   }
 
   private void setActuatorVoltage(double volts) {
