@@ -225,7 +225,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     teleop().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
 
     SmartDashboard.putData(
-        "RESET PRACTICE FIELD", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(120))));
+        "RESET PRACTICE FIELD", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(0))));
 
     // display all sysid routines
     SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
