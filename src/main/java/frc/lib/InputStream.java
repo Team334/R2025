@@ -9,6 +9,7 @@ import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.DoubleUnaryOperator;
 
@@ -17,7 +18,6 @@ import java.util.function.DoubleUnaryOperator;
 /** A functional interface to aid in modifying double suppliers, such as from a joystick. */
 @FunctionalInterface
 public interface InputStream extends DoubleSupplier {
-
   /**
    * Creates an input stream from another.
    *
@@ -164,6 +164,18 @@ public interface InputStream extends DoubleSupplier {
   public default InputStream rateLimit(double rate) {
     var limiter = new SlewRateLimiter(rate);
     return map(x -> limiter.calculate(x));
+  }
+
+  /**
+   * Rate limits the stream outputs by a specified rate when enabled.
+   *
+   * @param rate The rate in units / s.
+   * @param enable A boolean supplier that if true will enable the rate limiter.
+   * @return A rate limited stream.
+   */
+  public default InputStream rateLimit(double rate, BooleanSupplier enable) {
+    var limiter = new SlewRateLimiter(rate);
+    return map(x -> enable.getAsBoolean() ? limiter.calculate(rate) : x);
   }
 
   /**

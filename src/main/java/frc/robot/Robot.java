@@ -145,7 +145,9 @@ public class Robot extends TimedRobot {
     PortForwarder.add(5800, "orangepi-lower.local", 5800);
 
     new Trigger(() -> getCurrentPiece() == Piece.NONE)
-        .onChange(rumbleControllers(1, 1).onlyIf(teleop()::getAsBoolean));
+        .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
+
+    new Trigger(() -> _intake.hasAlgae()).onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -168,8 +170,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData("Auto Chooser", autoChooser);
 
     autoChooser.addRoutine("Reset Odometry", _autos::resetOdometry);
-    autoChooser.addRoutine("Simple Path", _autos::simplePath);
+    autoChooser.addRoutine("88888888888 Simple Path", _autos::simplePath);
     autoChooser.addRoutine("One Piece", _autos::onePiece);
+    autoChooser.addRoutine("Two Piece", _autos::twoPiece);
+    autoChooser.addRoutine("Taxi", _autos::taxi);
 
     autonomous().whileTrue(autoChooser.selectedCommandScheduler());
 
@@ -313,6 +317,11 @@ public class Robot extends TimedRobot {
     _operatorController
         .leftTrigger()
         .whileTrue(_manipulator.outtake(ManipulatorConstants.coralOuttakeSpeed));
+
+    // intake / outtake algae
+    _operatorController
+        .leftStick()
+        .whileTrue(either(_intake.outtakeAlgae(), _intake.intakeAlgae(), _intake::hasAlgae));
   }
 
   /** Rumble the driver and operator controllers for some amount of seconds. */

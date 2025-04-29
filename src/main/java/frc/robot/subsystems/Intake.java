@@ -14,13 +14,16 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
+import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -29,6 +32,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
@@ -58,6 +64,8 @@ public class Intake extends AdvancedSubsystem {
   private final StatusSignal<Angle> _actuatorPositionGetter = _actuatorMotor.getPosition();
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
 
+  private final StatusSignal<Current> _feedCurrentGetter = _feedMotor.getStatorCurrent();
+
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
           new SysIdRoutine.Config(
@@ -78,6 +86,8 @@ public class Intake extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
+  private boolean _hasAlgae = false;
+
   private SingleJointedArmSim _actuatorSim;
 
   private double _lastSimTime;
@@ -86,6 +96,19 @@ public class Intake extends AdvancedSubsystem {
 
   public Intake() {
     setDefaultCommand(stow());
+
+    new Trigger(() -> _hasAlgae).whileTrue(holdAlgae());
+
+    // if the intake is supposed to be holding an algae but stator current drops, assume that
+    // the algae fell out
+    new Trigger(
+            () -> {
+              return _feedCurrentGetter.getValue().in(Amps)
+                  >= IntakeConstants.algaeHoldCurrentThreshold.in(Amps);
+            })
+        .and(() -> _hasAlgae)
+        .debounce(0.1)
+        .onTrue(Commands.runOnce(() -> _hasAlgae = false));
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -223,6 +246,11 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
+  @Logged(name = "Has Algae")
+  public boolean hasAlgae() {
+    return _hasAlgae;
+  }
+
   // set the actuator angle and feed speed.
   private Command set(double actuatorAngle, double feedSpeed) {
     return run(
@@ -252,6 +280,48 @@ public class Intake extends AdvancedSubsystem {
             IntakeConstants.actuatorOut.in(Radians),
             -IntakeConstants.feedSpeed.in(RadiansPerSecond))
         .withName("Outtake");
+  }
+
+  /** Holds an algae in the intake. */
+  public Command holdAlgae() {
+    return run(
+        () -> {
+          _actuatorMotor.setControl(
+              _actuatorPositionSetter.withPosition(
+                  Units.radiansToRotations(IntakeConstants.intakeAlgae.in(Radians))));
+          _feedMotor.setControl(
+              _feedVoltageSetter.withOutput(IntakeConstants.algaeStallVolts.in(Volts)));
+        });
+  }
+
+  /** Intakes algae of the ground. */
+  public Command intakeAlgae() {
+    var pickedUpAlgae =
+        new BooleanEvent(
+                CommandScheduler.getInstance().getDefaultButtonLoop(),
+                () -> {
+                  return _feedCurrentGetter.getValue().in(Amps)
+                      >= IntakeConstants.algaeIntakeCurrentThreshold.in(Amps);
+                })
+            .debounce(0.1);
+
+    return set(
+            IntakeConstants.intakeAlgae.in(Radians),
+            -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
+        .until(pickedUpAlgae)
+        .andThen(Commands.runOnce(() -> _hasAlgae = true));
+  }
+
+  /** Outtakes algae into the processor. */
+  public Command outtakeAlgae() {
+    return Commands.sequence(
+        set(
+                IntakeConstants.scoreAlgae.in(Radians),
+                -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
+            .until(() -> MathUtil.isNear(IntakeConstants.scoreAlgae.in(Radians), getAngle(), 0.1)),
+        set(
+            IntakeConstants.scoreAlgae.in(Radians),
+            IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond)));
   }
 
   private void setActuatorVoltage(double volts) {

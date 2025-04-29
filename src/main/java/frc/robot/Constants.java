@@ -25,6 +25,7 @@ import edu.wpi.first.units.VoltageUnit;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.Frequency;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -205,8 +206,8 @@ public final class Constants {
                 Math.pow(TunerConstants.FrontLeft.LocationX, 2)
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
-    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.5);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 2);
+    public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(1);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI / 2);
 
     public static final LinearVelocity translationalDeadband = maxTranslationalSpeed.times(0.01);
     public static final AngularVelocity rotationalDeadband = maxAngularSpeed.times(0.01);
@@ -239,7 +240,7 @@ public final class Constants {
 
     public static final AngularVelocity actuatorVelocity = RotationsPerSecond.of(2);
     public static final AngularAcceleration actuatorAcceleration =
-        RotationsPerSecondPerSecond.of(3);
+        RotationsPerSecondPerSecond.of(5);
 
     public static final double feedGearRatio = 32 / 18.0;
     public static final double actuatorGearRatio = 50;
@@ -248,8 +249,16 @@ public final class Constants {
 
     public static final Angle actuatorStowed = Radians.of(2.26);
     public static final Angle actuatorOut = Radians.of(-0.34);
+    public static final Angle intakeAlgae = Radians.of(0.736);
+    public static final Angle scoreAlgae = Radians.of(1.385);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
+    public static final AngularVelocity algaeFeedSpeed = RadiansPerSecond.of(-30);
+
+    public static final Current algaeIntakeCurrentThreshold = Amps.of(30);
+
+    public static final Current algaeHoldCurrentThreshold = Amps.of(40);
+    public static final Voltage algaeStallVolts = Volts.of(-1);
   }
 
   public static class WristevatorConstants {
@@ -265,8 +274,8 @@ public final class Constants {
     /** Wristevator presets. */
     public static enum Preset implements Setpoint {
       HOME(Radians.of(-1.06), Radians.of(0)),
-      HUMAN(Radians.of(-0.457), Radians.of(17.984)),
-      PROCESSOR(Radians.of(-1.06), Radians.of(0)),
+      HUMAN(Radians.of(-0.457), Radians.of(16.96)),
+      PROCESSOR(Radians.of(-1.06), Radians.of(6.182)),
 
       L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
@@ -298,9 +307,10 @@ public final class Constants {
     /** Wristevator intermediate setpoints. */
     public static enum Intermediate implements Setpoint {
       INFINITY(Radians.of(Integer.MAX_VALUE), Radians.of(Integer.MAX_VALUE)),
-      I1(Radians.of(-1.06), Radians.of(3)),
+      I1(Radians.of(-1.06), Radians.of(1.8)),
       I2(Radians.of(-1.06), Radians.of(36.92)),
-      I3(Radians.of(-1.06), Radians.of(30));
+      I3(Radians.of(-1.06), Radians.of(30)),
+      I4(Radians.of(-1.06), Radians.of(10));
 
       private final Angle _angle;
       private final Angle _height;
@@ -324,12 +334,8 @@ public final class Constants {
     public static final HashMap<Pair<Setpoint, Setpoint>, Setpoint> setpointMap = new HashMap<>();
 
     static {
-      // going to a upwards wrist angle from home
-      setpointMap.put(Pair.of(HOME, L1), I1);
-      setpointMap.put(Pair.of(HOME, L4), I2);
-
       // going up to l4
-      setpointMap.put(Pair.of(I1, L4), I2);
+      setpointMap.put(Pair.of(HOME, L4), I2);
       setpointMap.put(Pair.of(L1, L4), I2);
       setpointMap.put(Pair.of(L2, L4), I2);
       setpointMap.put(Pair.of(L3, L4), I2);
@@ -347,10 +353,28 @@ public final class Constants {
       setpointMap.put(Pair.of(L4, LOWER_ALGAE), I2);
       setpointMap.put(Pair.of(L4, HUMAN), I2);
       setpointMap.put(Pair.of(L4, PROCESSOR), I2);
+
+      // going to a upwards wrist angle from home
+      setpointMap.put(Pair.of(HOME, L1), I1);
+
+      // going down to home
+      setpointMap.put(Pair.of(I2, HOME), I1);
+      setpointMap.put(Pair.of(L3, HOME), I1);
+      setpointMap.put(Pair.of(L2, HOME), I1);
+      setpointMap.put(Pair.of(L1, HOME), I1);
+      setpointMap.put(Pair.of(UPPER_ALGAE, HOME), I1);
+      setpointMap.put(Pair.of(LOWER_ALGAE, HOME), I1);
+      setpointMap.put(Pair.of(HUMAN, HOME), I1);
+      setpointMap.put(Pair.of(PROCESSOR, HOME), I1);
+      setpointMap.put(Pair.of(HOME, HOME), I1);
+
+      // going down to processor
+      setpointMap.put(Pair.of(UPPER_ALGAE, PROCESSOR), I4);
+      setpointMap.put(Pair.of(LOWER_ALGAE, PROCESSOR), I4);
     }
 
     public static final AngularVelocity maxWristSpeed = RotationsPerSecond.of(1);
-    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(14);
+    public static final AngularVelocity maxElevatorSpeed = RotationsPerSecond.of(17);
 
     public static final AngularVelocity manualWristSpeed = RotationsPerSecond.of(1);
     public static final AngularVelocity manualElevatorSpeed = RotationsPerSecond.of(3);
@@ -358,7 +382,7 @@ public final class Constants {
     public static final AngularAcceleration maxWristAcceleration =
         RotationsPerSecondPerSecond.of(3);
     public static final AngularAcceleration maxElevatorAcceleration =
-        RotationsPerSecondPerSecond.of(15);
+        RotationsPerSecondPerSecond.of(17);
 
     public static final int homeSwitch = 7;
 
@@ -429,10 +453,12 @@ public final class Constants {
     public static final int algaeBeam = 4;
 
     public static final AngularVelocity algaeOuttakeSpeed = RadiansPerSecond.of(-30);
-    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity algaeIntakeSpeed = RadiansPerSecond.of(50);
 
     public static final AngularVelocity coralOuttakeSpeed = RadiansPerSecond.of(-40);
-    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(30);
+    public static final AngularVelocity coralIntakeSpeed = RadiansPerSecond.of(40);
+
+    public static final AngularVelocity humanIntakeSpeed = RadiansPerSecond.of(20);
 
     public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(10);
 
@@ -454,6 +480,6 @@ public final class Constants {
 
     public static final double flywheelGearRatio = 3;
 
-    public static final Voltage holdAlgaeVoltage = Volts.of(0.6);
+    public static final Voltage holdAlgaeVoltage = Volts.of(0.8);
   }
 }

@@ -15,7 +15,7 @@ import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 public class HolonomicController {
   // generate the path for the robot to follow
   private final ProfiledPIDController _translationProfile =
-      new ProfiledPIDController(0, 0, 0, new Constraints(3, 3));
+      new ProfiledPIDController(0, 0, 0, new Constraints(1, 2));
   private final ProfiledPIDController _headingProfile =
       new ProfiledPIDController(0, 0, 0, new Constraints(Math.PI, Math.PI * 2));
 
