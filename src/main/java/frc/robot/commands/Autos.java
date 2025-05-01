@@ -183,6 +183,45 @@ public class Autos {
     return routine;
   }
 
+  public AutoRoutine processor() {
+    var routine = _factory.newRoutine("Processor");
+    var trajA = routine.trajectory("Processor A");
+    var trajB = routine.trajectory("Processor B");
+    var trajC = routine.trajectory("Processor C");
+    var trajD = routine.trajectory("Processor D");
+    var trajE = routine.trajectory("Processor E");
+
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _currentPieceSetter.accept(Piece.CORAL)),
+                trajA.resetOdometry(),
+                trajA.cmd()));
+
+    trajA
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(L4),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.LEFT),
+                _manipulator.feed().withTimeout(1.5),
+                trajB.cmd()));
+
+    trajB
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(UPPER_ALGAE),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.CENTER),
+                _manipulator.feed(),
+                trajC.cmd()));
+
+    trajC.done().onTrue(sequence(_wristevator.setGoal(PROCESSOR), trajC.cmd()));
+
+    return routine;
+  }
+
   public AutoRoutine resetOdometry() {
     var routine = _factory.newRoutine("Reset Odometry");
     var traj = routine.trajectory("ResetOdometry");
