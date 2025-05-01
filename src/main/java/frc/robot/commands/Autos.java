@@ -190,6 +190,7 @@ public class Autos {
     var trajC = routine.trajectory("Processor C");
     var trajD = routine.trajectory("Processor D");
     var trajE = routine.trajectory("Processor E");
+    var trajF = routine.trajectory("Processor F");
 
     routine
         .active()
@@ -217,7 +218,19 @@ public class Autos {
                 _manipulator.feed(),
                 trajC.cmd()));
 
-    trajC.done().onTrue(sequence(_wristevator.setGoal(PROCESSOR), trajC.cmd()));
+    trajC.done().onTrue(sequence(_wristevator.setGoal(PROCESSOR), trajD.cmd()));
+    trajD.done().onTrue(sequence(_manipulator.feed().withTimeout(1.5), trajE.cmd()));
+
+    trajE
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(LOWER_ALGAE),
+                _swerve.fieldAlign(FieldLocation.REEF, AlignSide.CENTER),
+                _manipulator.feed(),
+                trajF.cmd()));
+
+    trajF.done().onTrue(sequence(_wristevator.setGoal(PROCESSOR), trajD.cmd()));
 
     return routine;
   }
