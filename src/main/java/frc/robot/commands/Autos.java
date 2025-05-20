@@ -213,13 +213,13 @@ public class Autos {
         .done()
         .onTrue(
             sequence(
-                _wristevator.setGoal(UPPER_ALGAE),
+                _wristevator.setGoal(LOWER_ALGAE),
                 _swerve.fieldAlign(FieldLocation.REEF, AlignSide.CENTER),
                 _manipulator.feed(),
                 trajC.cmd()));
 
     trajC.done().onTrue(sequence(_wristevator.setGoal(PROCESSOR), trajD.cmd()));
-    trajD.done().onTrue(sequence(_manipulator.feed().withTimeout(1.5), trajE.cmd()));
+    trajD.done().onTrue(_manipulator.feed().withTimeout(1.5));
 
     trajE
         .done()
