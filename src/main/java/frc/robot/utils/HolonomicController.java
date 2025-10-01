@@ -1,7 +1,8 @@
 package frc.robot.utils;
 
+import static edu.wpi.first.units.Units.*;
+
 import dev.doglog.DogLog;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.controller.PIDController;
@@ -13,49 +14,60 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 
 public class HolonomicController {
-  // generate the path for the robot to follow
   private final ProfiledPIDController _translationProfile =
-      new ProfiledPIDController(0, 0, 0, new Constraints(1, 2));
+      new ProfiledPIDController(
+          0,
+          0,
+          0,
+          new Constraints(
+              MetersPerSecond.of(3).in(MetersPerSecond),
+              MetersPerSecondPerSecond.of(4).in(MetersPerSecondPerSecond)));
   private final ProfiledPIDController _headingProfile =
-      new ProfiledPIDController(0, 0, 0, new Constraints(Math.PI, Math.PI * 2));
+      new ProfiledPIDController(
+          0,
+          0,
+          0,
+          new Constraints(
+              RadiansPerSecond.of(Math.PI).in(RadiansPerSecond),
+              RadiansPerSecondPerSecond.of(Math.PI * 2).in(RadiansPerSecondPerSecond)));
 
   private Vector<N2> _translationDirection = VecBuilder.fill(0, 0);
 
   private Pose2d _startPose = Pose2d.kZero;
-  private Pose2d _goalPose = Pose2d.kZero;
+  private double _goalHeading = 0;
 
-  // used to follow the path
-  private final PIDController _xController = new PIDController(0.8, 0, 0.01);
-  private final PIDController _yController = new PIDController(0.8, 0, 0.01);
+  private final PIDController _xController = new PIDController(0, 0, 0);
+  private final PIDController _yController = new PIDController(0, 0, 0);
 
-  private final PIDController _headingController = new PIDController(1.0, 0, 0.01);
+  private final PIDController _headingController = new PIDController(0, 0, 0);
 
   public HolonomicController() {
-    _headingProfile.enableContinuousInput(-Math.PI, Math.PI);
     _headingController.enableContinuousInput(-Math.PI, Math.PI);
+    _headingProfile.enableContinuousInput(-Math.PI, Math.PI);
   }
 
-  /** Whether the translation and rotation profiles have completed. */
+  /** Whether the chassis profiles have been completed or not. */
   public boolean isFinished() {
-    return MathUtil.isNear(
-            _translationProfile.getGoal().position,
-            _translationProfile.getSetpoint().position,
-            0.001)
-        && MathUtil.isNear(
-            _translationProfile.getGoal().velocity,
-            _translationProfile.getSetpoint().velocity,
-            0.001)
-        && MathUtil.isNear(
-            _headingProfile.getGoal().position, _headingProfile.getSetpoint().position, 0.001)
-        && MathUtil.isNear(
-            _headingProfile.getGoal().velocity, _headingProfile.getSetpoint().velocity, 0.001);
+    return _translationProfile.getSetpoint().equals(_translationProfile.getGoal())
+        && _headingProfile.getSetpoint().equals(_headingProfile.getGoal());
+  }
+
+  /** Resets the PID controllers. */
+  public void reset() {
+    _xController.reset();
+    _yController.reset();
+
+    _headingController.reset();
   }
 
   /**
-   * Resets the translation and rotation profiles given the current speeds, pose, and the goal pose.
+   * Resets the motion profiles and the PID controllers.
+   *
+   * @param currentPose The current pose.
+   * @param goalPose The goal pose.
+   * @param currentSpeeds The current field-relative speeds of the chassis.
    */
   public void reset(Pose2d currentPose, Pose2d goalPose, ChassisSpeeds currentSpeeds) {
-    // vector where head is at goal pose and tail is at current pose
     _translationDirection =
         VecBuilder.fill(goalPose.getX() - currentPose.getX(), goalPose.getY() - currentPose.getY());
 
@@ -64,67 +76,57 @@ public class HolonomicController {
         _translationDirection.dot(
                 VecBuilder.fill(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond))
             / _translationDirection.norm());
-
     _headingProfile.reset(
         currentPose.getRotation().getRadians(), currentSpeeds.omegaRadiansPerSecond);
 
-    _xController.reset();
-    _yController.reset();
-
-    _headingController.reset();
+    reset();
 
     _startPose = currentPose;
-    _goalPose = goalPose;
+    _goalHeading = goalPose.getRotation().getRadians();
   }
 
   /**
-   * Samples the motion profiles at the next timestep. The motion profile ends at the desired goal
-   * pose at a chassis speeds of 0.
+   * Samples the motions profiles at the next timestep, finding chassis speeds based on the profiles
+   * and PID correction.
    *
-   * @param currentPose The current pose of the chassis necessary for PID.
+   * @param currentPose The current pose.
+   * @return Field-relative speeds for the chassis.
    */
   public ChassisSpeeds calculate(Pose2d currentPose) {
-    _headingProfile.calculate(
-        currentPose.getRotation().getRadians(),
-        _goalPose
-            .getRotation()
-            .getRadians()); // measurement might matter for continous heading thing?
     _translationProfile.calculate(
         0,
-        _translationDirection
-            .norm()); // measurement doesn't matter, handled by individual controllers
+        _translationDirection.norm()); // measurement doesn't matter, handled by xy PID controllers
+    _headingProfile.calculate(
+        currentPose.getRotation().getRadians(), _goalHeading); // TODO: why does measurement matter?
 
-    Pose2d setpoint =
+    Vector<N2> setpointPosition =
+        _translationDirection.unit().times(_translationProfile.getSetpoint().position);
+    Vector<N2> setpointVelocity =
+        _translationDirection.unit().times(_translationProfile.getSetpoint().velocity);
+
+    Pose2d setpointPose =
         new Pose2d(
-            _startPose.getX()
-                + _translationDirection
-                    .unit()
-                    .times(_translationProfile.getSetpoint().position)
-                    .get(0),
-            _startPose.getY()
-                + _translationDirection
-                    .unit()
-                    .times(_translationProfile.getSetpoint().position)
-                    .get(1),
+            _startPose.getX() + setpointPosition.get(0),
+            _startPose.getY() + setpointPosition.get(1),
             new Rotation2d(_headingProfile.getSetpoint().position));
 
     return calculate(
         new ChassisSpeeds(
-            _translationDirection.unit().times(_translationProfile.getSetpoint().velocity).get(0),
-            _translationDirection.unit().times(_translationProfile.getSetpoint().velocity).get(1),
+            setpointVelocity.get(0),
+            setpointVelocity.get(1),
             _headingProfile.getSetpoint().velocity),
-        setpoint,
+        setpointPose,
         currentPose);
   }
 
   /**
-   * Modifies some base chassis speeds the drive is currently traveling at to bring the drive closer
-   * to a desired pose.
+   * Modifies some base field-relative chassis speeds the chassis is currently traveling at to bring
+   * it closer to the desired pose.
    *
-   * @param baseSpeeds The field-relative speed the drive is already traveling at.
+   * @param baseSpeeds The field-relative speed the chassis is already traveling at.
    * @param desiredPose The desired pose.
-   * @param currentPose The current pose of the drive.
-   * @return New modified speeds.
+   * @param currentPose The current pose.
+   * @return New modified field-relative speeds.
    */
   public ChassisSpeeds calculate(ChassisSpeeds baseSpeeds, Pose2d desiredPose, Pose2d currentPose) {
     DogLog.log("Auto/Controller Desired Pose", desiredPose);

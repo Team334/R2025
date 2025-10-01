@@ -13,8 +13,6 @@ import edu.wpi.first.wpilibj.simulation.SimHooks;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
-// (from team 1155)
-
 /** Provides helper methods that run a command when performing unit tests. */
 public class UnitTestingUtil {
   public static final Time TICK_RATE = Seconds.of(0.02);
