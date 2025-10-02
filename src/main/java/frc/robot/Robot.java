@@ -113,16 +113,18 @@ public class Robot extends TimedRobot {
 
   /** Watchdog config / class preloading needed to reduce choreo delay. */
   private void choreoSetup() {
+    final double loopOverrunWarningPeriod = 500;
+
     try {
       Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
       watchdogField.setAccessible(true);
       Watchdog watchdog = (Watchdog) watchdogField.get(this);
-      watchdog.setTimeout(1000);
+      watchdog.setTimeout(loopOverrunWarningPeriod);
     } catch (Exception e) {
       DriverStation.reportWarning("failed to disable loop overrun worning", false);
     }
 
-    CommandScheduler.getInstance().setPeriod(1000);
+    CommandScheduler.getInstance().setPeriod(loopOverrunWarningPeriod);
 
     ClassPreloader.preload(
         "edu.wpi.first.math.geometry.Transform2d",
