@@ -21,8 +21,10 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.ClassPreloader;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -33,6 +35,7 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.commands.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Swerve;
+import java.lang.reflect.Field;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -105,12 +108,28 @@ public class Robot extends TimedRobot {
 
     autonomous().whileTrue(chooser.selectedCommandScheduler());
 
-    // TODO: maybe isn't needed
+    choreoSetup();
+  }
+
+  /** Watchdog config / class preloading needed to reduce choreo delay. */
+  private void choreoSetup() {
+    try {
+      Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
+      watchdogField.setAccessible(true);
+      Watchdog watchdog = (Watchdog) watchdogField.get(this);
+      watchdog.setTimeout(1000);
+    } catch (Exception e) {
+      DriverStation.reportWarning("failed to disable loop overrun worning", false);
+    }
+
+    CommandScheduler.getInstance().setPeriod(1000);
+
     ClassPreloader.preload(
         "edu.wpi.first.math.geometry.Transform2d",
         "edu.wpi.first.math.geometry.Twist2d",
         "java.lang.FdLibm$Hypot",
-        "choreo.trajectory.Trajectory");
+        "choreo.trajectory.Trajectory",
+        "choreo.trajectory.SwerveSample");
   }
 
   // set logging to be file only or not
