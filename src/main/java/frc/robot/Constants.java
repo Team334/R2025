@@ -86,10 +86,10 @@ public final class Constants {
 
     public static final Distance intakeLength = Inches.of(15);
 
-    public static final Angle actuatorStowed = Radians.of(0.92559260823);
-    public static final Angle actuatorOut = Radians.of(3.48159274025);
+    public static final Angle actuatorStowed = Radians.of(0.973);
+    public static final Angle actuatorOut = Radians.of(3.52);
 
-    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(55);
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(30); // TODO: increase back
   }
 
   public static class SwerveConstants {
