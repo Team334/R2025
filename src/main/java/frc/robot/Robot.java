@@ -34,6 +34,7 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.commands.Autos;
 import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Swerve;
 import java.lang.reflect.Field;
 
@@ -51,6 +52,9 @@ public class Robot extends TimedRobot {
   // subsystems
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
+
+  @Logged(name = "Intake")
+  private final Intake _intake = new Intake();
 
   private final Autos _autos = new Autos(_swerve);
 
@@ -113,7 +117,11 @@ public class Robot extends TimedRobot {
 
   /** Watchdog config / class preloading needed to reduce choreo delay. */
   private void choreoSetup() {
-    final double loopOverrunWarningPeriod = 500;
+    // something slow about watchdog's printEpochs() when there's a loop overrun (Tracer
+    // printEpochs() DS writes?)
+    // more here: https://www.chiefdelphi.com/t/choreo-autonomous-loop-overruns/495597/21
+    // problem now is that loop overruns won't get noticed unless there's another way to log them
+    final double loopOverrunWarningPeriod = 30;
 
     try {
       Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
@@ -121,11 +129,12 @@ public class Robot extends TimedRobot {
       Watchdog watchdog = (Watchdog) watchdogField.get(this);
       watchdog.setTimeout(loopOverrunWarningPeriod);
     } catch (Exception e) {
-      DriverStation.reportWarning("failed to disable loop overrun worning", false);
+      DriverStation.reportWarning("Failed to increase watchdog timeout", false);
     }
 
     CommandScheduler.getInstance().setPeriod(loopOverrunWarningPeriod);
 
+    // preloading long-loading classes used on auton init by choreo
     ClassPreloader.preload(
         "edu.wpi.first.math.geometry.Transform2d",
         "edu.wpi.first.math.geometry.Twist2d",
