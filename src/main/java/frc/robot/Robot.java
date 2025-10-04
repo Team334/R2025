@@ -55,7 +55,7 @@ public class Robot extends TimedRobot {
   @Logged(name = "Intake")
   private final Intake _intake = new Intake();
 
-  private final Autos _autos = new Autos(_swerve);
+  private final Autos _autos = new Autos(_swerve, _intake);
 
   private final NetworkTableInstance _ntInst;
 
@@ -105,7 +105,8 @@ public class Robot extends TimedRobot {
 
     AutoChooser chooser = new AutoChooser();
 
-    chooser.addRoutine("Example", _autos::example);
+    chooser.addRoutine("Short Path", _autos::shortPath);
+    chooser.addRoutine("Forward Intake Right", _autos::forwardIntakeRight);
 
     SmartDashboard.putData("Auto Chooser", chooser);
 

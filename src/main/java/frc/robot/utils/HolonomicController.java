@@ -36,10 +36,10 @@ public class HolonomicController {
   private Pose2d _startPose = Pose2d.kZero;
   private double _goalHeading = 0;
 
-  private final PIDController _xController = new PIDController(0, 0, 0);
-  private final PIDController _yController = new PIDController(0, 0, 0);
+  private final PIDController _xController = new PIDController(0.3, 0, 0);
+  private final PIDController _yController = new PIDController(0.3, 0, 0);
 
-  private final PIDController _headingController = new PIDController(0, 0, 0);
+  private final PIDController _headingController = new PIDController(0.3, 0, 0);
 
   public HolonomicController() {
     _headingController.enableContinuousInput(-Math.PI, Math.PI);

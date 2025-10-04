@@ -1,19 +1,23 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.wpilibj2.command.Commands.*;
+
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import dev.doglog.DogLog;
-import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Swerve;
 
 public class Autos {
   private final AutoFactory _factory;
 
   private final Swerve _swerve;
+  private final Intake _intake;
 
-  public Autos(Swerve swerve) {
+  public Autos(Swerve swerve, Intake intake) {
     _swerve = swerve;
+    _intake = intake;
 
     _factory =
         new AutoFactory(
@@ -30,12 +34,27 @@ public class Autos {
             });
   }
 
-  public AutoRoutine example() {
-    AutoRoutine routine = _factory.newRoutine("example");
+  public AutoRoutine shortPath() {
+    AutoRoutine routine = _factory.newRoutine("shortPath");
 
-    AutoTrajectory exampleTraj = routine.trajectory("example");
+    AutoTrajectory shortPath = routine.trajectory("shortPath");
 
-    routine.active().onTrue(Commands.sequence(exampleTraj.resetOdometry(), exampleTraj.cmd()));
+    routine.active().onTrue(sequence(shortPath.resetOdometry(), shortPath.cmd()));
+
+    return routine;
+  }
+
+  public AutoRoutine forwardIntakeRight() {
+    AutoRoutine routine = _factory.newRoutine("forwardIntakeRight");
+
+    // Load the routine's trajectories
+    AutoTrajectory forwardMeter = routine.trajectory("forwardMeter");
+    AutoTrajectory rightMeter = routine.trajectory("rightMeter");
+
+    // When the routine begins, reset odometry and start the first trajectory
+    routine.active().onTrue(sequence(forwardMeter.resetOdometry(), forwardMeter.cmd()));
+
+    forwardMeter.done().onTrue(_intake.intake().withTimeout(3).andThen(rightMeter.cmd()));
 
     return routine;
   }
