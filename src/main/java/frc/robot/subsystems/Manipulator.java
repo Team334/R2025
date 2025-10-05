@@ -265,30 +265,12 @@ public class Manipulator extends AdvancedSubsystem {
   }
 
   /** Passoff from the serializer. */
-  // public Command passoff() {
-  //     BooleanEvent coralEventFalling = _coralEvent.falling();
-
-  //     return setSpeed(ManipulatorConstants.passoffSpeed.unaryMinus().in(RadiansPerSecond))
-  //         .until(coralEventFalling::getAsBoolean)
-  //         .andThen(
-  //             setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-  //                 .alongWith(watchCoralBeam(Piece.CORAL, true)))
-  //         .withName("Passoff");
-  // }
-
-  /** Passoff from the serializer. */
   public Command passoff() {
     return setSpeed(ManipulatorConstants.passoffSpeed.unaryMinus().in(RadiansPerSecond))
         .until(_coralEvent.falling()::getAsBoolean)
         .andThen(feedIn(ManipulatorConstants.passoffSpeed))
         .withName("Passoff");
   }
-
-  // /** Inverse passoff into the serializer. */
-  // public Command inversePassoff() {
-  //     return setSpeed(ManipulatorConstants.passoffSpeed.in(RadiansPerSecond))
-  //         .withName("Inverse Passoff");
-  // }
 
   /** Inverse passoff into the serializer. */
   public Command inversePassoff() {
