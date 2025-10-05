@@ -7,6 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.*;
 import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoChooser;
 import com.ctre.phoenix6.SignalLogger;
@@ -32,9 +33,11 @@ import frc.lib.InputStream;
 import frc.robot.Constants.Piece;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.commands.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import java.lang.reflect.Field;
@@ -56,7 +59,11 @@ public class Robot extends TimedRobot {
   private final Intake _intake = new Intake();
 
   @Logged(name = "Serializer")
-  private final Serializer _serializer = new Serializer((Piece piece) -> _manipulatorPiece = piece);
+  private final Serializer _serializer = new Serializer();
+
+  @Logged(name = "Manipulator")
+  private final Manipulator _manipulator =
+      new Manipulator((Piece piece) -> _manipulatorPiece = piece);
 
   private final Autos _autos = new Autos(_swerve, _intake);
 
@@ -69,6 +76,13 @@ public class Robot extends TimedRobot {
   /** The current piece in the manipulator. */
   public static Piece getManipulatorPiece() {
     return _manipulatorPiece;
+  }
+
+  private static Setpoint _wristevatorGoal = UPPER_ALGAE;
+
+  /** The goal for the wristevator. */
+  public static Setpoint getWristevatorGoal() {
+    return _wristevatorGoal;
   }
 
   /**
@@ -203,6 +217,7 @@ public class Robot extends TimedRobot {
     CommandScheduler.getInstance().run();
 
     DogLog.log("Manipulator Current Piece", getManipulatorPiece());
+    DogLog.log("Wristevator Goal", getWristevatorGoal().toString());
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
       setFileOnly(true);

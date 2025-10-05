@@ -17,21 +17,16 @@ import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
 import frc.robot.Constants;
-import frc.robot.Constants.Piece;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
-import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {
   private final DigitalInput _coralBeam;
@@ -57,12 +52,8 @@ public class Serializer extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
-  private final Consumer<Piece> _manipulatorPieceSetter;
-
-  public Serializer(Consumer<Piece> manipulatorPieceSetter) {
+  public Serializer() {
     setDefaultCommand(idle());
-
-    _manipulatorPieceSetter = manipulatorPieceSetter;
 
     _coralBeam = new DigitalInput(SerializerConstants.coralBeamPort);
 
@@ -144,13 +135,7 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Inverse passoff from the manipulator. */
   public Command inversePassoff() {
-    BooleanEvent coralBeamFall =
-        new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getCoralBeam)
-            .falling();
-
     return setSpeed(SerializerConstants.passoffSpeed.unaryMinus().in(RadiansPerSecond))
-        .until(() -> coralBeamFall.getAsBoolean())
-        .andThen(Commands.runOnce(() -> _manipulatorPieceSetter.accept(Piece.NONE)))
         .withName("Inverse Passoff");
   }
 
