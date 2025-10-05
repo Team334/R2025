@@ -29,11 +29,13 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.Piece;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.commands.Autos;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
+import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
 import java.lang.reflect.Field;
 
@@ -44,22 +46,30 @@ import java.lang.reflect.Field;
  */
 @Logged(strategy = Strategy.OPT_IN)
 public class Robot extends TimedRobot {
-  // controllers
   private final CommandXboxController _driverController =
       new CommandXboxController(Ports.driverController);
 
-  // subsystems
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
 
   @Logged(name = "Intake")
   private final Intake _intake = new Intake();
 
+  @Logged(name = "Serializer")
+  private final Serializer _serializer = new Serializer((Piece piece) -> _manipulatorPiece = piece);
+
   private final Autos _autos = new Autos(_swerve, _intake);
 
   private final NetworkTableInstance _ntInst;
 
   private boolean _fileOnlySet = false;
+
+  private static Piece _manipulatorPiece = Piece.NONE;
+
+  /** The current piece in the manipulator. */
+  public static Piece getManipulatorPiece() {
+    return _manipulatorPiece;
+  }
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -99,7 +109,8 @@ public class Robot extends TimedRobot {
                 runOnce(() -> DataLogManager.log("Robot Self Check Finished")))
             .withName("Robot Self Check"));
 
-    SmartDashboard.putData(runOnce(FaultLogger::clear).withName("Clear Faults"));
+    SmartDashboard.putData(
+        runOnce(FaultLogger::clear).withName("Clear Faults").ignoringDisable(true));
 
     addPeriodic(FaultLogger::update, 1);
 
@@ -120,7 +131,7 @@ public class Robot extends TimedRobot {
     // something slow about watchdog's printEpochs() when there's a loop overrun (Tracer
     // printEpochs() DS writes?)
     // more here: https://www.chiefdelphi.com/t/choreo-autonomous-loop-overruns/495597/21
-    // problem now is that loop overruns won't get noticed unless there's another way to log them
+    // problem now is that loop overruns won't get noticed so need to find another way to log them
     final double loopOverrunWarningPeriod = 30;
 
     try {
@@ -190,6 +201,8 @@ public class Robot extends TimedRobot {
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
+
+    DogLog.log("Manipulator Current Piece", getManipulatorPiece());
 
     if (DriverStation.isFMSAttached() && !_fileOnlySet) {
       setFileOnly(true);

@@ -40,6 +40,12 @@ public final class Constants {
     public static final int driverController = 0;
   }
 
+  public static enum Piece {
+    CORAL,
+    ALGAE,
+    NONE
+  }
+
   public static class FieldConstants {
     public static final AprilTagFieldLayout tagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
@@ -90,6 +96,23 @@ public final class Constants {
     public static final Angle actuatorOut = Radians.of(3.52);
 
     public static final AngularVelocity feedSpeed = RadiansPerSecond.of(30); // TODO: increase back
+  }
+
+  public static class SerializerConstants {
+    public static final int coralBeamPort = 6;
+
+    public static final Voltage feedkS = Volts.of(0.30489);
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkV =
+        Volts.per(RotationsPerSecond).ofNative(0.28324);
+    public static final Per<VoltageUnit, AngularVelocityUnit> feedkP =
+        Volts.per(RotationsPerSecond).ofNative(0.41102);
+
+    public static final double feedGearRatio = 70.0 / 30;
+
+    public static final AngularVelocity feedSpeed = RadiansPerSecond.of(20);
+    public static final AngularVelocity passoffSpeed = RadiansPerSecond.of(35);
+
+    public static final int feedMotorId = 10;
   }
 
   public static class SwerveConstants {
