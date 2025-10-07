@@ -22,12 +22,16 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.ClassPreloader;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.IterativeRobotBase;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Watchdog;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import edu.wpi.first.wpilibj2.command.ScheduleCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
 import frc.robot.Constants.Piece;
@@ -35,11 +39,13 @@ import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.commands.Autos;
+import frc.robot.commands.Superstructure;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Serializer;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Wristevator;
 import java.lang.reflect.Field;
 
 /**
@@ -51,6 +57,9 @@ import java.lang.reflect.Field;
 public class Robot extends TimedRobot {
   private final CommandXboxController _driverController =
       new CommandXboxController(Ports.driverController);
+
+  private final CommandXboxController _operatorController =
+      new CommandXboxController(Ports.operatorController);
 
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
@@ -65,6 +74,10 @@ public class Robot extends TimedRobot {
   private final Manipulator _manipulator =
       new Manipulator((Piece piece) -> _manipulatorPiece = piece);
 
+  @Logged(name = "Wristevator")
+  private final Wristevator _wristevator =
+      new Wristevator((Setpoint goal) -> _wristevatorGoal = goal);
+
   private final Autos _autos = new Autos(_swerve, _intake);
 
   private final NetworkTableInstance _ntInst;
@@ -78,7 +91,7 @@ public class Robot extends TimedRobot {
     return _manipulatorPiece;
   }
 
-  private static Setpoint _wristevatorGoal = UPPER_ALGAE;
+  private static Setpoint _wristevatorGoal = HOME;
 
   /** The goal for the wristevator. */
   public static Setpoint getWristevatorGoal() {
@@ -113,7 +126,11 @@ public class Robot extends TimedRobot {
 
     FaultLogger.setup(_ntInst);
 
-    configureBindings();
+    configureDriverBindings();
+    configureOperatorBindings();
+
+    new Trigger(() -> getManipulatorPiece() == Piece.NONE)
+        .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -183,7 +200,21 @@ public class Robot extends TimedRobot {
             new NTEpilogueBackend(_ntInst), new FileBackend(DataLogManager.getLog()));
   }
 
-  private void configureBindings() {
+  /** Rumble the driver and operator controllers for some amount of seconds. */
+  private Command rumbleControllers(double rumble, double seconds) {
+    return run(() -> {
+          _driverController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+          _operatorController.getHID().setRumble(RumbleType.kBothRumble, rumble);
+        })
+        .finallyDo(
+            () -> {
+              _driverController.getHID().setRumble(RumbleType.kBothRumble, 0);
+              _operatorController.getHID().setRumble(RumbleType.kBothRumble, 0);
+            })
+        .withTimeout(seconds);
+  }
+
+  private void configureDriverBindings() {
     _swerve.setDefaultCommand(
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
@@ -199,6 +230,61 @@ public class Robot extends TimedRobot {
     _driverController.x().whileTrue(_swerve.brake());
     _driverController.a().onTrue(_swerve.toggleFieldOriented());
     _driverController.y().onTrue(_swerve.resetHeading());
+  }
+
+  private void configureOperatorBindings() {
+    // wristevator setpoint control
+    // _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
+    // _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    // _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
+
+    // _operatorController.a().onTrue(_wristevator.setGoal(L1));
+
+    // _operatorController
+    //     .b()
+    //     .onTrue(
+    //         either(
+    //             _wristevator.setGoal(L2),
+    //             _wristevator.setGoal(LOWER_ALGAE),
+    //             () -> getManipulatorPiece() == Piece.CORAL));
+
+    // _operatorController
+    //     .y()
+    //     .onTrue(
+    //         either(
+    //             _wristevator.setGoal(L3),
+    //             _wristevator.setGoal(UPPER_ALGAE),
+    //             () -> getManipulatorPiece() == Piece.CORAL));
+
+    // _operatorController.x().onTrue(_wristevator.setGoal(L4));
+
+    // ground outtake
+    _operatorController.leftBumper().whileTrue(_intake.outtake());
+    _operatorController.povUp().whileTrue(Superstructure.serializerOuttake(_serializer, _intake));
+
+    // ground intake / passoff
+    _operatorController
+        .rightBumper()
+        .and(_wristevator::homeSwitch)
+        .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
+
+    _operatorController
+        .rightBumper()
+        .and(() -> !_wristevator.homeSwitch())
+        .whileTrue(
+            Superstructure.groundIntake(_intake, _serializer)
+                .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
+
+    // intake / inverse passoff
+    _operatorController
+        .rightTrigger()
+        .and(_wristevator::homeSwitch)
+        .whileTrue(Superstructure.inversePassoff(_serializer, _manipulator));
+
+    _operatorController
+        .rightTrigger()
+        .and(() -> !_wristevator.homeSwitch())
+        .whileTrue(_manipulator.feed());
   }
 
   /**

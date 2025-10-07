@@ -6,6 +6,7 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -172,7 +173,15 @@ public class Intake extends AdvancedSubsystem {
 
     if (Robot.isSimulation()) {
       // rely on sim to control the position
-      CTREUtil.attempt(() -> _actuatorMotor.setPosition(0), _actuatorMotor);
+      _actuatorMotor.setPosition(0);
+
+      // prevent setRawMotor_ from negating physics sim output
+      var c = new MotorOutputConfigs();
+
+      _actuatorMotor.getConfigurator().refresh(c);
+      _actuatorMotor
+          .getConfigurator()
+          .apply(c.withInverted(InvertedValue.CounterClockwise_Positive));
 
       SmartDashboard.putData("Intake Visualizer", _mech);
 
