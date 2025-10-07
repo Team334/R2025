@@ -234,29 +234,39 @@ public class Robot extends TimedRobot {
 
   private void configureOperatorBindings() {
     // wristevator setpoint control
-    // _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
-    // _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
-    // _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
+    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
+    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
 
-    // _operatorController.a().onTrue(_wristevator.setGoal(L1));
+    _operatorController.a().onTrue(_wristevator.setGoal(L1));
 
-    // _operatorController
-    //     .b()
-    //     .onTrue(
-    //         either(
-    //             _wristevator.setGoal(L2),
-    //             _wristevator.setGoal(LOWER_ALGAE),
-    //             () -> getManipulatorPiece() == Piece.CORAL));
+    _operatorController
+        .b()
+        .onTrue(
+            either(
+                _wristevator.setGoal(L2),
+                _wristevator.setGoal(LOWER_ALGAE),
+                () -> getManipulatorPiece() == Piece.CORAL));
 
-    // _operatorController
-    //     .y()
-    //     .onTrue(
-    //         either(
-    //             _wristevator.setGoal(L3),
-    //             _wristevator.setGoal(UPPER_ALGAE),
-    //             () -> getManipulatorPiece() == Piece.CORAL));
+    _operatorController
+        .y()
+        .onTrue(
+            either(
+                _wristevator.setGoal(L3),
+                _wristevator.setGoal(UPPER_ALGAE),
+                () -> getManipulatorPiece() == Piece.CORAL));
 
-    // _operatorController.x().onTrue(_wristevator.setGoal(L4));
+    _operatorController.x().onTrue(_wristevator.setGoal(L4));
+
+    // SmartDashboard.putData(_wristevator.setGoal(PROCESSOR).withName("Processor"));
+    // SmartDashboard.putData(_wristevator.setGoal(HUMAN).withName("Human"));
+    // SmartDashboard.putData(_wristevator.setGoal(HOME).withName("Home"));
+    // SmartDashboard.putData(_wristevator.setGoal(L1).withName("L1"));
+    // SmartDashboard.putData(_wristevator.setGoal(L2).withName("L2"));
+    // SmartDashboard.putData(_wristevator.setGoal(LOWER_ALGAE).withName("Lower Algae"));
+    // SmartDashboard.putData(_wristevator.setGoal(L3).withName("L3"));
+    // SmartDashboard.putData(_wristevator.setGoal(UPPER_ALGAE).withName("Upper Algae"));
+    // SmartDashboard.putData(_wristevator.setGoal(L4).withName("L4"));
 
     // ground outtake
     _operatorController.leftBumper().whileTrue(_intake.outtake());

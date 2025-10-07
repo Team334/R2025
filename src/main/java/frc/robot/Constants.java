@@ -251,7 +251,7 @@ public final class Constants {
       setpointMap.put(Pair.of(L4, HUMAN), I2);
       setpointMap.put(Pair.of(L4, PROCESSOR), I2);
 
-      // going to a upwards wrist angle from home
+      // going to an upwards wrist angle from home
       setpointMap.put(Pair.of(HOME, L1), I1);
 
       // going down to home
@@ -299,6 +299,9 @@ public final class Constants {
 
     public static final Angle minWristAngle = Radians.of(-1.1);
     public static final Angle maxWristAngle = Radians.of(1.32);
+
+    public static final Angle initialWristAngle = Radians.of(-1.05);
+    public static final Angle initialElevatorHeight = Radians.zero();
 
     public static final double wristGearRatio = 33.75;
 
