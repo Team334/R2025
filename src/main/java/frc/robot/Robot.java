@@ -163,7 +163,7 @@ public class Robot extends TimedRobot {
     // printEpochs() DS writes?)
     // more here: https://www.chiefdelphi.com/t/choreo-autonomous-loop-overruns/495597/21
     // problem now is that loop overruns won't get noticed so need to find another way to log them
-    final double loopOverrunWarningPeriod = 0.025;
+    final double loopOverrunWarningPeriod = 1;
 
     try {
       Field watchdogField = IterativeRobotBase.class.getDeclaredField("m_watchdog");
