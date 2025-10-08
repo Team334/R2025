@@ -177,7 +177,7 @@ public final class Constants {
       L1(Radians.of(-0.233), Radians.of(2.095)),
       L2(Radians.of(-0.793), Radians.of(14.769)),
       L3(Radians.of(-1.06), Radians.of(26.828)),
-      L4(Radians.of(1.282), Radians.of(38.2)),
+      L4(Radians.of(1.06), Radians.of(38.2)),
 
       LOWER_ALGAE(Radians.of(-1.114), Radians.of(19.201)),
       UPPER_ALGAE(Radians.of(-1.06), Radians.of(30));

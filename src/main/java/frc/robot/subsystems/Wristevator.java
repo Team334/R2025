@@ -587,9 +587,6 @@ public class Wristevator extends AdvancedSubsystem {
 
     refreshProfileReferences();
 
-    // hard limit height setter
-    _heightSetter.LimitReverseMotion = homeSwitch();
-
     DogLog.log(
         "Wristevator/Elevator Reference",
         Units.rotationsToRadians(_elevatorReference.getValueAsDouble()));
