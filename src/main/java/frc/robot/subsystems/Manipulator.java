@@ -249,6 +249,11 @@ public class Manipulator extends AdvancedSubsystem {
         .withName("Feed");
   }
 
+  /** Releases any piece. */
+  public Command releasePiece() {
+    return feedOut(ManipulatorConstants.coralOuttakeSpeed);
+  }
+
   /** Spin wheels inwards and change the current piece. */
   private Command feedIn(AngularVelocity speed) {
     return setSpeed(speed.in(RadiansPerSecond))

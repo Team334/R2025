@@ -46,7 +46,7 @@ public class Superstructure {
                 .until(
                     () ->
                         MathUtil.isNear(
-                            IntakeConstants.actuatorStowed.in(Radians), intake.getAngle(), 0.1)),
+                            IntakeConstants.actuatorStowed.in(Radians), intake.getAngle(), 0.3)),
             serializer.outtake())
         .withName("Serializer Outtake");
   }

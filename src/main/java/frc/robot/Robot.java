@@ -285,7 +285,7 @@ public class Robot extends TimedRobot {
             Superstructure.groundIntake(_intake, _serializer)
                 .andThen(new ScheduleCommand(rumbleControllers(1, 1))));
 
-    // intake / inverse passoff
+    // feed / inverse passoff
     _operatorController
         .rightTrigger()
         .and(_wristevator::homeSwitch)
@@ -295,6 +295,9 @@ public class Robot extends TimedRobot {
         .rightTrigger()
         .and(() -> !_wristevator.homeSwitch())
         .whileTrue(_manipulator.feed());
+
+    // general release piece
+    _operatorController.leftTrigger().whileTrue(_manipulator.releasePiece());
   }
 
   /**
