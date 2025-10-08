@@ -583,6 +583,8 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Wristevator/periodic()");
+
     super.periodic();
 
     refreshProfileReferences();
@@ -601,6 +603,8 @@ public class Wristevator extends AdvancedSubsystem {
         Units.rotationsToRadians(_wristReferenceSlope.getValueAsDouble()));
 
     DogLog.log("Wristevator/Latest Setpoint", _latestSetpoint.toString());
+
+    DogLog.timeEnd("Time/Wristevator/periodic()");
   }
 
   @Override

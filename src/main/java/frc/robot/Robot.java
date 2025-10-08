@@ -309,6 +309,8 @@ public class Robot extends TimedRobot {
    */
   @Override
   public void robotPeriodic() {
+    DogLog.time("Time/Robot/robotPeriodic()");
+
     // Runs the Scheduler.  This is responsible for polling buttons, adding newly-scheduled
     // commands, running already-scheduled commands, removing finished or interrupted commands,
     // and running subsystem periodic() methods.  This must be called from the robot's periodic
@@ -323,6 +325,8 @@ public class Robot extends TimedRobot {
 
       _fileOnlySet = true;
     }
+
+    DogLog.timeEnd("Time/Robot/robotPeriodic()");
   }
 
   @Override

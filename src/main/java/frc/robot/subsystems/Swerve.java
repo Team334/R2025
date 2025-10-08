@@ -416,6 +416,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Swerve/periodic()");
+
     updateVisionPoseEstimates();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
@@ -427,6 +429,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
                 _hasAppliedDriverPerspective = true;
               });
+
+      DogLog.timeEnd("Time/Swerve/periodic()");
     }
 
     DogLog.log(

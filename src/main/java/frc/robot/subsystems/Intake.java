@@ -14,6 +14,7 @@ import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -287,7 +288,11 @@ public class Intake extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Intake/periodic()");
+
     super.periodic();
+
+    DogLog.timeEnd("Time/Intake/periodic()");
   }
 
   @Override

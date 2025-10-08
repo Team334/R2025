@@ -145,7 +145,11 @@ public class Serializer extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Serializer/periodic()");
+
     super.periodic();
+
+    DogLog.timeEnd("Time/Serializer/periodic()");
   }
 
   @Override

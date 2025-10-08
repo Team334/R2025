@@ -284,7 +284,11 @@ public class Manipulator extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Manipulator/periodic()");
+
     super.periodic();
+
+    DogLog.timeEnd("Time/Manipulator/periodic()");
   }
 
   @Override
