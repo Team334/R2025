@@ -11,6 +11,12 @@ import static frc.robot.Constants.WristevatorConstants.Preset.*;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Pair;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.AngleUnit;
 import edu.wpi.first.units.AngularAccelerationUnit;
 import edu.wpi.first.units.AngularVelocityUnit;
@@ -25,6 +31,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Per;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.generated.TunerConstants;
+import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimatorConstants;
 import java.util.HashMap;
 
 /**
@@ -54,6 +61,16 @@ public final class Constants {
   public static class FieldConstants {
     public static final AprilTagFieldLayout tagLayout =
         AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeWelded);
+
+    public static enum Alignment {
+      LEFT,
+      CENTERED,
+      RIGHT
+    }
+
+    public static final Transform2d leftOffset = new Transform2d(0.5, -0.5, Rotation2d.k180deg);
+    public static final Transform2d centeredOffset = new Transform2d(0.5, 0, Rotation2d.k180deg);
+    public static final Transform2d rightOffset = new Transform2d(0.5, 0.5, Rotation2d.k180deg);
   }
 
   public static class VisionConstants {
@@ -63,6 +80,31 @@ public final class Constants {
     public static final double xBoundMargin = 0.01;
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
+
+    public static final String lowerLeftArducamName = "lower-left-arducam";
+    public static final String lowerRightArducamName = "lower-right-arducam";
+
+    public static final VisionPoseEstimatorConstants lowerLeftArducam =
+        new VisionPoseEstimatorConstants(
+            lowerLeftArducamName,
+            new Transform3d(
+                new Translation3d(0.3015, 0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
+            0.2,
+            0.2,
+            2.5,
+            4.5);
+
+    public static final VisionPoseEstimatorConstants lowerRightArducam =
+        new VisionPoseEstimatorConstants(
+            lowerRightArducamName,
+            new Transform3d(
+                new Translation3d(0.3015, -0.3014, 0.199),
+                new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),
+            0.2,
+            0.2,
+            2.5,
+            4.5);
   }
 
   public static class IntakeConstants {

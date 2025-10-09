@@ -39,13 +39,17 @@ import frc.lib.InputStream;
 import frc.lib.SelfChecked;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.SwerveConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.HolonomicController;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -89,7 +93,17 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = false;
 
-  private final List<VisionPoseEstimator> _cameras = List.of();
+  @Logged(name = VisionConstants.lowerLeftArducamName)
+  private final VisionPoseEstimator _lowerLeftArducam =
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
+
+  @Logged(name = VisionConstants.lowerRightArducamName)
+  private final VisionPoseEstimator _lowerRightArducam =
+      VisionPoseEstimator.buildFromConstants(
+          VisionConstants.lowerRightArducam, this::getHeadingAtTime);
+
+  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
 
   private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
 
@@ -101,6 +115,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   private final VisionSystemSim _visionSystemSim;
 
   private boolean _hasAppliedDriverPerspective = false;
+
+  private Pose2d _alignToTagPose = Pose2d.kZero;
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -150,6 +166,16 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
       _visionSystemSim = new VisionSystemSim("main");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
+
+      _lowerLeftArducam
+          .getCameraSim()
+          .prop
+          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
+
+      _lowerRightArducam
+          .getCameraSim()
+          .prop
+          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
       _cameras.forEach(cam -> _visionSystemSim.addCamera(cam.getCameraSim(), cam.robotToCam));
     } else {
@@ -337,29 +363,70 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
-  /**
-   * Drives the robot in a straight line to some given goal pose. Uses the pose estimator for robot
-   * pose.
-   */
+  /** Drives the robot in a straight line to some given goal pose. */
   public Command driveTo(Pose2d goalPose) {
-    return driveTo(goalPose, this::getPose);
+    return driveTo(() -> goalPose);
   }
 
   /** Drives the robot in a straight line to some given goal pose. */
-  private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
+  public Command driveTo(Supplier<Pose2d> goalPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(robotPose.get());
+          ChassisSpeeds speeds = _poseController.calculate(getPose());
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
         .beforeStarting(
             () ->
                 _poseController.reset(
-                    robotPose.get(),
-                    goalPose,
+                    getPose(),
+                    goalPose.get(),
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::isFinished)
         .withName("Drive To");
+  }
+
+  /**
+   * Aligns directly centered, to the left, or to the right of the closest visible tag.
+   *
+   * @param alignment The alignment (left, centered, right).
+   */
+  public Command alignToTag(Alignment alignment) {
+    return driveTo(() -> _alignToTagPose)
+        .beforeStarting(
+            () -> {
+              _alignToTagPose = Pose2d.kZero;
+
+              int closestTag =
+                  _newEstimates.stream()
+                      .flatMap(e -> Arrays.stream(e.singleTagEstimates()))
+                      .min(Comparator.comparingDouble(tag -> tag.distance()))
+                      .get()
+                      .tag();
+
+              _alignToTagPose = FieldConstants.tagLayout.getTagPose(closestTag).get().toPose2d();
+
+              // TODO: find alignment depending on tag id (use a map)
+              switch (alignment) {
+                case LEFT:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.leftOffset);
+                  break;
+
+                case CENTERED:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.centeredOffset);
+                  break;
+
+                case RIGHT:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.rightOffset);
+                  break;
+
+                default:
+                  break;
+              }
+
+              DogLog.log("Swerve/Align To Tag Pose", _alignToTagPose);
+            })
+        .onlyIf(() -> _newEstimates.size() > 0)
+        .withName("Align To Tag");
   }
 
   /** Wrapper for getting estimated pose. */
@@ -429,8 +496,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
                 _hasAppliedDriverPerspective = true;
               });
-
-      DogLog.timeEnd("Time/Swerve/periodic()");
     }
 
     DogLog.log(
@@ -454,6 +519,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 VecBuilder.fill(stdDevs[0], stdDevs[1], stdDevs[2]));
           });
     }
+
+    DogLog.timeEnd("Time/Swerve/periodic()");
   }
 
   @Override
