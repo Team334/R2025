@@ -68,9 +68,9 @@ public final class Constants {
       RIGHT
     }
 
-    public static final Transform2d leftOffset = new Transform2d(0.5, -0.5, Rotation2d.k180deg);
-    public static final Transform2d centeredOffset = new Transform2d(0.5, 0, Rotation2d.k180deg);
-    public static final Transform2d rightOffset = new Transform2d(0.5, 0.5, Rotation2d.k180deg);
+    public static final Transform2d leftOffset = new Transform2d(0.5, -0.15, Rotation2d.k180deg);
+    public static final Transform2d centeredOffset = new Transform2d(0.55, 0, Rotation2d.k180deg);
+    public static final Transform2d rightOffset = new Transform2d(0.5, 0.15, Rotation2d.k180deg);
   }
 
   public static class VisionConstants {
@@ -81,12 +81,12 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.01;
 
-    public static final String lowerLeftArducamName = "lower-left-arducam";
-    public static final String lowerRightArducamName = "lower-right-arducam";
+    public static final String leftArducamName = "left-arducam";
+    public static final String rightArducamName = "right-arducam";
 
-    public static final VisionPoseEstimatorConstants lowerLeftArducam =
+    public static final VisionPoseEstimatorConstants leftArducam =
         new VisionPoseEstimatorConstants(
-            lowerLeftArducamName,
+            leftArducamName,
             new Transform3d(
                 new Translation3d(0.3015, 0.3014, 0.199),
                 new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
@@ -95,9 +95,9 @@ public final class Constants {
             2.5,
             4.5);
 
-    public static final VisionPoseEstimatorConstants lowerRightArducam =
+    public static final VisionPoseEstimatorConstants rightArducam =
         new VisionPoseEstimatorConstants(
-            lowerRightArducamName,
+            rightArducamName,
             new Transform3d(
                 new Translation3d(0.3015, -0.3014, 0.199),
                 new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),

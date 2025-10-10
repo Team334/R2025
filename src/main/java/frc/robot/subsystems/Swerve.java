@@ -93,17 +93,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = false;
 
-  @Logged(name = VisionConstants.lowerLeftArducamName)
-  private final VisionPoseEstimator _lowerLeftArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.leftArducamName)
+  private final VisionPoseEstimator _leftArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.lowerRightArducamName)
-  private final VisionPoseEstimator _lowerRightArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.lowerRightArducam, this::getHeadingAtTime);
+  @Logged(name = VisionConstants.rightArducamName)
+  private final VisionPoseEstimator _rightArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of(_leftArducam, _rightArducam);
 
   private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
 
@@ -167,12 +165,12 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       _visionSystemSim = new VisionSystemSim("main");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _lowerLeftArducam
+      _leftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _lowerRightArducam
+      _rightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
@@ -394,8 +392,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return driveTo(() -> _alignToTagPose)
         .beforeStarting(
             () -> {
-              _alignToTagPose = Pose2d.kZero;
-
               int closestTag =
                   _newEstimates.stream()
                       .flatMap(e -> Arrays.stream(e.singleTagEstimates()))

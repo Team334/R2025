@@ -39,7 +39,7 @@ public class HolonomicController {
   private final PIDController _xController = new PIDController(0.3, 0, 0);
   private final PIDController _yController = new PIDController(0.3, 0, 0);
 
-  private final PIDController _headingController = new PIDController(0.3, 0, 0);
+  private final PIDController _headingController = new PIDController(0.6, 0, 0);
 
   public HolonomicController() {
     _headingController.enableContinuousInput(-Math.PI, Math.PI);

@@ -34,6 +34,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
+import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.Piece;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
@@ -227,9 +228,25 @@ public class Robot extends TimedRobot {
                 .negate()
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
-    _driverController.x().whileTrue(_swerve.brake());
-    _driverController.a().onTrue(_swerve.toggleFieldOriented());
-    _driverController.y().onTrue(_swerve.resetHeading());
+    _driverController.a().whileTrue(_swerve.brake());
+    _driverController.y().onTrue(_swerve.toggleFieldOriented());
+    _driverController.b().onTrue(_swerve.resetHeading());
+
+    _driverController
+        .x()
+        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
+        .whileTrue(_swerve.alignToTag(Alignment.LEFT));
+
+    _driverController
+        .x()
+        .and(
+            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
+        .whileTrue(_swerve.alignToTag(Alignment.CENTERED));
+
+    _driverController
+        .x()
+        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
+        .whileTrue(_swerve.alignToTag(Alignment.RIGHT));
   }
 
   private void configureOperatorBindings() {
@@ -257,16 +274,6 @@ public class Robot extends TimedRobot {
                 () -> getManipulatorPiece() == Piece.CORAL));
 
     _operatorController.x().onTrue(_wristevator.setGoal(L4));
-
-    // SmartDashboard.putData(_wristevator.setGoal(PROCESSOR).withName("Processor"));
-    // SmartDashboard.putData(_wristevator.setGoal(HUMAN).withName("Human"));
-    // SmartDashboard.putData(_wristevator.setGoal(HOME).withName("Home"));
-    // SmartDashboard.putData(_wristevator.setGoal(L1).withName("L1"));
-    // SmartDashboard.putData(_wristevator.setGoal(L2).withName("L2"));
-    // SmartDashboard.putData(_wristevator.setGoal(LOWER_ALGAE).withName("Lower Algae"));
-    // SmartDashboard.putData(_wristevator.setGoal(L3).withName("L3"));
-    // SmartDashboard.putData(_wristevator.setGoal(UPPER_ALGAE).withName("Upper Algae"));
-    // SmartDashboard.putData(_wristevator.setGoal(L4).withName("L4"));
 
     // ground outtake
     _operatorController.leftBumper().whileTrue(_intake.outtake());
