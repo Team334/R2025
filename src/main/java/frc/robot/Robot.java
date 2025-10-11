@@ -347,5 +347,9 @@ public class Robot extends TimedRobot {
     super.close();
 
     _swerve.close();
+    _intake.close();
+    _serializer.close();
+    _manipulator.close();
+    _wristevator.close();
   }
 }

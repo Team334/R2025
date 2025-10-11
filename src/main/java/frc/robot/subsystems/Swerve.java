@@ -293,7 +293,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                           allianceColor == Alliance.Red ? Rotation2d.k180deg : Rotation2d.kZero)
                   .orElse(Rotation2d.kZero);
 
-          resetRotation(rotation);
+          resetPose(new Pose2d(getPose().getTranslation(), rotation));
         });
   }
 
