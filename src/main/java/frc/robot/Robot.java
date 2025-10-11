@@ -309,6 +309,8 @@ public class Robot extends TimedRobot {
 
     // general release piece
     _operatorController.leftTrigger().whileTrue(_manipulator.releasePiece());
+
+    _operatorController.povDown().whileTrue(_intake.zero());
   }
 
   /**

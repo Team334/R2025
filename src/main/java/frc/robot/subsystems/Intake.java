@@ -7,6 +7,7 @@ import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.configs.MotorOutputConfigs;
+import com.ctre.phoenix6.configs.SoftwareLimitSwitchConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
@@ -277,6 +278,30 @@ public class Intake extends AdvancedSubsystem {
             IntakeConstants.actuatorOut.in(Radians),
             IntakeConstants.feedSpeed.unaryMinus().in(RadiansPerSecond))
         .withName("Outtake");
+  }
+
+  public Command zero() {
+    return run(() -> setActuatorVoltage(-1))
+        .beforeStarting(
+            () -> {
+              var c = new SoftwareLimitSwitchConfigs();
+
+              _actuatorMotor.getConfigurator().refresh(c);
+              _actuatorMotor
+                  .getConfigurator()
+                  .apply(c.withForwardSoftLimitEnable(false).withReverseSoftLimitEnable(false));
+            })
+        .finallyDo(
+            () -> {
+              _actuatorMotor.setPosition(IntakeConstants.actuatorStowed);
+
+              var c = new SoftwareLimitSwitchConfigs();
+
+              _actuatorMotor.getConfigurator().refresh(c);
+              _actuatorMotor
+                  .getConfigurator()
+                  .apply(c.withForwardSoftLimitEnable(true).withReverseSoftLimitEnable(true));
+            });
   }
 
   private void setActuatorVoltage(double volts) {

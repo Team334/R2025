@@ -75,11 +75,12 @@ public class Autos {
         .done()
         .onTrue(
             sequence(
-                    _wristevator.setGoal(L4),
-                    _swerve.alignToTag(Alignment.LEFT),
-                    _manipulator.feed())
-                .andThen(onePieceB.cmd()));
+                _wristevator.setGoal(L4),
+                _swerve.alignToTag(Alignment.LEFT),
+                waitSeconds(0.5),
+                _manipulator.feed()));
 
+    onePieceA.doneDelayed(5).onTrue(onePieceB.cmd());
     onePieceB.done().onTrue(_wristevator.setGoal(HOME));
 
     return routine;
