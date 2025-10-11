@@ -18,6 +18,7 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.ClassPreloader;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -133,6 +134,8 @@ public class Robot extends TimedRobot {
     new Trigger(() -> getManipulatorPiece() == Piece.NONE)
         .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
+    PortForwarder.add(5800, "orangepi.local", 5800);
+
     SmartDashboard.putData(
         "Robot Self Check",
         sequence(
@@ -147,9 +150,6 @@ public class Robot extends TimedRobot {
     addPeriodic(FaultLogger::update, 1);
 
     AutoChooser chooser = new AutoChooser();
-
-    chooser.addRoutine("Short Path", _autos::shortPath);
-    chooser.addRoutine("Forward Intake Right", _autos::forwardIntakeRight);
 
     SmartDashboard.putData("Auto Chooser", chooser);
 
