@@ -8,8 +8,6 @@ import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.StringArrayPublisher;
 import java.util.Set;
 
-// (from 1155)
-
 /** A table on Network Tables that contains non-persistent faults. */
 public class FaultsTable {
   private final StringArrayPublisher errors;

@@ -6,12 +6,8 @@ package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
 import static edu.wpi.first.wpilibj2.command.Commands.sequence;
-import static edu.wpi.first.wpilibj2.command.button.RobotModeTriggers.*;
-import static frc.robot.Constants.WristevatorConstants.Preset.*;
-import static frc.robot.Robot.getWristevatorGoal;
 
 import choreo.trajectory.SwerveSample;
-import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFX;
@@ -23,26 +19,18 @@ import com.ctre.phoenix6.swerve.SwerveRequest.*;
 import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.epilogue.Logged.Strategy;
-import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.units.measure.*;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.Subsystem;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.FaultLogger;
 import frc.lib.FaultsTable;
 import frc.lib.FaultsTable.Fault;
@@ -51,21 +39,17 @@ import frc.lib.InputStream;
 import frc.lib.SelfChecked;
 import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.FieldConstants.FieldLocation;
+import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
-import frc.robot.utils.AlignPoses;
-import frc.robot.utils.AlignPoses.AlignSide;
 import frc.robot.utils.HolonomicController;
-import frc.robot.utils.LimelightHelpers;
-import frc.robot.utils.LimelightHelpers.RawDetection;
-import frc.robot.utils.SysId;
 import frc.robot.utils.VisionPoseEstimator;
 import frc.robot.utils.VisionPoseEstimator.VisionPoseEstimate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,6 +58,20 @@ import org.photonvision.simulation.VisionSystemSim;
 
 @Logged(strategy = Strategy.OPT_IN)
 public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChecked {
+  // teleop requests
+  private final RobotCentric _robotCentricRequest = new RobotCentric();
+  private final FieldCentric _fieldCentricRequest = new FieldCentric();
+
+  private final SwerveDriveBrake _brakeRequest = new SwerveDriveBrake();
+
+  // auton request for choreo / pose controller
+  private final ApplyFieldSpeeds _fieldSpeedsRequest = new ApplyFieldSpeeds();
+
+  private final HolonomicController _poseController = new HolonomicController();
+
+  private double _lastSimTime = 0;
+  private Notifier _simNotifier;
+
   // faults and the table containing them
   private Set<Fault> _faults = new HashSet<Fault>();
   private FaultsTable _faultsTable =
@@ -82,59 +80,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           getName() + " Faults"); // TODO: watch out unit tests
 
   private boolean _hasError = false;
-
-  // teleop requests
-  private final RobotCentric _robotCentricRequest = new RobotCentric();
-  private final FieldCentric _fieldCentricRequest = new FieldCentric();
-
-  private final SwerveDriveBrake _brakeRequest = new SwerveDriveBrake();
-
-  // auton request for choreo
-  private final ApplyFieldSpeeds _fieldSpeedsRequest = new ApplyFieldSpeeds();
-
-  // sysid requests
-  private final SysIdSwerveTranslation _translationSysIdRequest = new SysIdSwerveTranslation();
-  private final SysIdSwerveSteerGains _steerSysIdRequest = new SysIdSwerveSteerGains();
-  private final SysIdSwerveRotation _rotationSysIdRequest = new SysIdSwerveRotation();
-
-  // SysId routine for characterizing translation. This is used to find PID gains for the drive
-  // motors.
-  private final SysIdRoutine _sysIdRoutineTranslation =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              null, // Use default ramp rate (1 V/s)
-              Volts.of(2), // Reduce dynamic step voltage to 4 V to prevent brownout
-              Seconds.of(5), // Use default timeout (10 s)
-              state -> SignalLogger.writeString("state", state.toString())),
-          new SysIdRoutine.Mechanism(
-              volts -> setControl(_translationSysIdRequest.withVolts(volts)), null, this));
-
-  // SysId routine for characterizing steer. This is used to find PID gains for the steer motors.
-  private final SysIdRoutine _sysIdRoutineSteer =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              null, // Use default ramp rate (1 V/s)
-              Volts.of(7), // Use dynamic voltage of 7 V
-              null, // Use default timeout (10 s)
-              state -> SignalLogger.writeString("state", state.toString())),
-          new SysIdRoutine.Mechanism(
-              volts -> setControl(_steerSysIdRequest.withVolts(volts)), null, this));
-
-  // SysId routine for finding MOI of the robot.
-  private final SysIdRoutine _sysIdRoutineRotation =
-      new SysIdRoutine(
-          new SysIdRoutine.Config(
-              null, // Radian Per Second
-              Volts.of(7), // Radians
-              null, // Use default timeout (10 s)
-              state -> SignalLogger.writeString("state", state.toString())),
-          new SysIdRoutine.Mechanism(
-              volts -> setControl(_rotationSysIdRequest.withRotationalRate(volts.in(Volts))),
-              null,
-              this));
-
-  private double _lastSimTime = 0;
-  private Notifier _simNotifier;
 
   @Logged(name = "Driver Chassis Speeds")
   private final ChassisSpeeds _driverChassisSpeeds = new ChassisSpeeds();
@@ -148,36 +93,28 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = false;
 
-  private List<VisionPoseEstimate> _estimates = new ArrayList<VisionPoseEstimate>();
+  @Logged(name = VisionConstants.leftArducamName)
+  private final VisionPoseEstimator _leftArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam, this::getHeadingAtTime);
 
-  private double _alignEstimateDistance = Double.MAX_VALUE;
+  @Logged(name = VisionConstants.rightArducamName)
+  private final VisionPoseEstimator _rightArducam =
+      VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam, this::getHeadingAtTime);
 
-  private Translation2d _alignOdomCompensation = null;
+  private final List<VisionPoseEstimator> _cameras = List.of(_leftArducam, _rightArducam);
 
-  private HolonomicController _poseController = new HolonomicController();
-
-  private boolean _hasAppliedDriverPerspective;
-
-  @Logged(name = VisionConstants.lowerLeftArducamName)
-  private final VisionPoseEstimator _lowerLeftArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.lowerLeftArducam, this::getHeadingAtTime);
-
-  @Logged(name = VisionConstants.lowerRightArducamName)
-  private final VisionPoseEstimator _lowerRightArducam =
-      VisionPoseEstimator.buildFromConstants(
-          VisionConstants.lowerRightArducam, this::getHeadingAtTime);
-
-  private final List<VisionPoseEstimator> _cameras = List.of(_lowerLeftArducam, _lowerRightArducam);
+  private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
 
   private final List<VisionPoseEstimate> _acceptedEstimates = new ArrayList<>();
   private final List<VisionPoseEstimate> _rejectedEstimates = new ArrayList<>();
 
-  private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
-
   private final Set<Pose3d> _detectedTags = new HashSet<>();
 
   private final VisionSystemSim _visionSystemSim;
+
+  private boolean _hasAppliedDriverPerspective = false;
+
+  private Pose2d _alignToTagPose = Pose2d.kZero;
 
   /**
    * Creates a new CommandSwerveDrivetrain.
@@ -220,32 +157,20 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
           DogLog.log("Swerve/Odometry Period", state.OdometryPeriod);
         });
 
-    autonomous().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
-
-    teleop().onTrue(Commands.runOnce(() -> _ignoreVisionEstimates = false));
-
-    SmartDashboard.putData(
-        "RESET PRACTICE FIELD", Commands.runOnce(() -> resetRotation(Rotation2d.fromDegrees(0))));
-
-    // display all sysid routines
-    SysId.displayRoutine("Swerve Translation", _sysIdRoutineTranslation);
-    SysId.displayRoutine("Swerve Steer", _sysIdRoutineSteer);
-    SysId.displayRoutine("Swerve Rotation", _sysIdRoutineRotation);
-
     registerFallibles();
 
     if (Robot.isSimulation()) {
       startSimThread();
 
-      _visionSystemSim = new VisionSystemSim("Vision System Sim");
+      _visionSystemSim = new VisionSystemSim("main");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _lowerLeftArducam
+      _leftArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _lowerRightArducam
+      _rightArducam
           .getCameraSim()
           .prop
           .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
@@ -302,6 +227,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   }
 
   /** Returns whether this subsystem has errors (has fault type of error). */
+  @Logged(name = "Has Error")
   public final boolean hasError() {
     return _hasError;
   }
@@ -367,7 +293,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                           allianceColor == Alliance.Red ? Rotation2d.k180deg : Rotation2d.kZero)
                   .orElse(Rotation2d.kZero);
 
-          resetRotation(rotation);
+          resetPose(new Pose2d(getPose().getTranslation(), rotation));
         });
   }
 
@@ -435,250 +361,68 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
             .withWheelForceFeedforwardsY(sample.moduleForcesY()));
   }
 
-  /** Finds the proper align pose and tag when aligning. */
-  private Pair<AlignPoses, Integer> findAlignment(FieldLocation location) {
-    Alliance alliance = DriverStation.getAlliance().orElse(Alliance.Blue);
-
-    AlignPoses alignGoal = FieldConstants.reefFlush;
-    AlignPoses alignBaseGoal = FieldConstants.reefFlush;
-
-    int alignTag = FieldConstants.reefTag;
-
-    double minDistance = Double.MAX_VALUE;
-
-    Pose2d robotPose =
-        getPose()
-            .rotateAround(
-                FieldConstants.fieldCenter,
-                alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-    switch (location) {
-      case REEF:
-        if (getWristevatorGoal() == L1 || getWristevatorGoal() == L4) {
-          alignBaseGoal = FieldConstants.reefNotFlush;
-        } else {
-          alignBaseGoal = FieldConstants.reefFlush;
-        }
-
-        for (int i = 0; i < 6; i++) {
-          AlignPoses goal =
-              alignBaseGoal.rotateAround(
-                  FieldConstants.reefCenter, Rotation2d.fromDegrees(-60).times(i));
-
-          if (robotPose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-            alignGoal = goal;
-            minDistance = robotPose.minus(goal.getCenter()).getTranslation().getNorm();
-
-            alignTag = FieldConstants.reefTag + i;
-          }
-        }
-
-        break;
-
-      case HUMAN:
-        alignBaseGoal = FieldConstants.human;
-
-        for (int i = 0; i < 2; i++) {
-          AlignPoses goal =
-              alignBaseGoal.transform(new Translation2d(0, -6.26 * i), Rotation2d.kZero);
-
-          goal =
-              goal.rotateAround(
-                  goal.getCenter().getTranslation(), Rotation2d.fromDegrees(106).times(i));
-
-          if (robotPose.minus(goal.getCenter()).getTranslation().getNorm() < minDistance) {
-            alignGoal = goal;
-            minDistance = robotPose.minus(goal.getCenter()).getTranslation().getNorm();
-
-            alignTag = FieldConstants.humanTag - i;
-          }
-        }
-
-        break;
-
-      case PROCESSOR:
-        alignGoal = FieldConstants.processor;
-        alignTag = FieldConstants.processorTag;
-        break;
-
-      default:
-        break;
-    }
-
-    alignGoal =
-        alignGoal.rotateAround(
-            FieldConstants.fieldCenter,
-            alliance == Alliance.Blue ? Rotation2d.kZero : Rotation2d.k180deg);
-
-    alignTag =
-        alliance == Alliance.Blue ? alignTag : FieldConstants.tagCorrespondences.get(alignTag);
-
-    return Pair.of(alignGoal, alignTag);
-  }
-
-  /** Backup function that'll manually prepare for reef alignment. */
-  public Command resetToReefTag() {
-    return Commands.run(
-            () -> {
-              var tag = findAlignment(FieldLocation.REEF).getSecond();
-
-              _newEstimates.stream()
-                  .map(e -> e.singleTagEstimates())
-                  .flatMap(e -> Arrays.stream(e))
-                  .forEach(
-                      e -> {
-                        if (e.tag() != tag) return;
-
-                        if (e.distance() < _alignEstimateDistance) {
-                          _ignoreVisionEstimates = true;
-
-                          var pose =
-                              samplePoseAt(Utils.fpgaToCurrentTime(e.timestamp()))
-                                  .orElse(getPose());
-
-                          _alignOdomCompensation =
-                              e.pose().toPose2d().getTranslation().minus(pose.getTranslation());
-
-                          _alignEstimateDistance = e.distance();
-                        }
-                      });
-            })
-        .until(() -> _alignOdomCompensation != null);
-  }
-
-  /** Align to a coral. */
-  public Command pieceAlign() {
-    return defer(
-            () -> {
-              Angle tx = Degrees.of(-LimelightHelpers.getTX(VisionConstants.limelightName));
-              Angle ty = Degrees.of(LimelightHelpers.getTY(VisionConstants.limelightName));
-
-              RawDetection[] rawDetections =
-                  LimelightHelpers.getRawDetections(VisionConstants.limelightName);
-              double sideProportions = 0;
-
-              if (rawDetections.length != 0) {
-                Rectangle2d coralBox =
-                    new Rectangle2d(
-                        new Translation2d(rawDetections[0].corner0_X, rawDetections[0].corner0_Y),
-                        new Translation2d(rawDetections[0].corner2_X, rawDetections[0].corner2_Y));
-
-                sideProportions = coralBox.getYWidth() / coralBox.getXWidth();
-              }
-
-              double groundDistance =
-                  (VisionConstants.robotToLimelight.getZ())
-                      * Math.tan(
-                          (Math.PI / 2)
-                              - (VisionConstants.robotToLimelight.getRotation().getY()
-                                  - ty.in(Radians)));
-
-              Rotation2d groundAngle =
-                  new Rotation2d(
-                      Math.atan2(
-                          groundDistance * Math.sin(tx.in(Radians)),
-                          (groundDistance - VisionConstants.robotToLimelight.getX())
-                              * Math.cos(tx.in(Radians))));
-
-              var pose =
-                  sideProportions < 1.3
-                      ? getPose()
-                          .transformBy(
-                              new Transform2d(
-                                  -groundDistance * groundAngle.getCos(),
-                                  -groundDistance * groundAngle.getSin(),
-                                  groundAngle.plus(
-                                      sideProportions >= 1.3
-                                          ? Rotation2d.fromDegrees(45)
-                                          : Rotation2d.kZero)))
-                      : getPose();
-
-              return driveTo(pose);
-            })
-        .unless(() -> LimelightHelpers.getTargetCount(VisionConstants.limelightName) == 0)
-        .withName("Piece Align");
-  }
-
-  /** Aligns to the specified field location. */
-  public Command fieldAlign(FieldLocation location, AlignSide side) {
-    return defer(
-            () -> {
-              var alignment = findAlignment(location);
-
-              return alignTo(alignment.getFirst().getPose(side), alignment.getSecond());
-            })
-        .withName("Field Align");
-  }
-
-  /** Aligns to a pose using trig estimate for the robot pose that uses the specified tag id. */
-  public Command alignTo(Pose2d goalPose, int tag) {
-    return sequence(
-            driveTo(goalPose).until(() -> _alignOdomCompensation != null),
-            driveTo(
-                goalPose,
-                () -> {
-                  // if it drove all the way to the goal pose but never got a trig estimate
-                  if (_alignOdomCompensation == null) return getPose();
-
-                  return new Pose2d(
-                      getPose().getTranslation().plus(_alignOdomCompensation), getHeading());
-                }))
-        .raceWith(
-            Commands.run(
-                () -> {
-                  // update align odom compensation if there are new trig estimates
-                  _newEstimates.stream()
-                      .map(e -> e.singleTagEstimates())
-                      .flatMap(e -> Arrays.stream(e))
-                      .forEach(
-                          e -> {
-                            if (e.tag() != tag) return;
-
-                            if (e.distance() > VisionConstants.trigMaxDistance.in(Meters)) return;
-
-                            if (e.distance() < _alignEstimateDistance) {
-                              _ignoreVisionEstimates = true;
-
-                              var pose =
-                                  samplePoseAt(Utils.fpgaToCurrentTime(e.timestamp()))
-                                      .orElse(getPose());
-
-                              _alignOdomCompensation =
-                                  e.pose().toPose2d().getTranslation().minus(pose.getTranslation());
-
-                              _alignEstimateDistance = e.distance();
-                            }
-                          });
-                }))
-        .finallyDo(
-            () -> {
-              _alignEstimateDistance = Double.MAX_VALUE;
-              _alignOdomCompensation = null;
-              _ignoreVisionEstimates = false; // TODO: reset to old value instead of this
-            })
-        .withName("Align To");
-  }
-
-  /** Drives the robot in a straight line to some given goal pose. Uses the global pose estimate. */
+  /** Drives the robot in a straight line to some given goal pose. */
   public Command driveTo(Pose2d goalPose) {
-    return driveTo(goalPose, this::getPose);
+    return driveTo(() -> goalPose);
   }
 
   /** Drives the robot in a straight line to some given goal pose. */
-  private Command driveTo(Pose2d goalPose, Supplier<Pose2d> robotPose) {
+  public Command driveTo(Supplier<Pose2d> goalPose) {
     return run(() -> {
-          ChassisSpeeds speeds = _poseController.calculate(robotPose.get());
+          ChassisSpeeds speeds = _poseController.calculate(getPose());
 
           setControl(_fieldSpeedsRequest.withSpeeds(speeds));
         })
         .beforeStarting(
             () ->
                 _poseController.reset(
-                    robotPose.get(),
-                    goalPose,
+                    getPose(),
+                    goalPose.get(),
                     ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getHeading())))
         .until(_poseController::isFinished)
         .withName("Drive To");
+  }
+
+  /**
+   * Aligns directly centered, to the left, or to the right of the closest visible tag.
+   *
+   * @param alignment The alignment (left, centered, right).
+   */
+  public Command alignToTag(Alignment alignment) {
+    return driveTo(() -> _alignToTagPose)
+        .beforeStarting(
+            () -> {
+              int closestTag =
+                  _newEstimates.stream()
+                      .flatMap(e -> Arrays.stream(e.singleTagEstimates()))
+                      .min(Comparator.comparingDouble(tag -> tag.distance()))
+                      .get()
+                      .tag();
+
+              _alignToTagPose = FieldConstants.tagLayout.getTagPose(closestTag).get().toPose2d();
+
+              // TODO: find alignment depending on tag id (use a map)
+              switch (alignment) {
+                case LEFT:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.leftOffset);
+                  break;
+
+                case CENTERED:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.centeredOffset);
+                  break;
+
+                case RIGHT:
+                  _alignToTagPose = _alignToTagPose.transformBy(FieldConstants.rightOffset);
+                  break;
+
+                default:
+                  break;
+              }
+
+              DogLog.log("Swerve/Align To Tag Pose", _alignToTagPose);
+            })
+        .onlyIf(() -> _newEstimates.size() > 0)
+        .withName("Align To Tag");
   }
 
   /** Wrapper for getting estimated pose. */
@@ -691,10 +435,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
     return getPose().getRotation();
   }
 
-  /**
-   * Returns the robot's estimated rotation at the given timestamp. This timestamp must be in FPGA
-   * time.
-   */
+  /** Returns the robot's estimated rotation at the given timestamp (FPGA time). */
   public Rotation2d getHeadingAtTime(double timestamp) {
     return samplePoseAt(Utils.fpgaToCurrentTime(timestamp)).orElse(getPose()).getRotation();
   }
@@ -706,29 +447,20 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   // updates pose estimator with vision
   private void updateVisionPoseEstimates() {
+    _newEstimates.clear();
+
     _acceptedEstimates.clear();
     _rejectedEstimates.clear();
 
-    _newEstimates.clear();
-
     _detectedTags.clear();
-
-    _estimates.clear();
 
     for (VisionPoseEstimator cam : _cameras) {
       cam.update();
 
-      _estimates = cam.getNewEstimates();
-
-      // TEMPORARY CAMERA PLACEMENT VISUALIZATION:
-      // DogLog.log(
-      //     "Swerve/" + cam.camName + " Position",
-      //     new Pose3d(getPose())
-      //         .transformBy(new Transform3d(0.0, 0.0, 0.1, Rotation3d.kZero))
-      //         .transformBy(cam.robotToCam));
+      var estimates = cam.getNewEstimates();
 
       // add estimates to arrays and update detected tags
-      _estimates.forEach(
+      estimates.forEach(
           (estimate) -> {
             // add all detected tag poses
             for (int id : estimate.detectedTags()) {
@@ -747,6 +479,8 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Swerve/periodic()");
+
     updateVisionPoseEstimates();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
@@ -781,11 +515,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
                 VecBuilder.fill(stdDevs[0], stdDevs[1], stdDevs[2]));
           });
     }
+
+    DogLog.timeEnd("Time/Swerve/periodic()");
   }
 
   @Override
   public void simulationPeriodic() {
-    _visionSystemSim.update(getPose());
+    _visionSystemSim.update(getPose()); // TODO: odom only?
   }
 
   // TODO: add self check routines
@@ -806,8 +542,6 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Override
   public void close() {
     super.close();
-
-    _cameras.forEach(cam -> cam.close());
 
     _simNotifier.close();
   }

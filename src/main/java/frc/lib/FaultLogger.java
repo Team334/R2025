@@ -22,8 +22,6 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 import org.photonvision.PhotonCamera;
 
-// (from team 1155 but slightly modified)
-
 /**
  * FaultLogger allows for faults and errors to be logged and displayed.
  *
@@ -81,8 +79,8 @@ public final class FaultLogger {
     activeFaults.addAll(newFaults);
     newFaults.clear();
 
-    // log to doglog as well
-    activeFaults.forEach(f -> DogLog.logFault(f.toString()));
+    // log to doglog
+    activeFaults.forEach(f -> DogLog.logFault(f.toString(), null));
 
     totalFaults.addAll(activeFaults);
 

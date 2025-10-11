@@ -26,7 +26,7 @@ public class Superstructure {
   /** Passoff from intake (if needed) -> serializer -> manipulator. */
   public static Command passoff(Intake intake, Serializer serializer, Manipulator manipulator) {
     return parallel(
-            intake.intake().until(serializer::getFrontBeam).asProxy(),
+            intake.intake().until(serializer::getCoralBeam).asProxy(),
             serializer.passoff(),
             manipulator.passoff())
         .withName("Passoff");
@@ -34,25 +34,26 @@ public class Superstructure {
 
   /** Coral passoff from manipulator -> serializer. */
   public static Command inversePassoff(Serializer serializer, Manipulator manipulator) {
-    return deadline(serializer.inversePassoff(), manipulator.inversePassoff())
+    return deadline(manipulator.inversePassoff(), serializer.inversePassoff())
         .withName("Inverse Passoff");
   }
 
   /** Outtake from serializer. */
   public static Command serializerOuttake(Serializer serializer, Intake intake) {
     return sequence(
-        intake
-            .stow()
-            .until(
-                () ->
-                    MathUtil.isNear(
-                        IntakeConstants.actuatorStowed.in(Radians), intake.getAngle(), 0.05)),
-        serializer.outtake());
+            intake
+                .stow()
+                .until(
+                    () ->
+                        MathUtil.isNear(
+                            IntakeConstants.actuatorStowed.in(Radians), intake.getAngle(), 0.3)),
+            serializer.outtake())
+        .withName("Serializer Outtake");
   }
 
   /** Intake from intake -> serializer. */
   public static Command groundIntake(Intake intake, Serializer serializer) {
-    return deadline(serializer.intake(), intake.intake().until(serializer::getFrontBeam).asProxy())
+    return deadline(serializer.intake(), intake.intake().until(serializer::getCoralBeam).asProxy())
         .withName("Ground Intake");
   }
 }

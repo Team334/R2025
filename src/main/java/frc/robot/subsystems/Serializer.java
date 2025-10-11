@@ -10,40 +10,29 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.networktables.BooleanEntry;
+import edu.wpi.first.networktables.BooleanSubscriber;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.DIOSim;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
 import frc.lib.FaultLogger;
-import frc.lib.Tuning;
 import frc.robot.Constants;
 import frc.robot.Constants.SerializerConstants;
 import frc.robot.Robot;
-import frc.robot.subsystems.Manipulator.Piece;
 import frc.robot.utils.SysId;
-import java.util.function.Consumer;
 
 public class Serializer extends AdvancedSubsystem {
-  private final DigitalInput _frontBeam;
+  private final DigitalInput _coralBeam;
 
-  private DIOSim _frontBeamSim;
-
-  private final BooleanEvent _frontBeamEvent;
-
-  private BooleanEntry _frontBeamSimValue;
-
-  @Logged(name = "Desired Speed")
-  private double _desiredSpeed;
+  private DIOSim _coralBeamSim;
+  private BooleanSubscriber _coralBeamState;
 
   private final TalonFX _feedMotor =
       new TalonFX(SerializerConstants.feedMotorId, Constants.canivore);
@@ -63,25 +52,16 @@ public class Serializer extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
-  private final Consumer<Piece> _currentPieceSetter;
-
-  public Serializer(Consumer<Piece> currentPieceSetter) {
+  public Serializer() {
     setDefaultCommand(idle());
 
-    _currentPieceSetter = currentPieceSetter;
-
-    _frontBeam = new DigitalInput(SerializerConstants.frontBeamPort);
-
-    _frontBeamEvent =
-        new BooleanEvent(CommandScheduler.getInstance().getDefaultButtonLoop(), this::getFrontBeam)
-            .falling();
+    _coralBeam = new DigitalInput(SerializerConstants.coralBeamPort);
 
     SysId.displayRoutine("Serializer Feed", _serializerRoutine);
 
     if (Robot.isSimulation()) {
-      _frontBeamSim = new DIOSim(_frontBeam);
-
-      _frontBeamSimValue = Tuning.entry("/Tuning/Serializer Front Beam", false);
+      _coralBeamSim = new DIOSim(_coralBeam);
+      _coralBeamState = DogLog.tunable("Serializer/Coral Beam State", false);
     }
 
     var feedMotorConfigs = new TalonFXConfiguration();
@@ -94,7 +74,8 @@ public class Serializer extends AdvancedSubsystem {
 
     feedMotorConfigs.Feedback.SensorToMechanismRatio = SerializerConstants.feedGearRatio;
 
-    _feedVelocitySetter.UpdateFreqHz = 250;
+    _feedVelocitySetter.UpdateFreqHz =
+        250; // to quickly stop the serializer once the coral beam is broken
 
     CTREUtil.attempt(() -> _feedMotor.getConfigurator().apply(feedMotorConfigs), _feedMotor);
 
@@ -120,32 +101,31 @@ public class Serializer extends AdvancedSubsystem {
   // Set the speed of the front feed wheels in rad/s.
   private Command setSpeed(double speed) {
     return run(
-        () -> {
-          _desiredSpeed = speed;
-
-          _feedMotor.setControl(_feedVelocitySetter.withVelocity(Units.radiansToRotations(speed)));
-        });
+        () ->
+            _feedMotor.setControl(
+                _feedVelocitySetter.withVelocity(Units.radiansToRotations(speed))));
   }
 
-  @Logged(name = "Front Beam")
-  public boolean getFrontBeam() {
-    return !_frontBeam.get();
+  @Logged(name = "Coral Beam")
+  public boolean getCoralBeam() {
+    return !_coralBeam.get();
   }
 
   public Command idle() {
     return setSpeed(0).withName("Idle");
   }
 
-  /** Intakes a coral until the front beam is broken. */
+  /** Intakes a coral until the coral beam is broken. */
   public Command intake() {
     return setSpeed(SerializerConstants.feedSpeed.in(RadiansPerSecond))
-        .until(this::getFrontBeam)
+        .until(this::getCoralBeam)
         .withName("Intake");
   }
 
   /** Outtakes a coral to the intake. */
   public Command outtake() {
-    return setSpeed(-SerializerConstants.feedSpeed.in(RadiansPerSecond)).withName("Outtake");
+    return setSpeed(SerializerConstants.feedSpeed.unaryMinus().in(RadiansPerSecond))
+        .withName("Outtake");
   }
 
   /** Passoffs a coral to the manipulator. */
@@ -155,9 +135,7 @@ public class Serializer extends AdvancedSubsystem {
 
   /** Inverse passoff from the manipulator. */
   public Command inversePassoff() {
-    return setSpeed(-SerializerConstants.feedSpeed.in(RadiansPerSecond))
-        .until(() -> _frontBeamEvent.getAsBoolean())
-        .andThen(Commands.runOnce(() -> _currentPieceSetter.accept(Piece.NONE)))
+    return setSpeed(SerializerConstants.passoffSpeed.unaryMinus().in(RadiansPerSecond))
         .withName("Inverse Passoff");
   }
 
@@ -167,22 +145,25 @@ public class Serializer extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Serializer/periodic()");
+
     super.periodic();
+
+    DogLog.timeEnd("Time/Serializer/periodic()");
   }
 
   @Override
   public void simulationPeriodic() {
     super.simulationPeriodic();
 
-    _frontBeamSim.setValue(!_frontBeamSimValue.get());
+    _coralBeamSim.setValue(!_coralBeamState.get());
   }
 
   @Override
   public void close() {
-    _frontBeam.close();
-
     _feedMotor.close();
 
-    _frontBeamSimValue.close();
+    _coralBeam.close();
+    _coralBeamState.close();
   }
 }

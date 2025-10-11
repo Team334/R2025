@@ -57,7 +57,6 @@ import frc.robot.Constants.WristevatorConstants.Setpoint;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
 import java.util.function.Consumer;
-import java.util.function.DoubleSupplier;
 
 public class Wristevator extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.35, 2);
@@ -116,7 +115,6 @@ public class Wristevator extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setWristVoltage(volts.in(Volts)), null, this));
 
-  @Logged(name = "Motion Magic Timestamp Threshold")
   private double _motionMagicTimestampThreshold = 0;
 
   private final Trigger _motionMagicTrigger =
@@ -144,9 +142,6 @@ public class Wristevator extends AdvancedSubsystem {
           WristevatorConstants.maxElevatorSpeed.in(RadiansPerSecond),
           WristevatorConstants.maxElevatorAcceleration.in(RadiansPerSecondPerSecond));
 
-  private final State _elevatorMaxGoal = new State();
-  private final State _elevatorMaxSetpoint = new State();
-
   private final TrapezoidProfile _elevatorMaxProfile =
       new TrapezoidProfile(_elevatorMaxConstraints);
 
@@ -156,15 +151,9 @@ public class Wristevator extends AdvancedSubsystem {
           WristevatorConstants.maxWristSpeed.in(RadiansPerSecond),
           WristevatorConstants.maxWristAcceleration.in(RadiansPerSecondPerSecond));
 
-  private final State _wristMaxGoal = new State();
-  private final State _wristMaxSetpoint = new State();
-
   private final TrapezoidProfile _wristMaxProfile = new TrapezoidProfile(_wristMaxConstraints);
 
   private final DigitalInput _homeSwitch = new DigitalInput(WristevatorConstants.homeSwitch);
-
-  @Logged(name = "Is Manual")
-  private boolean _isManual = false;
 
   @Logged(name = "Is Motion Magic")
   private boolean _isMotionMagic = false;
@@ -173,6 +162,7 @@ public class Wristevator extends AdvancedSubsystem {
   private boolean _finishedLatestProfiles = true;
 
   private Setpoint _latestSetpoint = HOME;
+
   private Consumer<Setpoint> _wristevatorGoalSetter;
 
   private DIOSim _homeSwitchSim;
@@ -186,9 +176,6 @@ public class Wristevator extends AdvancedSubsystem {
 
   public Wristevator(Consumer<Setpoint> wristevatorGoalSetter) {
     _wristevatorGoalSetter = wristevatorGoalSetter;
-
-    new Trigger(() -> _isManual)
-        .onTrue(Commands.runOnce(() -> _wristevatorGoalSetter.accept(null)));
 
     var leftMotorConfigs = new TalonFXConfiguration();
     var rightMotorConfigs = new TalonFXConfiguration();
@@ -280,8 +267,10 @@ public class Wristevator extends AdvancedSubsystem {
                 _wristMotor.getMotorVoltage()),
         _wristMotor);
 
-    CTREUtil.attempt(() -> _wristMotor.setPosition(Radians.of(-1.05)), _wristMotor);
-    CTREUtil.attempt(() -> _leftMotor.setPosition(Radians.of(0)), _leftMotor);
+    CTREUtil.attempt(
+        () -> _wristMotor.setPosition(WristevatorConstants.initialWristAngle), _wristMotor);
+    CTREUtil.attempt(
+        () -> _leftMotor.setPosition(WristevatorConstants.initialElevatorHeight), _leftMotor);
 
     FaultLogger.register(_leftMotor);
     FaultLogger.register(_rightMotor);
@@ -298,17 +287,23 @@ public class Wristevator extends AdvancedSubsystem {
     if (Robot.isSimulation()) {
       _homeSwitchSim = new DIOSim(_homeSwitch);
 
+      // rely on sim to control the position
+      _leftMotor.setPosition(0);
+      _wristMotor.setPosition(0);
+
       _elevatorSim =
           new ElevatorSim(
               DCMotor.getKrakenX60(2),
               WristevatorConstants.elevatorGearRatio,
               Units.lbsToKilograms(9.398),
               WristevatorConstants.drumRadius.in(Meters),
-              0,
+              WristevatorConstants.minElevatorHeight.in(Rotations)
+                  * WristevatorConstants.drumCircumference.in(Meters),
               WristevatorConstants.maxElevatorHeight.in(Rotations)
                   * WristevatorConstants.drumCircumference.in(Meters),
               false,
-              0);
+              WristevatorConstants.initialElevatorHeight.in(Rotations)
+                  * WristevatorConstants.drumCircumference.in(Meters));
 
       _wristSim =
           new SingleJointedArmSim(
@@ -320,7 +315,9 @@ public class Wristevator extends AdvancedSubsystem {
               WristevatorConstants.minWristAngle.in(Radians),
               WristevatorConstants.maxWristAngle.in(Radians),
               false,
-              0);
+              WristevatorConstants.initialWristAngle.in(Radians));
+
+      SmartDashboard.putData("Wristevator Visualizer", _mech);
 
       startSimThread();
     }
@@ -338,11 +335,9 @@ public class Wristevator extends AdvancedSubsystem {
               final double deltaTime = currentTime - _lastSimTime;
 
               var leftMotorSimState = _leftMotor.getSimState();
-              var rightMotorSimState = _rightMotor.getSimState();
               var wristMotorSimState = _wristMotor.getSimState();
 
               leftMotorSimState.setSupplyVoltage(batteryVolts);
-              rightMotorSimState.setSupplyVoltage(batteryVolts);
               wristMotorSimState.setSupplyVoltage(batteryVolts);
 
               _elevatorSim.setInputVoltage(leftMotorSimState.getMotorVoltageMeasure().in(Volts));
@@ -356,10 +351,6 @@ public class Wristevator extends AdvancedSubsystem {
                   _elevatorSim.getPositionMeters()
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
-              rightMotorSimState.setRawRotorPosition(
-                  -_elevatorSim.getPositionMeters()
-                      / WristevatorConstants.drumCircumference.in(Meters)
-                      * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRawRotorPosition(
                   Units.radiansToRotations(
                       _wristSim.getAngleRads() * WristevatorConstants.wristGearRatio));
@@ -367,10 +358,6 @@ public class Wristevator extends AdvancedSubsystem {
               // raw rotor velocities
               leftMotorSimState.setRotorVelocity(
                   _elevatorSim.getVelocityMetersPerSecond()
-                      / WristevatorConstants.drumCircumference.in(Meters)
-                      * WristevatorConstants.elevatorGearRatio);
-              rightMotorSimState.setRotorVelocity(
-                  -_elevatorSim.getVelocityMetersPerSecond()
                       / WristevatorConstants.drumCircumference.in(Meters)
                       * WristevatorConstants.elevatorGearRatio);
               wristMotorSimState.setRotorVelocity(
@@ -409,21 +396,6 @@ public class Wristevator extends AdvancedSubsystem {
     return !_homeSwitch.get();
   }
 
-  /** Whether the wristevator is open for manual control or not. */
-  public boolean isManual() {
-    return _isManual;
-  }
-
-  /** Indicate switch to manual control. */
-  public Command switchToManual() {
-    return Commands.runOnce(
-            () -> {
-              _isManual = true;
-              _finishedLatestProfiles = false;
-            })
-        .withName("Switch To Manual");
-  }
-
   private Command holdInPlace() {
     return run(() -> {
           _leftMotor.setControl(_heightSetter);
@@ -460,7 +432,7 @@ public class Wristevator extends AdvancedSubsystem {
     }
   }
 
-  /** Finds the next setpoint variable given the previous setpoint variable and the goal. */
+  /** Finds the next setpoint variable given the latest setpoint variable and the goal. */
   private void findNextSetpoint(Setpoint goal) {
     // if we haven't finished the previous profiles
     if (!_finishedLatestProfiles) {
@@ -489,20 +461,10 @@ public class Wristevator extends AdvancedSubsystem {
 
   /** Find new constraints for the motion magic control requests. */
   private void findProfileConstraints(Setpoint setpoint) {
-    _elevatorMaxSetpoint.position = getHeight();
-    _elevatorMaxSetpoint.velocity = 0;
-
-    _wristMaxSetpoint.position = getAngle();
-    _wristMaxSetpoint.velocity = 0;
-
-    _elevatorMaxGoal.position = setpoint.getHeight().in(Radians);
-    _elevatorMaxGoal.velocity = 0;
-
-    _wristMaxGoal.position = setpoint.getAngle().in(Radians);
-    _wristMaxGoal.velocity = 0;
-
-    _elevatorMaxProfile.calculate(0, _elevatorMaxSetpoint, _elevatorMaxGoal);
-    _wristMaxProfile.calculate(0, _wristMaxSetpoint, _wristMaxGoal);
+    _elevatorMaxProfile.calculate(
+        0, new State(getHeight(), 0), new State(setpoint.getHeight().in(Radians), 0));
+    _wristMaxProfile.calculate(
+        0, new State(getAngle(), 0), new State(setpoint.getAngle().in(Radians), 0));
 
     double elevatorTime = _elevatorMaxProfile.totalTime();
     double wristTime = _wristMaxProfile.totalTime();
@@ -583,24 +545,25 @@ public class Wristevator extends AdvancedSubsystem {
                       (MathUtil.isNear(
                               _latestSetpoint.getHeight().in(Rotations),
                               _elevatorReference.getValueAsDouble(),
-                              0.001)
-                          && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.001)
+                              0.003)
+                          && MathUtil.isNear(0, _elevatorReferenceSlope.getValueAsDouble(), 0.003)
                           && MathUtil.isNear(
                               _latestSetpoint.getAngle().in(Rotations),
                               _wristReference.getValueAsDouble(),
-                              0.001)
-                          && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.001));
+                              0.003)
+                          && MathUtil.isNear(0, _wristReferenceSlope.getValueAsDouble(), 0.003));
                 })
                 .beforeStarting(
-                    setSpeeds(() -> 0, () -> 0)
+                    run(() -> {
+                          _leftMotor.setControl(_elevatorVelocitySetter.withVelocity(0));
+                          _wristMotor.setControl(_wristVelocitySetter.withVelocity(0));
+                        })
                         .until(
                             () ->
                                 MathUtil.isNear(0, getElevatorVelocity(), 0.01)
                                     && MathUtil.isNear(0, getWristVelocity(), 0.01))
                         .andThen(
                             () -> {
-                              _isManual = false;
-
                               findNextSetpoint(goal);
                               findProfileConstraints(_latestSetpoint);
 
@@ -608,24 +571,6 @@ public class Wristevator extends AdvancedSubsystem {
                             }))
                 .until(() -> _finishedLatestProfiles && _latestSetpoint == goal))
         .withName("Set Goal");
-  }
-
-  /**
-   * Control the elevator and wrist speeds individually.
-   *
-   * @param elevatorSpeed The elevator drum speed in radians per second.
-   * @param wristSpeed The wrist speed in radians per second.
-   */
-  public Command setSpeeds(DoubleSupplier elevatorSpeed, DoubleSupplier wristSpeed) {
-    return run(() -> {
-          _leftMotor.setControl(
-              _elevatorVelocitySetter.withVelocity(
-                  Units.radiansToRotations(elevatorSpeed.getAsDouble())));
-          _wristMotor.setControl(
-              _wristVelocitySetter.withVelocity(
-                  Units.radiansToRotations(wristSpeed.getAsDouble())));
-        })
-        .withName("Set Speeds");
   }
 
   private void setElevatorVoltage(double volts) {
@@ -638,13 +583,11 @@ public class Wristevator extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Wristevator/periodic()");
+
     super.periodic();
 
     refreshProfileReferences();
-
-    // hard limits
-    _heightSetter.LimitReverseMotion = homeSwitch();
-    _elevatorVelocitySetter.LimitReverseMotion = homeSwitch();
 
     DogLog.log(
         "Wristevator/Elevator Reference",
@@ -660,17 +603,21 @@ public class Wristevator extends AdvancedSubsystem {
         Units.rotationsToRadians(_wristReferenceSlope.getValueAsDouble()));
 
     DogLog.log("Wristevator/Latest Setpoint", _latestSetpoint.toString());
+
+    DogLog.timeEnd("Time/Wristevator/periodic()");
   }
 
   @Override
   public void simulationPeriodic() {
-    _homeSwitchSim.setValue(getHeight() == 0);
+    _homeSwitchSim.setValue(getHeight() != 0); // inverted dio
 
+    // subtract initial values to match what the mechs look like irl
     _elevator.setLength(
-        Units.radiansToRotations(getHeight()) * WristevatorConstants.drumCircumference.in(Meters));
-    _wrist.setAngle(Math.toDegrees(getAngle()) - 90);
-
-    SmartDashboard.putData("Wristevator Visualizer", _mech);
+        Units.radiansToRotations(
+                getHeight() - WristevatorConstants.initialElevatorHeight.in(Radians))
+            * WristevatorConstants.drumCircumference.in(Meters));
+    _wrist.setAngle(
+        Math.toDegrees(getAngle() - WristevatorConstants.initialWristAngle.in(Radians)) - 90);
   }
 
   @Override

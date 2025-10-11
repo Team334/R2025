@@ -6,24 +6,24 @@ import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.configs.MotorOutputConfigs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import dev.doglog.DogLog;
 import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
 import edu.wpi.first.wpilibj.smartdashboard.MechanismLigament2d;
@@ -32,9 +32,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.lib.AdvancedSubsystem;
 import frc.lib.CTREUtil;
@@ -44,6 +41,10 @@ import frc.robot.Constants.IntakeConstants;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
 
+/**
+ * IMPORTANT: 0 degrees is facing towards front of robot, positive voltage/angle is
+ * counterclockwise.
+ */
 public class Intake extends AdvancedSubsystem {
   private final Mechanism2d _mech = new Mechanism2d(1.85, 1);
   private final MechanismRoot2d _root = _mech.getRoot("pivot", 0.5, 0.1);
@@ -63,8 +64,6 @@ public class Intake extends AdvancedSubsystem {
 
   private final StatusSignal<Angle> _actuatorPositionGetter = _actuatorMotor.getPosition();
   private final StatusSignal<AngularVelocity> _feedVelocityGetter = _feedMotor.getVelocity();
-
-  private final StatusSignal<Current> _feedCurrentGetter = _feedMotor.getStatorCurrent();
 
   private final SysIdRoutine _actuatorRoutine =
       new SysIdRoutine(
@@ -86,8 +85,6 @@ public class Intake extends AdvancedSubsystem {
           new SysIdRoutine.Mechanism(
               (Voltage volts) -> setFeedVoltage(volts.in(Volts)), null, this));
 
-  private boolean _hasAlgae = false;
-
   private SingleJointedArmSim _actuatorSim;
 
   private double _lastSimTime;
@@ -96,19 +93,6 @@ public class Intake extends AdvancedSubsystem {
 
   public Intake() {
     setDefaultCommand(stow());
-
-    new Trigger(() -> _hasAlgae).whileTrue(holdAlgae());
-
-    // if the intake is supposed to be holding an algae but stator current drops, assume that
-    // the algae fell out
-    new Trigger(
-            () -> {
-              return _feedCurrentGetter.getValue().in(Amps)
-                  >= IntakeConstants.algaeHoldCurrentThreshold.in(Amps);
-            })
-        .and(() -> _hasAlgae)
-        .debounce(0.1)
-        .onTrue(Commands.runOnce(() -> _hasAlgae = false));
 
     var feedMotorConfigs = new TalonFXConfiguration();
     var actuatorMotorConfigs = new TalonFXConfiguration();
@@ -132,12 +116,14 @@ public class Intake extends AdvancedSubsystem {
 
     actuatorMotorConfigs.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
 
+    actuatorMotorConfigs.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
+
     actuatorMotorConfigs.Feedback.SensorToMechanismRatio = IntakeConstants.actuatorGearRatio;
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitThreshold =
-        IntakeConstants.actuatorStowed.plus(Radians.of(0.15)).in(Rotations);
+        IntakeConstants.actuatorOut.in(Rotations);
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitThreshold =
-        IntakeConstants.actuatorOut.minus(Radians.of(0.15)).in(Rotations);
+        IntakeConstants.actuatorStowed.in(Rotations);
 
     actuatorMotorConfigs.SoftwareLimitSwitch.ForwardSoftLimitEnable = true;
     actuatorMotorConfigs.SoftwareLimitSwitch.ReverseSoftLimitEnable = true;
@@ -181,10 +167,26 @@ public class Intake extends AdvancedSubsystem {
     FaultLogger.register(_actuatorMotor);
 
     SysId.displayRoutine(
-        "Actuator", _actuatorRoutine, () -> getAngle() >= 1.8, () -> getAngle() <= -0.4);
+        "Actuator",
+        _actuatorRoutine,
+        () -> getAngle() >= IntakeConstants.actuatorOut.in(Radians),
+        () -> getAngle() <= IntakeConstants.actuatorStowed.in(Radians));
     SysId.displayRoutine("Intake Feed", _feedRoutine);
 
     if (Robot.isSimulation()) {
+      // rely on sim to control the position
+      _actuatorMotor.setPosition(0);
+
+      // prevent setRawMotor_ from negating physics sim output
+      var c = new MotorOutputConfigs();
+
+      _actuatorMotor.getConfigurator().refresh(c);
+      _actuatorMotor
+          .getConfigurator()
+          .apply(c.withInverted(InvertedValue.CounterClockwise_Positive));
+
+      SmartDashboard.putData("Intake Visualizer", _mech);
+
       _actuatorSim =
           new SingleJointedArmSim(
               DCMotor.getKrakenX60(1),
@@ -194,7 +196,7 @@ public class Intake extends AdvancedSubsystem {
               IntakeConstants.intakeLength.in(Meters),
               IntakeConstants.actuatorStowed.in(Radians),
               IntakeConstants.actuatorOut.in(Radians),
-              false,
+              true,
               IntakeConstants.actuatorStowed.in(Radians));
 
       startSimThread();
@@ -246,11 +248,6 @@ public class Intake extends AdvancedSubsystem {
     return _feedVelocityGetter.refresh().getValue().in(RadiansPerSecond);
   }
 
-  @Logged(name = "Has Algae")
-  public boolean hasAlgae() {
-    return _hasAlgae;
-  }
-
   // set the actuator angle and feed speed.
   private Command set(double actuatorAngle, double feedSpeed) {
     return run(
@@ -278,50 +275,8 @@ public class Intake extends AdvancedSubsystem {
   public Command outtake() {
     return set(
             IntakeConstants.actuatorOut.in(Radians),
-            -IntakeConstants.feedSpeed.in(RadiansPerSecond))
+            IntakeConstants.feedSpeed.unaryMinus().in(RadiansPerSecond))
         .withName("Outtake");
-  }
-
-  /** Holds an algae in the intake. */
-  public Command holdAlgae() {
-    return run(
-        () -> {
-          _actuatorMotor.setControl(
-              _actuatorPositionSetter.withPosition(
-                  Units.radiansToRotations(IntakeConstants.intakeAlgae.in(Radians))));
-          _feedMotor.setControl(
-              _feedVoltageSetter.withOutput(IntakeConstants.algaeStallVolts.in(Volts)));
-        });
-  }
-
-  /** Intakes algae of the ground. */
-  public Command intakeAlgae() {
-    var pickedUpAlgae =
-        new BooleanEvent(
-                CommandScheduler.getInstance().getDefaultButtonLoop(),
-                () -> {
-                  return _feedCurrentGetter.getValue().in(Amps)
-                      >= IntakeConstants.algaeIntakeCurrentThreshold.in(Amps);
-                })
-            .debounce(0.1);
-
-    return set(
-            IntakeConstants.intakeAlgae.in(Radians),
-            -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
-        .until(pickedUpAlgae)
-        .andThen(Commands.runOnce(() -> _hasAlgae = true));
-  }
-
-  /** Outtakes algae into the processor. */
-  public Command outtakeAlgae() {
-    return Commands.sequence(
-        set(
-                IntakeConstants.scoreAlgae.in(Radians),
-                -IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond))
-            .until(() -> MathUtil.isNear(IntakeConstants.scoreAlgae.in(Radians), getAngle(), 0.1)),
-        set(
-            IntakeConstants.scoreAlgae.in(Radians),
-            IntakeConstants.algaeFeedSpeed.in(RadiansPerSecond)));
   }
 
   private void setActuatorVoltage(double volts) {
@@ -334,7 +289,11 @@ public class Intake extends AdvancedSubsystem {
 
   @Override
   public void periodic() {
+    DogLog.time("Time/Intake/periodic()");
+
     super.periodic();
+
+    DogLog.timeEnd("Time/Intake/periodic()");
   }
 
   @Override
@@ -342,8 +301,6 @@ public class Intake extends AdvancedSubsystem {
     super.simulationPeriodic();
 
     _intake.setAngle(Math.toDegrees(getAngle()));
-
-    SmartDashboard.putData("Intake Visualizer", _mech);
   }
 
   @Override
