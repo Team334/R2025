@@ -378,7 +378,7 @@ public final class Constants {
                     + Math.pow(TunerConstants.FrontLeft.LocationY, 2)));
 
     public static final LinearVelocity maxTranslationalSpeed = MetersPerSecond.of(3.632);
-    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI);
+    public static final AngularVelocity maxAngularSpeed = RadiansPerSecond.of(Math.PI * 2);
 
     // respecting wheel COF and max motor torque (this can be obtained from choreo probably)
     public static final LinearAcceleration maxTranslationalAcceleration =

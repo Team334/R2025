@@ -1,23 +1,39 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import dev.doglog.DogLog;
-import frc.robot.subsystems.Intake;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.FieldConstants.Alignment;
+import frc.robot.Constants.Piece;
+import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Wristevator;
+import java.util.function.Consumer;
 
 public class Autos {
   private final AutoFactory _factory;
 
-  private final Swerve _swerve;
-  private final Intake _intake;
+  private final Consumer<Piece> _manipulatorPieceSetter;
 
-  public Autos(Swerve swerve, Intake intake) {
+  private final Swerve _swerve;
+  private final Wristevator _wristevator;
+  private final Manipulator _manipulator;
+
+  public Autos(
+      Consumer<Piece> manipulatorPieceSetter,
+      Swerve swerve,
+      Wristevator wristevator,
+      Manipulator manipulator) {
+    _manipulatorPieceSetter = manipulatorPieceSetter;
+
     _swerve = swerve;
-    _intake = intake;
+    _wristevator = wristevator;
+    _manipulator = manipulator;
 
     _factory =
         new AutoFactory(
@@ -34,27 +50,37 @@ public class Autos {
             });
   }
 
-  public AutoRoutine shortPath() {
-    AutoRoutine routine = _factory.newRoutine("shortPath");
-
-    AutoTrajectory shortPath = routine.trajectory("shortPath");
-
-    routine.active().onTrue(sequence(shortPath.resetOdometry(), shortPath.cmd()));
-
-    return routine;
+  public Command taxi() {
+    return sequence(
+        runOnce(() -> _manipulatorPieceSetter.accept(Piece.CORAL)),
+        _factory.resetOdometry("taxi"),
+        _factory.trajectoryCmd("taxi"));
   }
 
-  public AutoRoutine forwardIntakeRight() {
-    AutoRoutine routine = _factory.newRoutine("forwardIntakeRight");
+  public AutoRoutine onePiece() {
+    AutoRoutine routine = _factory.newRoutine("One Piece");
 
-    // Load the routine's trajectories
-    AutoTrajectory forwardMeter = routine.trajectory("forwardMeter");
-    AutoTrajectory rightMeter = routine.trajectory("rightMeter");
+    AutoTrajectory onePieceA = routine.trajectory("1pA");
+    AutoTrajectory onePieceB = routine.trajectory("1pB");
 
-    // When the routine begins, reset odometry and start the first trajectory
-    routine.active().onTrue(sequence(forwardMeter.resetOdometry(), forwardMeter.cmd()));
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _manipulatorPieceSetter.accept(Piece.CORAL)),
+                onePieceA.resetOdometry(),
+                onePieceA.cmd()));
 
-    forwardMeter.done().onTrue(_intake.intake().withTimeout(3).andThen(rightMeter.cmd()));
+    onePieceA
+        .done()
+        .onTrue(
+            sequence(
+                    _wristevator.setGoal(L4),
+                    _swerve.alignToTag(Alignment.LEFT),
+                    _manipulator.feed())
+                .andThen(onePieceB.cmd()));
+
+    onePieceB.done().onTrue(_wristevator.setGoal(HOME));
 
     return routine;
   }

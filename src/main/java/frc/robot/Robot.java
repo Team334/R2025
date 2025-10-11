@@ -80,7 +80,8 @@ public class Robot extends TimedRobot {
   private final Wristevator _wristevator =
       new Wristevator((Setpoint goal) -> _wristevatorGoal = goal);
 
-  private final Autos _autos = new Autos(_swerve, _intake);
+  private final Autos _autos =
+      new Autos((Piece piece) -> _manipulatorPiece = piece, _swerve, _wristevator, _manipulator);
 
   private final NetworkTableInstance _ntInst;
 
@@ -150,6 +151,9 @@ public class Robot extends TimedRobot {
     addPeriodic(FaultLogger::update, 1);
 
     AutoChooser chooser = new AutoChooser();
+
+    chooser.addCmd("Taxi", _autos::taxi);
+    chooser.addRoutine("One Piece", _autos::onePiece);
 
     SmartDashboard.putData("Auto Chooser", chooser);
 
