@@ -92,6 +92,9 @@ public class Autos {
         routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pA");
     AutoTrajectory onePieceB =
         routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pB");
+    AutoTrajectory onePieceC =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pC");
+        
 
     routine
         .active()
@@ -111,7 +114,7 @@ public class Autos {
                 _manipulator.feed()));
 
     onePieceA.doneDelayed(5).onTrue(onePieceB.cmd());
-    onePieceB.done().onTrue(_wristevator.setGoal(HOME));
+    onePieceB.done().onTrue(_wristevator.setGoal(HOME).andThen(onePieceC.cmd()));
 
     return routine;
   }
