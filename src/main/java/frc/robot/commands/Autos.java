@@ -7,6 +7,8 @@ import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import dev.doglog.DogLog;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.Piece;
@@ -23,6 +25,24 @@ public class Autos {
   private final Swerve _swerve;
   private final Wristevator _wristevator;
   private final Manipulator _manipulator;
+
+  private SendableChooser<Side> _sideSelector = new SendableChooser<Side>();
+
+  private enum Side {
+    LEFT("Left "),
+    CENTER("Center "),
+    RIGHT("Right ");
+
+    private final String _dir;
+
+    private Side(String dir) {
+      _dir = dir;
+    }
+
+    public String getDirectory() {
+      return _dir;
+    }
+  }
 
   public Autos(
       Consumer<Piece> manipulatorPieceSetter,
@@ -48,6 +68,14 @@ public class Autos {
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
               DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
+
+    _sideSelector.setDefaultOption("Center", Side.CENTER);
+
+    _sideSelector.addOption("Left", Side.LEFT);
+    _sideSelector.addOption("Center", Side.CENTER);
+    _sideSelector.addOption("Right", Side.RIGHT);
+
+    SmartDashboard.putData("Auton Side Selector", _sideSelector);
   }
 
   public Command taxi() {
@@ -60,8 +88,10 @@ public class Autos {
   public AutoRoutine onePiece() {
     AutoRoutine routine = _factory.newRoutine("One Piece");
 
-    AutoTrajectory onePieceA = routine.trajectory("1pA");
-    AutoTrajectory onePieceB = routine.trajectory("1pB");
+    AutoTrajectory onePieceA =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pA");
+    AutoTrajectory onePieceB =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pB");
 
     routine
         .active()
