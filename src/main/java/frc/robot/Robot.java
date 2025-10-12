@@ -148,6 +148,10 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(
         runOnce(FaultLogger::clear).withName("Clear Faults").ignoringDisable(true));
 
+    SmartDashboard.putData(
+        "Clear Manipulator Current Piece",
+        runOnce(() -> _manipulatorPiece = Piece.NONE).ignoringDisable(true));
+
     addPeriodic(FaultLogger::update, 1);
 
     AutoChooser chooser = new AutoChooser();
