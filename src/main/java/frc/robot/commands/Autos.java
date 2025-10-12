@@ -81,8 +81,8 @@ public class Autos {
   public Command taxi() {
     return sequence(
         runOnce(() -> _manipulatorPieceSetter.accept(Piece.CORAL)),
-        _factory.resetOdometry("taxi"),
-        _factory.trajectoryCmd("taxi"));
+        _factory.resetOdometry(_sideSelector.getSelected().getDirectory() + "taxi"),
+        _factory.trajectoryCmd(_sideSelector.getSelected().getDirectory() + "taxi"));
   }
 
   public AutoRoutine onePiece() {

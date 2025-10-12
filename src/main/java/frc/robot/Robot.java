@@ -228,12 +228,15 @@ public class Robot extends TimedRobot {
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getLeftX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getRightX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     _driverController.a().whileTrue(_swerve.brake());
