@@ -94,7 +94,6 @@ public class Autos {
         routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pB");
     AutoTrajectory onePieceC =
         routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pC");
-        
 
     routine
         .active()
