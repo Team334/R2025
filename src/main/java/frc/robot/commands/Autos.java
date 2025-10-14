@@ -1,23 +1,59 @@
 package frc.robot.commands;
 
 import static edu.wpi.first.wpilibj2.command.Commands.*;
+import static frc.robot.Constants.WristevatorConstants.Preset.*;
 
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
 import dev.doglog.DogLog;
-import frc.robot.subsystems.Intake;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.FieldConstants.Alignment;
+import frc.robot.Constants.Piece;
+import frc.robot.subsystems.Manipulator;
 import frc.robot.subsystems.Swerve;
+import frc.robot.subsystems.Wristevator;
+import java.util.function.Consumer;
 
 public class Autos {
   private final AutoFactory _factory;
 
-  private final Swerve _swerve;
-  private final Intake _intake;
+  private final Consumer<Piece> _manipulatorPieceSetter;
 
-  public Autos(Swerve swerve, Intake intake) {
+  private final Swerve _swerve;
+  private final Wristevator _wristevator;
+  private final Manipulator _manipulator;
+
+  private SendableChooser<Side> _sideSelector = new SendableChooser<Side>();
+
+  private enum Side {
+    LEFT("Left "),
+    CENTER("Center "),
+    RIGHT("Right ");
+
+    private final String _dir;
+
+    private Side(String dir) {
+      _dir = dir;
+    }
+
+    public String getDirectory() {
+      return _dir;
+    }
+  }
+
+  public Autos(
+      Consumer<Piece> manipulatorPieceSetter,
+      Swerve swerve,
+      Wristevator wristevator,
+      Manipulator manipulator) {
+    _manipulatorPieceSetter = manipulatorPieceSetter;
+
     _swerve = swerve;
-    _intake = intake;
+    _wristevator = wristevator;
+    _manipulator = manipulator;
 
     _factory =
         new AutoFactory(
@@ -32,29 +68,52 @@ public class Autos {
               DogLog.log("Auto/Current Trajectory Duration", traj.getTotalTime());
               DogLog.log("Auto/Current Trajectory Is Active", isActive);
             });
+
+    _sideSelector.setDefaultOption("Center", Side.CENTER);
+
+    _sideSelector.addOption("Left", Side.LEFT);
+    _sideSelector.addOption("Center", Side.CENTER);
+    _sideSelector.addOption("Right", Side.RIGHT);
+
+    SmartDashboard.putData("Auton Side Selector", _sideSelector);
   }
 
-  public AutoRoutine shortPath() {
-    AutoRoutine routine = _factory.newRoutine("shortPath");
-
-    AutoTrajectory shortPath = routine.trajectory("shortPath");
-
-    routine.active().onTrue(sequence(shortPath.resetOdometry(), shortPath.cmd()));
-
-    return routine;
+  public Command taxi() {
+    return sequence(
+        runOnce(() -> _manipulatorPieceSetter.accept(Piece.CORAL)),
+        _factory.resetOdometry(_sideSelector.getSelected().getDirectory() + "taxi"),
+        _factory.trajectoryCmd(_sideSelector.getSelected().getDirectory() + "taxi"));
   }
 
-  public AutoRoutine forwardIntakeRight() {
-    AutoRoutine routine = _factory.newRoutine("forwardIntakeRight");
+  public AutoRoutine onePiece() {
+    AutoRoutine routine = _factory.newRoutine("One Piece");
 
-    // Load the routine's trajectories
-    AutoTrajectory forwardMeter = routine.trajectory("forwardMeter");
-    AutoTrajectory rightMeter = routine.trajectory("rightMeter");
+    AutoTrajectory onePieceA =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pA");
+    AutoTrajectory onePieceB =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pB");
+    AutoTrajectory onePieceC =
+        routine.trajectory(_sideSelector.getSelected().getDirectory() + "1pC");
 
-    // When the routine begins, reset odometry and start the first trajectory
-    routine.active().onTrue(sequence(forwardMeter.resetOdometry(), forwardMeter.cmd()));
+    routine
+        .active()
+        .onTrue(
+            sequence(
+                runOnce(() -> _manipulatorPieceSetter.accept(Piece.CORAL)),
+                onePieceA.resetOdometry(),
+                onePieceA.cmd()));
 
-    forwardMeter.done().onTrue(_intake.intake().withTimeout(3).andThen(rightMeter.cmd()));
+    onePieceA
+        .done()
+        .onTrue(
+            sequence(
+                _wristevator.setGoal(L4),
+                _swerve.alignToTag(Alignment.LEFT),
+                waitSeconds(0.5),
+                _manipulator.feed()));
+
+    onePieceA.doneDelayed(5).onTrue(onePieceB.cmd());
+    onePieceB.done().onTrue(_wristevator.setGoal(HOME).andThen(onePieceC.cmd()));
 
     return routine;
   }

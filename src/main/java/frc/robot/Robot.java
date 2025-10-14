@@ -18,6 +18,7 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
+import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.ClassPreloader;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -79,7 +80,8 @@ public class Robot extends TimedRobot {
   private final Wristevator _wristevator =
       new Wristevator((Setpoint goal) -> _wristevatorGoal = goal);
 
-  private final Autos _autos = new Autos(_swerve, _intake);
+  private final Autos _autos =
+      new Autos((Piece piece) -> _manipulatorPiece = piece, _swerve, _wristevator, _manipulator);
 
   private final NetworkTableInstance _ntInst;
 
@@ -133,6 +135,8 @@ public class Robot extends TimedRobot {
     new Trigger(() -> getManipulatorPiece() == Piece.NONE)
         .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
+    PortForwarder.add(5800, "orangepi.local", 5800);
+
     SmartDashboard.putData(
         "Robot Self Check",
         sequence(
@@ -144,12 +148,16 @@ public class Robot extends TimedRobot {
     SmartDashboard.putData(
         runOnce(FaultLogger::clear).withName("Clear Faults").ignoringDisable(true));
 
+    SmartDashboard.putData(
+        "Clear Manipulator Current Piece",
+        runOnce(() -> _manipulatorPiece = Piece.NONE).ignoringDisable(true));
+
     addPeriodic(FaultLogger::update, 1);
 
     AutoChooser chooser = new AutoChooser();
 
-    chooser.addRoutine("Short Path", _autos::shortPath);
-    chooser.addRoutine("Forward Intake Right", _autos::forwardIntakeRight);
+    chooser.addCmd("Taxi", _autos::taxi);
+    chooser.addRoutine("One Piece", _autos::onePiece);
 
     SmartDashboard.putData("Auto Chooser", chooser);
 
@@ -220,12 +228,15 @@ public class Robot extends TimedRobot {
         _swerve.drive(
             InputStream.of(_driverController::getLeftY)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getLeftX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxTranslationalSpeed.in(MetersPerSecond)),
             InputStream.of(_driverController::getRightX)
                 .negate()
+                .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
     _driverController.a().whileTrue(_swerve.brake());
