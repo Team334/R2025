@@ -135,7 +135,7 @@ public class Robot extends TimedRobot {
     new Trigger(() -> getManipulatorPiece() == Piece.NONE)
         .onChange(rumbleControllers(1, 1).onlyIf(teleop()));
 
-    PortForwarder.add(5800, "orangepi.local", 5800);
+    // PortForwarder.add(5800, "orangepi.local", 5800);
 
     SmartDashboard.putData(
         "Robot Self Check",
@@ -245,19 +245,19 @@ public class Robot extends TimedRobot {
 
     _driverController
         .x()
-        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignToTag(Alignment.LEFT));
+        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()));
+        // .whileTrue(_swerve.alignToTag(Alignment.LEFT));
 
     _driverController
         .x()
         .and(
-            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()))
-        .whileTrue(_swerve.alignToTag(Alignment.CENTERED));
+            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()));
+        // .whileTrue(_swerve.alignToTag(Alignment.CENTERED));
 
     _driverController
         .x()
-        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()))
-        .whileTrue(_swerve.alignToTag(Alignment.RIGHT));
+        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()));
+        // .whileTrue(_swerve.alignToTag(Alignment.RIGHT));
   }
 
   private void configureOperatorBindings() {

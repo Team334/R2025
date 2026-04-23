@@ -81,30 +81,30 @@ public final class Constants {
     public static final double yBoundMargin = 0.01;
     public static final double zBoundMargin = 0.03;
 
-    public static final String leftArducamName = "left-arducam";
-    public static final String rightArducamName = "right-arducam";
+    // public static final String leftArducamName = "left-arducam";
+    // public static final String rightArducamName = "right-arducam";
 
-    public static final VisionPoseEstimatorConstants leftArducam =
-        new VisionPoseEstimatorConstants(
-            leftArducamName,
-            new Transform3d(
-                new Translation3d(0.3015, 0.3014, 0.199),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
-            0.2,
-            0.1,
-            3,
-            4.5);
+    // public static final VisionPoseEstimatorConstants leftArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         leftArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.3015, 0.3014, 0.199),
+    //             new Rotation3d(0, -Units.degreesToRadians(16.96), -Units.degreesToRadians(15))),
+    //         0.2,
+    //         0.1,
+    //         3,
+    //         4.5);
 
-    public static final VisionPoseEstimatorConstants rightArducam =
-        new VisionPoseEstimatorConstants(
-            rightArducamName,
-            new Transform3d(
-                new Translation3d(0.3015, -0.3014, 0.199),
-                new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),
-            0.2,
-            0.1,
-            3,
-            4.5);
+    // public static final VisionPoseEstimatorConstants rightArducam =
+    //     new VisionPoseEstimatorConstants(
+    //         rightArducamName,
+    //         new Transform3d(
+    //             new Translation3d(0.3015, -0.3014, 0.199),
+    //             new Rotation3d(0, -Units.degreesToRadians(16.96), Units.degreesToRadians(15))),
+    //         0.2,
+    //         0.1,
+    //         3,
+    //         4.5);
   }
 
   public static class IntakeConstants {

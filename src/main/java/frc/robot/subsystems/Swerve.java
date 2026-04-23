@@ -93,15 +93,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   @Logged(name = "Ignore Vision Estimates")
   private boolean _ignoreVisionEstimates = false;
 
-  @Logged(name = VisionConstants.leftArducamName)
-  private final VisionPoseEstimator _leftArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam, this::getHeadingAtTime);
+  // @Logged(name = VisionConstants.leftArducamName)
+  // private final VisionPoseEstimator _leftArducam =
+  //     VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam, this::getHeadingAtTime);
 
-  @Logged(name = VisionConstants.rightArducamName)
-  private final VisionPoseEstimator _rightArducam =
-      VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam, this::getHeadingAtTime);
+  // @Logged(name = VisionConstants.rightArducamName)
+  // private final VisionPoseEstimator _rightArducam =
+  //     VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam, this::getHeadingAtTime);
 
-  private final List<VisionPoseEstimator> _cameras = List.of(_leftArducam, _rightArducam);
+  private final List<VisionPoseEstimator> _cameras = List.of();
 
   private final List<VisionPoseEstimate> _newEstimates = new ArrayList<>();
 
@@ -165,15 +165,15 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
       _visionSystemSim = new VisionSystemSim("main");
       _visionSystemSim.addAprilTags(FieldConstants.tagLayout);
 
-      _leftArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
+      // _leftArducam
+      //     .getCameraSim()
+      //     .prop
+      //     .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
-      _rightArducam
-          .getCameraSim()
-          .prop
-          .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
+      // _rightArducam
+      //     .getCameraSim()
+      //     .prop
+      //     .setCalibration(800, 600, Rotation2d.fromDegrees(72.7315316587));
 
       _cameras.forEach(cam -> _visionSystemSim.addCamera(cam.getCameraSim(), cam.robotToCam));
     } else {
@@ -481,7 +481,7 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
   public void periodic() {
     DogLog.time("Time/Swerve/periodic()");
 
-    updateVisionPoseEstimates();
+    // updateVisionPoseEstimates();
 
     if (!_hasAppliedDriverPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
