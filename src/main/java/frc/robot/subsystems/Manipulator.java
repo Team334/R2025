@@ -36,6 +36,7 @@ import frc.robot.Constants.Piece;
 import frc.robot.Robot;
 import frc.robot.utils.SysId;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 public class Manipulator extends AdvancedSubsystem {
@@ -84,6 +85,9 @@ public class Manipulator extends AdvancedSubsystem {
   private BooleanSubscriber _algaeBeamState;
 
   private final Consumer<Piece> _manipulatorPieceSetter;
+
+  private BooleanSupplier _rising = () -> false;
+  private BooleanSupplier _falling = () -> false;
 
   public Manipulator(Consumer<Piece> manipulatorPieceSetter) {
     setDefaultCommand(idle());
@@ -159,6 +163,13 @@ public class Manipulator extends AdvancedSubsystem {
       _coralBeamState = DogLog.tunable("Manipulator/Coral Beam State", false);
       _algaeBeamState = DogLog.tunable("Manipulator/Algae Beam State", false);
     }
+
+    new Trigger(_coralEvent.rising()::getAsBoolean)
+        .onTrue(run(() -> _rising = () -> true))
+        .onFalse(run(() -> _rising = () -> false));
+    new Trigger(_coralEvent.falling()::getAsBoolean)
+        .onTrue(run(() -> _falling = () -> true))
+        .onFalse(run(() -> _falling = () -> false));
   }
 
   private void setFlywheelVoltage(double volts, TalonFX motor) {
@@ -287,6 +298,9 @@ public class Manipulator extends AdvancedSubsystem {
     DogLog.time("Time/Manipulator/periodic()");
 
     super.periodic();
+
+    DogLog.log("Coral falling", _falling.getAsBoolean());
+    DogLog.log("Coral rising", _rising.getAsBoolean());
 
     DogLog.timeEnd("Time/Manipulator/periodic()");
   }

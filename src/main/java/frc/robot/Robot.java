@@ -18,7 +18,6 @@ import edu.wpi.first.epilogue.Logged.Strategy;
 import edu.wpi.first.epilogue.logging.EpilogueBackend;
 import edu.wpi.first.epilogue.logging.FileBackend;
 import edu.wpi.first.epilogue.logging.NTEpilogueBackend;
-import edu.wpi.first.net.PortForwarder;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.util.ClassPreloader;
 import edu.wpi.first.wpilibj.DataLogManager;
@@ -31,11 +30,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.ScheduleCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandPS5Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.lib.FaultLogger;
 import frc.lib.InputStream;
-import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.Piece;
 import frc.robot.Constants.Ports;
 import frc.robot.Constants.SwerveConstants;
@@ -57,11 +56,11 @@ import java.lang.reflect.Field;
  */
 @Logged(strategy = Strategy.OPT_IN)
 public class Robot extends TimedRobot {
-  private final CommandXboxController _driverController =
-      new CommandXboxController(Ports.driverController);
+  private final CommandPS5Controller _driverController =
+      new CommandPS5Controller(Ports.driverController);
 
-  private final CommandXboxController _operatorController =
-      new CommandXboxController(Ports.operatorController);
+  private final CommandPS5Controller _operatorController =
+      new CommandPS5Controller(Ports.operatorController);
 
   @Logged(name = "Swerve")
   private final Swerve _swerve = TunerConstants.createDrivetrain();
@@ -239,37 +238,40 @@ public class Robot extends TimedRobot {
                 .signedPow(2)
                 .scale(SwerveConstants.maxAngularSpeed.in(RadiansPerSecond))));
 
-    _driverController.a().whileTrue(_swerve.brake());
-    _driverController.y().onTrue(_swerve.toggleFieldOriented());
-    _driverController.b().onTrue(_swerve.resetHeading());
+    // _driverController.a().whileTrue(_swerve.brake());
+    // _driverController.y().onTrue(_swerve.toggleFieldOriented());
+    // _driverController.b().onTrue(_swerve.resetHeading());
 
-    _driverController
-        .x()
-        .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()));
-        // .whileTrue(_swerve.alignToTag(Alignment.LEFT));
+    // _driverController
+    //     .x()
+    //     .and(_driverController.leftTrigger().and(_driverController.rightTrigger().negate()));
+    // .whileTrue(_swerve.alignToTag(Alignment.LEFT));
 
-    _driverController
-        .x()
-        .and(
-            _driverController.leftTrigger().negate().and(_driverController.rightTrigger().negate()));
-        // .whileTrue(_swerve.alignToTag(Alignment.CENTERED));
+    // _driverController
+    //     .x()
+    //     .and(
+    //         _driverController
+    //             .leftTrigger()
+    //             .negate()
+    //             .and(_driverController.rightTrigger().negate()));
+    // .whileTrue(_swerve.alignToTag(Alignment.CENTERED));
 
-    _driverController
-        .x()
-        .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()));
-        // .whileTrue(_swerve.alignToTag(Alignment.RIGHT));
+    // _driverController
+        // .x()
+        // .and(_driverController.rightTrigger().and(_driverController.leftTrigger().negate()));
+    // .whileTrue(_swerve.alignToTag(Alignment.RIGHT));
   }
 
   private void configureOperatorBindings() {
     // wristevator setpoint control
-    _operatorController.back().onTrue(_wristevator.setGoal(PROCESSOR));
-    _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
-    _operatorController.rightStick().onTrue(_wristevator.setGoal(HOME));
+    // _operatorController.R1().onTrue(_wristevator.setGoal(PROCESSOR));
+    // _operatorController.start().onTrue(_wristevator.setGoal(HUMAN));
+    _operatorController.povDown().onTrue(_wristevator.setGoal(HOME));
 
-    _operatorController.a().onTrue(_wristevator.setGoal(L1));
+    _operatorController.cross().onTrue(_wristevator.setGoal(L1));
 
     _operatorController
-        .b()
+        .circle()
         .onTrue(
             either(
                 _wristevator.setGoal(L2),
@@ -277,27 +279,27 @@ public class Robot extends TimedRobot {
                 () -> getManipulatorPiece() == Piece.CORAL));
 
     _operatorController
-        .y()
+        .triangle()
         .onTrue(
             either(
                 _wristevator.setGoal(L3),
                 _wristevator.setGoal(UPPER_ALGAE),
                 () -> getManipulatorPiece() == Piece.CORAL));
 
-    _operatorController.x().onTrue(_wristevator.setGoal(L4));
+    _operatorController.square().onTrue(_wristevator.setGoal(L4));
 
     // ground outtake
-    _operatorController.leftBumper().whileTrue(_intake.outtake());
+    _operatorController.R1().whileTrue(_intake.outtake());
     _operatorController.povUp().whileTrue(Superstructure.serializerOuttake(_serializer, _intake));
 
     // ground intake / passoff
     _operatorController
-        .rightBumper()
+        .R2()
         .and(_wristevator::homeSwitch)
         .whileTrue(Superstructure.passoff(_intake, _serializer, _manipulator));
 
     _operatorController
-        .rightBumper()
+        .R2()
         .and(() -> !_wristevator.homeSwitch())
         .whileTrue(
             Superstructure.groundIntake(_intake, _serializer)
@@ -305,17 +307,17 @@ public class Robot extends TimedRobot {
 
     // feed / inverse passoff
     _operatorController
-        .rightTrigger()
+        .L1()
         .and(_wristevator::homeSwitch)
         .whileTrue(Superstructure.inversePassoff(_serializer, _manipulator));
 
     _operatorController
-        .rightTrigger()
+        .L1()
         .and(() -> !_wristevator.homeSwitch())
         .whileTrue(_manipulator.feed());
 
     // general release piece
-    _operatorController.leftTrigger().whileTrue(_manipulator.releasePiece());
+    _operatorController.L2().whileTrue(_manipulator.releasePiece());
   }
 
   /**

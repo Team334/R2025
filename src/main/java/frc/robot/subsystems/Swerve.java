@@ -41,7 +41,6 @@ import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.FieldConstants.Alignment;
 import frc.robot.Constants.SwerveConstants;
-import frc.robot.Constants.VisionConstants;
 import frc.robot.Robot;
 import frc.robot.generated.TunerConstants.TunerSwerveDrivetrain;
 import frc.robot.utils.HolonomicController;
@@ -95,11 +94,13 @@ public class Swerve extends TunerSwerveDrivetrain implements Subsystem, SelfChec
 
   // @Logged(name = VisionConstants.leftArducamName)
   // private final VisionPoseEstimator _leftArducam =
-  //     VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam, this::getHeadingAtTime);
+  //     VisionPoseEstimator.buildFromConstants(VisionConstants.leftArducam,
+  // this::getHeadingAtTime);
 
   // @Logged(name = VisionConstants.rightArducamName)
   // private final VisionPoseEstimator _rightArducam =
-  //     VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam, this::getHeadingAtTime);
+  //     VisionPoseEstimator.buildFromConstants(VisionConstants.rightArducam,
+  // this::getHeadingAtTime);
 
   private final List<VisionPoseEstimator> _cameras = List.of();
 
